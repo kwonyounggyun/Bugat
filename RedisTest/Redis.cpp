@@ -4,6 +4,7 @@
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/lockfree/stack.hpp>
+#include <boost/redis/request.hpp>
 
 class Impl
 {
@@ -41,7 +42,7 @@ auto Connect(std::shared_ptr<boost::redis::connection>& conn, boost::redis::conf
 {
 	auto ex = co_await boost::asio::this_coro::executor;
 	conn = std::make_shared<boost::redis::connection>(ex);
-	conn->async_run(cfg, {}, boost::asio::consign(boost::asio::detached, conn));
+	co_return conn->async_run(cfg, {}, boost::asio::consign(boost::asio::detached, conn));
 }
 
 class RedisContext
@@ -61,11 +62,25 @@ RedisClient::~RedisClient()
 	_context->_io.stop();
 }
 
-void RedisClient::Start(std::string host, int port, int threadCount)
+auto RedisClient::Start(std::string host, int port, int threadCount) -> Awaitable<void>
 {
 	boost::redis::config config;
-	config.addr = boost::redis::address{ host, std::to_string(port)};
+	config.addr = boost::redis::address{ host, std::to_string(port) };
 	boost::asio::co_spawn(_context->_io, Connect(_context->_conn, config), boost::asio::detached);
+}
 
+auto CommandSet(std::shared_ptr<boost::redis::connection>& conn, const std::string& key, const std::string& value) -> boost::asio::awaitable<void>
+{
+	boost::redis::response<boost::redis::ignore_t> resp;
+	boost::redis::request req;
+	req.push("SET", "key", "value");
+	co_await conn->async_exec(req, resp);
+	co_return;
+}
 
+auto RedisClient::Set(const std::string& key, const std::string& value) -> Awaitable<void>
+{
+	boost::asio::co_spawn(_context->_io, CommandSet(_context->_conn, key, value), boost::asio::detached);
+	Awaitable<void> waiter;
+	return Awaitable<void>();
 }
