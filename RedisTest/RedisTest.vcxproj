@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -139,12 +139,12 @@
     <ClCompile Include="RedisTest.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Network\BaseCoroutine.h" />
     <ClInclude Include="AnyContext.h" />
     <ClInclude Include="AnyExecutor.h" />
     <ClInclude Include="JsonObject.h" />
     <ClInclude Include="Redis.h" />
     <ClInclude Include="RedisCommand.h" />
+    <ClInclude Include="Task.h" />
     <ClInclude Include="ThreadGroup.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

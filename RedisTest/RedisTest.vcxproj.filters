@@ -44,7 +44,7 @@
     <ClInclude Include="AnyContext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Network\BaseCoroutine.h">
+    <ClInclude Include="Task.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

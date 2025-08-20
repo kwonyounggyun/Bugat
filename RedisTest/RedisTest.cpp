@@ -58,15 +58,6 @@ boost_redis_from_bulk(
     u = boost::json::value_to<user>(boost::json::parse(node.value));
 }
 
-#include "../Network/BaseCoroutine.h"
-Awaitable<int> TestCoro()
-{
-    std::cout << ":test" << std::endl;
-    co_await std::suspend_always{};
-    std::cout << ":test2" << std::endl;
-    co_return 1;
-}
-
 auto co_main(config cfg) -> asio::awaitable<void>
 {
     auto ex = co_await asio::this_coro::executor;
@@ -101,11 +92,35 @@ auto co_main(config cfg) -> asio::awaitable<void>
 
 #endif // defined(BOOST_ASIO_HAS_CO_AWAIT)
 
+#include "Task.h"
+
+auto TestFunc() -> Task<int>
+{
+    co_await  std::suspend_always{};
+    std::cout << "1" << std::endl;
+    co_await  std::suspend_always{};
+    std::cout << "2" << std::endl;
+    throw std::exception("test");
+    co_return 3;
+}
+
 #include "RedisCommand.h"
 using boost::asio::co_spawn;
 using boost::asio::detached;
 int main()
 {
+    auto task = TestFunc();
+    while (!task._handle.done())
+    {
+        task._handle.resume();
+        auto& p = task._handle.promise();
+        std::cout << "result : " << p._value << std::endl;
+    }
+
+    auto& p = task._handle.promise();
+    if(nullptr == p._error)
+        std::cout << "result : " << p._value << std::endl;
+
     asio::io_context io;
 
     user u{ "Joao", "58", "Brazil" };
