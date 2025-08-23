@@ -58,7 +58,7 @@ boost_redis_from_bulk(
     u = boost::json::value_to<user>(boost::json::parse(node.value));
 }
 
-auto co_main(config cfg) -> asio::awaitable<void>
+auto co_main(config cfg) -> asio::awaitable<int>
 {
     auto ex = co_await asio::this_coro::executor;
     auto conn = std::make_shared<connection>(ex);
@@ -88,41 +88,12 @@ auto co_main(config cfg) -> asio::awaitable<void>
     co_await conn->async_exec(req, resp);
 
     conn->cancel();
+
+    co_return 1;
 }
 
-#endif // defined(BOOST_ASIO_HAS_CO_AWAIT)
-
-#include "Task.h"
-
-auto TestFunc() -> Task<int>
+auto process(const asio::any_io_executor& io) -> asio::awaitable<int>
 {
-    co_await  std::suspend_always{};
-    std::cout << "1" << std::endl;
-    co_await  std::suspend_always{};
-    std::cout << "2" << std::endl;
-    throw std::exception("test");
-    co_return 3;
-}
-
-#include "RedisCommand.h"
-using boost::asio::co_spawn;
-using boost::asio::detached;
-int main()
-{
-    auto task = TestFunc();
-    while (!task._handle.done())
-    {
-        task._handle.resume();
-        auto& p = task._handle.promise();
-        std::cout << "result : " << p._value << std::endl;
-    }
-
-    auto& p = task._handle.promise();
-    if(nullptr == p._error)
-        std::cout << "result : " << p._value << std::endl;
-
-    asio::io_context io;
-
     user u{ "Joao", "58", "Brazil" };
     /*auto set = SetCommand("test", u);
     auto get = GetCommand<user>("test");
@@ -132,9 +103,52 @@ int main()
     config.addr = boost::redis::address{ "127.0.0.1", "6379" };
 
     // co_main을 co_spawn으로 실행
-    boost::asio::co_spawn(io, co_main(config), detached);
+    auto task = co_await boost::asio::co_spawn(io, co_main(config), boost::asio::use_awaitable);
 
-    // io_context 실행
+    std::cout << "complete : " << task << std::endl;
+    co_return task;
+}
+
+#endif // defined(BOOST_ASIO_HAS_CO_AWAIT)
+
+//#include "Task.h"
+//
+//auto TestFunc() -> Task<int>
+//{
+//    co_await  std::suspend_always{};
+//    std::cout << "1" << std::endl;
+//    co_await  std::suspend_always{};
+//    std::cout << "2" << std::endl;
+//    throw std::exception("test");
+//    co_return 3;
+//}
+
+class Context
+{
+
+};
+
+#include <exception>
+using boost::asio::co_spawn;
+using boost::asio::detached;
+int main()
+{
+   /* auto task = TestFunc();
+    while (!task._handle.done())
+    {
+        task._handle.resume();
+        auto& p = task._handle.promise();
+        std::cout << "result : " << p._value << std::endl;
+    }
+
+    auto& p = task._handle.promise();
+    if (nullptr == p._error)
+        std::cout << "result : " << p._value << std::endl;*/
+
+    asio::io_context io;
+
+    boost::asio::co_spawn(io, process(io.get_executor()), detached);
+
     io.run();
 
     return 0;

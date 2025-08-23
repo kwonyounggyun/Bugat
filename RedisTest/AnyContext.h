@@ -11,24 +11,24 @@ public:
 };
 
 template<typename Context>
-struct ContextModel : ExecuteConcept
+struct ContextModel : ContextConcept
 {
 public:
-	ContextModel(Context e) : _exec(e) {}
+	ContextModel(Context c) : _context(c) {}
 	void run() override
 	{
-		_exec.run();
+		_context.run();
 	}
 
 private:
-	Context _exec;
+	Context _context;
 };
 
 class AnyContext
 {
 public:
 	template<typename Context>
-	AnyContext(Context c) : _ptr(std::make_unique<ExcutorModel<Context>>(c)) {}
+	AnyContext(Context c) : _ptr(std::make_unique<ContextModel<Context>>(c)) {}
 
 	void run()
 	{
