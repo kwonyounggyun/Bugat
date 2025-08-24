@@ -43,6 +43,7 @@ public:
 
 		void await_suspend(std::coroutine_handle<> h) noexcept
 		{
+			// 여기서 비동기 처리
 			_h = h;
 		}
 
@@ -54,7 +55,7 @@ public:
 			}
 		}
 
-		std::coroutine_handle<> _h
+		std::coroutine_handle<> _h;
 	};
 
 	using handle = std::coroutine_handle<promise_type>;

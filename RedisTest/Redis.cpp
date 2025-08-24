@@ -78,8 +78,13 @@ auto CommandSet(std::shared_ptr<boost::redis::connection>& conn, const std::stri
 	co_return;
 }
 
-auto RedisClient::Set(const std::string& key, const std::string& value) -> Task<void>
+auto RedisClient::Set(const std::string& key, const std::string& value) -> BoostTask<void>
 {
-	auto wait = co_await boost::asio::co_spawn(_context->_io, CommandSet(_context->_conn, key, value), boost::asio::use_awaitable);
-
+	auto task = BoostTask([&](std::coroutine_handle<> h) { 
+		boost::asio::co_spawn(_context->_io, CommandSet(_context->_conn, key, value), [h]() {
+			h.resume();
+			});
+		});
+	co_await task;
+	co_return;
 }
