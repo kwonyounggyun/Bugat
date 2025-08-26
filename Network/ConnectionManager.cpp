@@ -1,3 +1,4 @@
+#include "Core.h"
 #include "ConnectionManager.h"
 #include "ThreadGroup.h"
 #include <boost/asio.hpp>

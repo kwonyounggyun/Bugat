@@ -141,6 +141,7 @@
   <ItemGroup>
     <ClInclude Include="AnyContext.h" />
     <ClInclude Include="AnyExecutor.h" />
+    <ClInclude Include="BoostTask.h" />
     <ClInclude Include="JsonObject.h" />
     <ClInclude Include="Redis.h" />
     <ClInclude Include="RedisCommand.h" />

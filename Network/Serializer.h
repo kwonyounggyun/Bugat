@@ -1,5 +1,4 @@
-#include <atomic>
-
+#pragma once
 
 template<typename T, typename Fn>
 class Serializer 

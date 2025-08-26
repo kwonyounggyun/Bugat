@@ -1,41 +1,9 @@
 #pragma once
 #include <map>
 #include <memory>
-#include "BaseCoroutine.h"
 
-class Connection
-{
-public:
-	Connection(const std::function<void()>&& deletor = []() {}) : _deletor(deletor)
-	{
-	}
 
-	Connection() = default;
-	~Connection()
-	{
-		_deletor();
-	}
-
-	void Read()
-	{
-
-	}
-
-	void Send()
-	{
-
-	}
-
-	void Accept()
-	{
-
-	}
-
-private:
-	std::function<void()> _deletor;
-};
-
-class ConnectionManager : public BaseCoroutine<int>
+class ConnectionManager
 {
 public:
 	ConnectionManager() = default;

@@ -103,10 +103,9 @@ auto process(const asio::any_io_executor& io) -> asio::awaitable<int>
     config.addr = boost::redis::address{ "127.0.0.1", "6379" };
 
     // co_main을 co_spawn으로 실행
-    auto task = co_await boost::asio::co_spawn(io, co_main(config), boost::asio::use_awaitable);
+    boost::asio::co_spawn(io, co_main(config), [](std::exception_ptr e, int result) {});
 
-    std::cout << "complete : " << task << std::endl;
-    co_return task;
+    co_return 1;
 }
 
 #endif // defined(BOOST_ASIO_HAS_CO_AWAIT)
@@ -122,11 +121,6 @@ auto process(const asio::any_io_executor& io) -> asio::awaitable<int>
 //    throw std::exception("test");
 //    co_return 3;
 //}
-
-class Context
-{
-
-};
 
 #include <exception>
 using boost::asio::co_spawn;
@@ -147,7 +141,15 @@ int main()
 
     asio::io_context io;
 
+    std::vector<double> test = { 1,11,1,1,1,1,1,1,1,1,1,1,1,11111111 };
     boost::asio::co_spawn(io, process(io.get_executor()), detached);
+
+    std::function<void()> func1 = []() {};
+    std::function<void(int)> func2 = [io = &io, test](int a) {};
+
+    auto lamda = [io = &io, test](int a) {};
+    auto lamda2 = [io = &io](int a) {};
+    std::cout << sizeof(func1) << " " << sizeof(func2) << " " << sizeof(lamda) << " " << sizeof(lamda2) << sizeof(std::vector<double>);
 
     io.run();
 

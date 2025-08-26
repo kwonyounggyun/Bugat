@@ -73,10 +73,10 @@ public:
 			auto headerPtr = reinterpret_cast<char*>(&_header) + sizeof(Header) - _remainHeaderSize;
 			for (auto iter = _listDataBlock.begin(); iter != _listDataBlock.end();)
 			{
-				auto blockSize = iter->GetSize();
+				auto blockSize = (*iter)->GetSize();
 				if (blockSize < _remainHeaderSize)
 				{
-					memcpy(headerPtr, iter->GetBuf(), blockSize);
+					memcpy(headerPtr, (*iter)->GetBuf(), blockSize);
 					_size -= blockSize;
 					_remainHeaderSize -= blockSize;
 					headerPtr += blockSize;
@@ -84,9 +84,9 @@ public:
 				}
 				else
 				{
-					memcpy(headerPtr, iter->Getbuf(), _remainHeaderSize);
+					memcpy(headerPtr, (*iter)->GetBuf(), _remainHeaderSize);
 					_size -= _remainHeaderSize;
-					iter->Consume(_remainHeaderSize);
+					(*iter)->Consume(_remainHeaderSize);
 					_remainHeaderSize = 0;
 					break;
 				}
@@ -101,10 +101,10 @@ public:
 		auto remainSize = _header.size;
 		for (auto iter = _listDataBlock.begin(); iter != _listDataBlock.end();)
 		{
-			auto blockSize = iter->GetSize();
+			auto blockSize = (*iter)->GetSize();
 			if (blockSize < remainSize)
 			{
-				memcpy(messageBuf, iter->GetBuf(), blockSize);
+				memcpy(messageBuf, (*iter)->GetBuf(), blockSize);
 				_size -= blockSize;
 				remainSize -= blockSize;
 				messageBuf += blockSize;
@@ -112,9 +112,9 @@ public:
 			}
 			else
 			{
-				memcpy(messageBuf, iter->Getbuf(), remainSize);
+				memcpy(messageBuf, (*iter)->GetBuf(), remainSize);
 				_size -= remainSize;
-				iter->Consume(remainSize);
+				(*iter)->Consume(remainSize);
 				remainSize = 0;
 				break;
 			}
