@@ -3,5 +3,5 @@
 struct Configure
 {
 	std::string ip;
-	int port;
+	unsigned short port;
 };

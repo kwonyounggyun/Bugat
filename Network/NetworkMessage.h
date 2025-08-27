@@ -121,6 +121,8 @@ public:
 		}
 
 		_remainHeaderSize = sizeof(Header);
+
+		return true;
 	}
 
 private:

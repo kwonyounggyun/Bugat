@@ -1,4 +1,4 @@
-#include "../Core.h"
+#include "Core.h"
 #include "BaseConnection.h"
 #include <boost/asio/read.hpp>
 #include <boost/asio/write.hpp>
@@ -6,7 +6,7 @@
 
 awaitable<void> BaseConnection::Read()
 {
-    NetworkMessage<Header> _msg; NetworkMessage<Header> _msg;
+    NetworkMessage<Header> _msg;
     try
     {
         for (;;)

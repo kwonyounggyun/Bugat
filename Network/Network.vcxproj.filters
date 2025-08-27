@@ -18,13 +18,10 @@
     <ClCompile Include="Network.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="ConnectionManager.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Connection.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="Server\BaseServer.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Server\BaseConnection.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -36,9 +33,6 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="NetworkMessage.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="ConnectionManager.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Thread.h">
@@ -56,13 +50,16 @@
     <ClInclude Include="Context.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Connection.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="Server\BaseServer.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Core.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Server\Configure.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Server\BaseConnection.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

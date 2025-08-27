@@ -8,9 +8,40 @@
 #include <thread>
 #include <future>
 
+#include "Server/Configure.h"
+#include "Server/BaseServer.h"
+#include "Server/BaseConnection.h"
+
+class Server : public BaseServer
+{
+public:
+	// Inherited via BaseServer
+	void AfterAccept(std::shared_ptr<BaseConnection> conn) override
+	{
+
+	}
+};
+
+class Connection : BaseConnection
+{
+protected:
+	// Inherited via BaseConnection
+	void ProcessMsg(const std::vector<char>& msg) override
+	{
+
+	}
+};
+
 int main()
 {
 	Context con;
+
+	Server server;
+	Configure config;
+	config.port = 5555;
+	server.Start(ConnectionFactory<Connection>(), config);
+
+
 
 	std::shared_ptr<bool> flag = std::make_shared<bool>(true);
 	auto future1 = std::async(std::launch::async, [_io = &con, flag]() {

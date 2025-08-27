@@ -6,5 +6,7 @@
 #include <list>
 #include <initializer_list>
 
+#include <memory.h>
+
 #include <atomic>
 #include <functional>

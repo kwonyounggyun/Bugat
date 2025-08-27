@@ -102,9 +102,9 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>D:\Libraries\boost188\include\boost-1_88;D:\Libraries\openssl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Libraries\boost188\include\boost-1_88;D:\Libraries\openssl\include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp23</LanguageStandard>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>Create</PrecompiledHeader>
       <PrecompiledHeaderFile>Core.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
@@ -129,22 +129,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Connection.cpp" />
-    <ClCompile Include="ConnectionManager.cpp" />
     <ClCompile Include="Network.cpp" />
     <ClCompile Include="Server\BaseServer.cpp" />
+    <ClCompile Include="Server\BaseConnection.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnyContext.h" />
     <ClInclude Include="AnyExecutor.h" />
     <ClInclude Include="BoostTask.h" />
-    <ClInclude Include="Connection.h" />
-    <ClInclude Include="ConnectionManager.h" />
     <ClInclude Include="Context.h" />
     <ClInclude Include="Core.h" />
     <ClInclude Include="NetworkMessage.h" />
     <ClInclude Include="ObjectPool.h" />
     <ClInclude Include="Server\BaseServer.h" />
+    <ClInclude Include="Server\Configure.h" />
+    <ClInclude Include="Server\BaseConnection.h" />
     <ClInclude Include="Thread.h" />
     <ClInclude Include="ThreadGroup.h" />
   </ItemGroup>
