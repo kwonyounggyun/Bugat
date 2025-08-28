@@ -3,6 +3,7 @@
 
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/use_awaitable.hpp>
+#include "NonCopyable.h"
 
 using boost::asio::awaitable;
 using boost::asio::use_awaitable;
@@ -17,6 +18,7 @@ struct Header
 class BaseConnection
 {
 public:
+	BaseConnection() = delete;
 	explicit BaseConnection(tcp::socket& socket) : _socket(std::move(socket)) {}
 	~BaseConnection() {}
 
@@ -36,13 +38,15 @@ private:
 class ConnectionFactoryConcept
 {
 public:
+	virtual ~ConnectionFactoryConcept() {}
 	virtual std::shared_ptr<BaseConnection> Create(tcp::socket& socket) = 0;
 };
 
 template<typename T>
-class ConnectionFactory : ConnectionFactoryConcept
+class ConnectionFactory : public ConnectionFactoryConcept
 {
 public:
+	virtual ~ConnectionFactory<T>() {}
 	virtual std::shared_ptr<BaseConnection> Create(tcp::socket& socket) override
 	{
 		return std::dynamic_pointer_cast<BaseConnection>(std::make_shared<T>(socket));
@@ -53,7 +57,7 @@ class AnyConnectionFactory
 {
 public:
 	template<typename T>
-	AnyConnectionFactory(ConnectionFactory<T> factory) : _ptr(std::make_unique<ConnectionFactory<T>>(factory)) {};
+	AnyConnectionFactory(ConnectionFactory<T> factory) : _ptr(std::make_unique<ConnectionFactory<T>>(std::move(factory))) {};
 
 	std::shared_ptr<BaseConnection> Create(tcp::socket& socket)
 	{

@@ -46,6 +46,13 @@ public:
 		}
 	}
 
+	template<typename T>
+	void Post(typename T::task_type&& task)
+	{
+		_context.post(std::move(task));
+	}
+
+	template<typename T>
 	void Post(typename T::task_type&& task)
 	{
 		_context.post(std::move(task));

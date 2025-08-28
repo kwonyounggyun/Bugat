@@ -35,6 +35,11 @@ public:
 		_ptr->run();
 	}
 
+	void post()
+	{
+
+	}
+
 private:
 	std::unique_ptr<ContextConcept> _ptr;
 };

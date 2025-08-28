@@ -22,8 +22,11 @@ public:
 	}
 };
 
-class Connection : BaseConnection
+class Connection : public BaseConnection
 {
+public:
+	explicit Connection(tcp::socket& socket) : BaseConnection(socket) {}
+
 protected:
 	// Inherited via BaseConnection
 	void ProcessMsg(const std::vector<char>& msg) override
