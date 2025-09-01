@@ -7,7 +7,7 @@
 /*
 * type T should be a class that has a run() and post() method.
 */
-template<typename T>
+template<typename Context>
 class ThreadGroup
 {
 public:
@@ -59,7 +59,7 @@ public:
 	}
 
 private:
-	T _context;
+	Context _context;
 	std::atomic_bool _stop{ false };
 	std::vector<std::thread> _threads;
 };

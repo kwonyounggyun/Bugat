@@ -29,9 +29,15 @@ awaitable<void> listener(BaseServer* server, AnyConnectionFactory&& factory, boo
 	}
 }
 
+BaseServer::BaseServer(AnyContext context) : _context(context)
+{
+}
+
+BaseServer::~BaseServer()
+{
+}
+
 void BaseServer::Start(AnyConnectionFactory factory, Configure config)
 {
-	boost::asio::io_context context;
-
-	co_spawn(context, listener(this, std::move(factory), context, config), detached);
+	co_spawn(_context, listener(this, std::move(factory), _context->_io, config), detached);
 }
