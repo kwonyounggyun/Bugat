@@ -1,10 +1,11 @@
 #pragma once
+//#include <shared_mutex>
 #include <stack>
-#include <shared_mutex>
+#include <memory>
 
 namespace bugat
 {
-	template<typename T, bool ThreadSafe = false, int AllocSize = 10>
+	template<typename T, int AllocSize = 10>
 	class ObjectPool
 	{
 	public:
@@ -51,10 +52,10 @@ namespace bugat
 
 	private:
 		std::stack<T*> _mems;
-		bool _release;
+		bool _release{ false };
 	};
 
-	template<typename T, int AllocSize>
+	/*template<typename T, int AllocSize>
 	class ObjectPool<T, true, AllocSize>
 	{
 	public:
@@ -106,5 +107,5 @@ namespace bugat
 		std::shared_mutex _mtx;
 		std::stack<T*> _mems;
 		bool _release;
-	};
+	};*/
 }

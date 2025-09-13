@@ -21,8 +21,14 @@ void fnCore()
 	bugat::RWLockObject<std::map<int, int>> obj;
 	auto lock = obj.LockRead();
 
-	bugat::ObjectPool<int, false, 10> k1;
-	bugat::ObjectPool<int, true, 10> k2;
+	bugat::ObjectPool<int, 10> k2;
+
+	{
+		auto testObj1 = k2.GetObj();
+		auto testObj2 = k2.GetObj();
+		auto testObj3 = k2.GetObj();
+		auto testObj4 = k2.GetObj();
+	}
 
 	bugat::TaskSerializer serial;
 	std::function<void()> func = []() {};
