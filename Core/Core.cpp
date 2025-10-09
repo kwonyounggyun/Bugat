@@ -34,6 +34,10 @@ void fnCore()
 	std::function<void()> func = []() {};
 	serial.Post(func);
 	serial.Post([]() {});
+
+	serial.Post([]()->int {
+		return 1;
+		}, [](int result) {});
 	serial.Run();
 	//std::make_unique<TaskModel<std::function<void()>, void>>(func);
 	//serial.Post(std::bind(add, 1));
