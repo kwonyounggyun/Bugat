@@ -13,12 +13,14 @@ namespace bugat::net
 	public:
 		Connection() = delete;
 		explicit Connection(tcp::socket& socket) : _socket(std::move(socket)) {}
+		explicit Connection(boost::asio::io_context& io) :_socket(io) {};
 		~Connection() {}
 
+		void Connect(std::string ip, short port);
 		void Send(char* buf, int size);
 
 	protected:
-		void Read(boost::asio::io_context& _io);
+		void Read();
 		virtual void ProcessMsg(const std::vector<char>& msg) {};
 
 	private:
@@ -52,7 +54,7 @@ namespace bugat::net
 		template<typename T>
 		AnyConnectionFactory(ConnectionFactory<T> factory) : _ptr(std::make_unique<ConnectionFactory<T>>(std::move(factory))) {};
 
-		std::shared_ptr<Connection> Create(tcp::socket& socket)
+		std::shared_ptr<Connection> Create(tcp::socket& socket) const
 		{
 			return _ptr->Create(socket);
 		}

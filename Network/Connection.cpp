@@ -7,17 +7,28 @@
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/connect.hpp>
 
 namespace bugat::net
 {
-    void Connection::Send(char* buf, int size)
+	void Connection::Connect(std::string ip, short port)
+	{
+		tcp::resolver resolver(_socket.get_executor());
+		tcp::endpoint ep(boost::asio::ip::make_address(ip), port);
+		tcp::resolver::results_type endpoints = resolver.resolve(ep);
+
+		auto result = boost::asio::connect(_socket, endpoints);
+		Read();
+	}
+
+	void Connection::Send(char* buf, int size)
     {
         boost::asio::async_write(_socket, boost::asio::buffer(buf, size), boost::asio::deferred);
     }
 
-    void Connection::Read(boost::asio::io_context& _io)
+    void Connection::Read()
     {
-		boost::asio::co_spawn(_io, [&]()->boost::asio::awaitable<void> {
+		boost::asio::co_spawn(_socket.get_executor(), [&]()->boost::asio::awaitable<void> {
 			NetworkMessage _msg;
 			try
 			{

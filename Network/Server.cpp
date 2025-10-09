@@ -13,17 +13,17 @@
 
 namespace bugat::net
 {
-	boost::asio::awaitable<void> listener(Server* server, AnyConnectionFactory& factory, unsigned short port)
+	/*boost::asio::awaitable<void> listener(Server* server, AnyConnectionFactory& factory, unsigned short port)
 	{
 		auto executor = co_await boost::asio::this_coro::executor;
 		tcp::acceptor acceptor(executor, { tcp::v4(), port });
 		for (;;)
 		{
 			tcp::socket socket = co_await acceptor.async_accept(boost::asio::use_awaitable);
-			auto connection = factory.Create(socket);
+			auto connection = factory.Create(server->GetIOContext(), socket);
 			server->Accept(connection);
 		}
-	}
+	}*/
 
 	Server::Server()
 	{
@@ -45,12 +45,24 @@ namespace bugat::net
 				});
 		}
 
-		boost::asio::co_spawn(_ioContext, listener(this, factory, config.port), boost::asio::detached);
+		//boost::asio::co_spawn(_ioContext, listener(this, factory, config.port), boost::asio::detached);
+		boost::asio::co_spawn(_ioContext,
+			[this, factory = std::move(factory), port = config.port]()->boost::asio::awaitable<void> {
+				auto executor = co_await boost::asio::this_coro::executor;
+				tcp::acceptor acceptor(executor, { tcp::v4(), port });
+				for (;;)
+				{
+					tcp::socket socket = co_await acceptor.async_accept(boost::asio::use_awaitable);
+					auto connection = factory.Create(socket);
+					Accept(connection);
+				}
+			}
+		, boost::asio::detached);
 	}
 
 	void Server::Accept(std::shared_ptr<Connection>& conn)
 	{
-		conn->Read(_ioContext);
+		conn->Read();
 		AfterAccept(conn);
 	}
 }
