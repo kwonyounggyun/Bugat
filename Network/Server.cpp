@@ -52,8 +52,9 @@ namespace bugat::net
 				tcp::acceptor acceptor(executor, { tcp::v4(), port });
 				for (;;)
 				{
-					tcp::socket socket = co_await acceptor.async_accept(boost::asio::use_awaitable);
-					auto connection = factory.Create(socket);
+					auto connection = factory.Create(_ioContext);
+					co_await acceptor.async_accept(*connection->_socket, boost::asio::use_awaitable);
+					
 					Accept(connection);
 				}
 			}

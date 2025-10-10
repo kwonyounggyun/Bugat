@@ -1,17 +1,12 @@
 #pragma once
 
 #include "../Core/ObjectPool.h"
+#include "Header.h"
 #include <list>
 #include <vector>
 
 namespace bugat::net
 {
-	struct Header
-	{
-		int size;
-		int type;
-	};
-
 	class NetworkMessage
 	{
 		const static int DefaultBlockSize = 1024;
@@ -73,7 +68,7 @@ namespace bugat::net
 			_size += block->GetSize();
 		}
 
-		bool GetNetMessage(std::vector<char>& message)
+		bool GetNetMessage(Header& header, std::vector<char>& message)
 		{
 			if (0 != _remainHeaderSize)
 			{
@@ -131,6 +126,7 @@ namespace bugat::net
 			}
 
 			_remainHeaderSize = sizeof(Header);
+			header = _header;
 
 			return true;
 		}

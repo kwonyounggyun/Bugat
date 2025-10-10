@@ -11,14 +11,24 @@
 
 namespace bugat::net
 {
-	void Connection::Connect(std::string ip, short port)
+	bool Connection::Connect(std::string ip, short port)
 	{
-		tcp::resolver resolver(_socket.get_executor());
+		tcp::resolver resolver(_socket->get_executor());
 		tcp::endpoint ep(boost::asio::ip::make_address(ip), port);
 		tcp::resolver::results_type endpoints = resolver.resolve(ep);
 
-		auto result = boost::asio::connect(_socket, endpoints);
+		try
+		{
+			auto result = boost::asio::connect(*_socket, endpoints);
+		}
+		catch (std::exception& e)
+		{
+			std::cout << "Connect failed. IP: " << ip << " Port: " << port << " Reason: " << e.what() << std::endl;
+			return false;
+		}
+
 		Read();
+		return true;
 	}
 
 	void Connection::Send(char* buf, int size)
@@ -28,8 +38,9 @@ namespace bugat::net
 
     void Connection::Read()
     {
-		boost::asio::co_spawn(_socket.get_executor(), [&]()->boost::asio::awaitable<void> {
+		boost::asio::co_spawn(_socket->get_executor(), [&]()->boost::asio::awaitable<void> {
 			NetworkMessage _msg;
+			Header header;
 			try
 			{
 				for (;;)
@@ -37,8 +48,8 @@ namespace bugat::net
 					auto block = _msg.GetNewDataBlock();
 					std::size_t n = co_await boost::asio::async_read(_socket, boost::asio::buffer(block->GetBuf(), block->GetSize()), boost::asio::use_awaitable);
 					std::vector<char> recievedMsg;
-					if (_msg.GetNetMessage(recievedMsg))
-						ProcessMsg(recievedMsg);
+					if (_msg.GetNetMessage(header, recievedMsg))
+						ProcessMsg(header, recievedMsg);
 				}
 			}
 			catch (std::exception&)

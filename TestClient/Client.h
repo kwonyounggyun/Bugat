@@ -22,10 +22,10 @@ namespace bugat::test
 		virtual ~Client();
 
 
-		void Connect(boost::asio::io_context& io, std::string ip, short port);
+		bool Connect(boost::asio::io_context& io, std::string ip, short port);
 		void Send(char* buf, int size);
 
 	private:
-		std::unique_ptr<bugat::net::Connection> _connection;
+		std::shared_ptr<bugat::net::Connection> _connection;
 	};
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Header.h"
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/io_context.hpp>
 
@@ -10,21 +11,20 @@ namespace bugat::net
 	class Connection : std::enable_shared_from_this<Connection>
 	{
 		friend class Server;
+		friend class AnyConnectionFactory;
 	public:
-		Connection() = delete;
-		explicit Connection(tcp::socket& socket) : _socket(std::move(socket)) {}
-		explicit Connection(boost::asio::io_context& io) :_socket(io) {};
+		Connection() : _socket(nullptr) {}
 		~Connection() {}
 
-		void Connect(std::string ip, short port);
+		bool Connect(std::string ip, short port);
 		void Send(char* buf, int size);
 
 	protected:
 		void Read();
-		virtual void ProcessMsg(const std::vector<char>& msg) {};
+		virtual void ProcessMsg(const Header& header, const std::vector<char>& msg) {};
 
 	private:
-		tcp::socket _socket;
+		std::unique_ptr<tcp::socket> _socket;
 	};
 
 	/*
@@ -34,7 +34,7 @@ namespace bugat::net
 	{
 	public:
 		virtual ~ConnectionFactoryConcept() {}
-		virtual std::shared_ptr<Connection> Create(tcp::socket& socket) = 0;
+		virtual std::shared_ptr<Connection> Create() = 0;
 	};
 
 	template<typename T>
@@ -42,9 +42,9 @@ namespace bugat::net
 	{
 	public:
 		virtual ~ConnectionFactory() {}
-		virtual std::shared_ptr<Connection> Create(tcp::socket& socket) override
+		virtual std::shared_ptr<Connection> Create() override
 		{
-			return std::dynamic_pointer_cast<Connection>(std::make_shared<T>(socket));
+			return std::dynamic_pointer_cast<Connection>(std::make_shared<T>());
 		}
 	};
 
@@ -54,9 +54,12 @@ namespace bugat::net
 		template<typename T>
 		AnyConnectionFactory(ConnectionFactory<T> factory) : _ptr(std::make_unique<ConnectionFactory<T>>(std::move(factory))) {};
 
-		std::shared_ptr<Connection> Create(tcp::socket& socket) const
+		std::shared_ptr<Connection> Create(boost::asio::io_context& io) const
 		{
-			return _ptr->Create(socket);
+			auto socket = std::make_unique<tcp::socket>(io);
+			auto connection = _ptr->Create();
+			connection->_socket = std::move(socket);
+			return connection;
 		}
 
 	private:
