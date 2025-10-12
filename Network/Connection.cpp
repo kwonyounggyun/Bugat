@@ -33,7 +33,7 @@ namespace bugat::net
 
 	void Connection::Send(char* buf, int size)
     {
-        boost::asio::async_write(_socket, boost::asio::buffer(buf, size), boost::asio::deferred);
+        boost::asio::async_write(*_socket, boost::asio::buffer(buf, size), boost::asio::deferred);
     }
 
     void Connection::Read()
@@ -46,7 +46,7 @@ namespace bugat::net
 				for (;;)
 				{
 					auto block = _msg.GetNewDataBlock();
-					std::size_t n = co_await boost::asio::async_read(_socket, boost::asio::buffer(block->GetBuf(), block->GetSize()), boost::asio::use_awaitable);
+					std::size_t n = co_await boost::asio::async_read(*_socket, boost::asio::buffer(block->GetBuf(), block->GetSize()), boost::asio::use_awaitable);
 					std::vector<char> recievedMsg;
 					if (_msg.GetNetMessage(header, recievedMsg))
 						ProcessMsg(header, recievedMsg);

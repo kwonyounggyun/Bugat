@@ -1,0 +1,14 @@
+namespace bugat.packet.game;
+
+table ReqCS_Login{
+	id:string;
+	pw:string;
+}
+
+root_type ReqCS_Login;
+
+table ResSC_Login{
+	pid:uint64; 
+}
+
+root_type ResSC_Login;

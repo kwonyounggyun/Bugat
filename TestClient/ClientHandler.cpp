@@ -1,21 +1,17 @@
 #include "stdafx.h"
 #include "ClientHandler.h"
-#include "../Network/Packet/headers/Protocol.h"
 
-namespace bugat::Handle
+namespace bugat::handle
 {
 	using namespace bugat::packet;
-	void ClientHandler::Handle(std::vector<char>& msg)
+
+	ClientHandler::ClientHandler()
 	{
-		game::PacketHeader* header = reinterpret_cast<PacketHeader*>(msg.data());
-		switch (header->type)
-		{
-		case (int)Protocol::S2C_PING:
-		{
-			break;
-		}
-		default:
-			break;
-		}
+		_handleMap[static_cast<int>(bugat::packet::game::Type::Weapon)] = &ClientHandler::ResSC_Login;
+	}
+
+	void ClientHandler::Handle(const bugat::test::Client* client, const bugat::net::Header& header, const std::vector<char>& msg)
+	{
+		_handleMap[header.type](client, header, msg);
 	}
 }

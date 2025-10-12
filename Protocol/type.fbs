@@ -1,0 +1,6 @@
+namespace bugat.packet.game;
+
+enum Type:short {
+	Weapon = 1,
+	Monster = 2,
+}

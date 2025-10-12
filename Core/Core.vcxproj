@@ -151,9 +151,12 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="NonCopyable.h" />
+    <ClInclude Include="ObjectId.h" />
     <ClInclude Include="ObjectPool.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="RWLockObject.h" />
+    <ClInclude Include="SerializeObject.h" />
+    <ClInclude Include="Singleton.h" />
     <ClInclude Include="TaskSerializer.h" />
   </ItemGroup>
   <ItemGroup>
