@@ -30,7 +30,7 @@
     <ClCompile Include="BaseServer.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="ConnectionManager.cpp">
+    <ClCompile Include="SessionManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Session.cpp">
@@ -47,13 +47,16 @@
     <ClInclude Include="BaseServer.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="ConnectionManager.h">
+    <ClInclude Include="SessionManager.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Session.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="stdafx.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerId.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

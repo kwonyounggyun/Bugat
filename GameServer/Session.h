@@ -13,6 +13,8 @@ namespace bugat
 		void Send(int size, char* buf);
 		void SetConnection(std::shared_ptr<net::Connection>& conn) { _connection = conn; }
 
+		void Close();
+
 	private:
 		std::shared_ptr<net::Connection> _connection;
 	};

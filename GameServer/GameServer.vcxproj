@@ -130,7 +130,7 @@
     <ClCompile Include="AuthHandler.cpp" />
     <ClCompile Include="AuthServer.cpp" />
     <ClCompile Include="BaseServer.cpp" />
-    <ClCompile Include="ConnectionManager.cpp" />
+    <ClCompile Include="SessionManager.cpp" />
     <ClCompile Include="GameServer.cpp" />
     <ClCompile Include="Session.cpp" />
   </ItemGroup>
@@ -138,7 +138,8 @@
     <ClInclude Include="AuthHandler.h" />
     <ClInclude Include="AuthServer.h" />
     <ClInclude Include="BaseServer.h" />
-    <ClInclude Include="ConnectionManager.h" />
+    <ClInclude Include="PlayerId.h" />
+    <ClInclude Include="SessionManager.h" />
     <ClInclude Include="Session.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
