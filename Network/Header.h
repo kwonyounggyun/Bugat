@@ -2,9 +2,11 @@
 
 namespace bugat::net
 {
+#pragma pack(push, 1)
 	struct Header
 	{
-		int size;
+		size_t size;
 		int type;
 	};
+#pragma pack(pop)
 }

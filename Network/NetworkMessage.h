@@ -7,46 +7,64 @@
 
 namespace bugat::net
 {
+	constexpr int DefaultBlockSize = 10240;
+	constexpr int MarginSize = 100;
+
 	class NetworkMessage
 	{
-		const static int DefaultBlockSize = 1024;
 	public:
 		class DataBlock
 		{
+			friend class NetworkMessage;
 		public:
-			DataBlock() : _head(0), _tail(0) {}
+			DataBlock() : _buf({ 0, }), _head(0), _tail(0), _maxSize(DefaultBlockSize) {}
+
+			char* GetBuf()
+			{
+				return &_buf[_tail - 1];
+			}
 
 			int GetSize()
+			{
+				return _maxSize - _tail;
+			}
+
+		private:
+			char* GetData()
+			{
+				return &_buf[_head];
+			}
+
+			int GetDataSize()
 			{
 				return _tail - _head;
 			}
 
-			bool Update(int size)
-			{
-				if (size > DefaultBlockSize)
-					return false;
-
-				_tail = size;
-				return true;
-			}
-
 			bool Consume(int size)
 			{
-				if (size > GetSize())
+				if (size > GetDataSize())
 					return false;
 
 				_head += size;
 				return true;
 			}
 
-			char* GetBuf()
+			bool Update(int size)
 			{
-				return &_buf[_head];
+				if ((_tail + size) > DefaultBlockSize)
+					return false;
+
+				_tail += size;
+				if ((DefaultBlockSize - _tail) < MarginSize)
+					_maxSize = _tail;
+
+				return true;
 			}
 
 		private:
 			char _buf[DefaultBlockSize];
 			int _head, _tail;
+			int _maxSize;
 		};
 
 	public:
@@ -57,15 +75,30 @@ namespace bugat::net
 			_dataBlockPool.Release();
 		}
 
-		auto GetNewDataBlock()
+		void Update(std::shared_ptr<DataBlock>& block, int size)
 		{
-			return _dataBlockPool.GetObj();
+			block->Update(size);
+			_size += size;
+		}
+
+		auto GetDataBlock()
+		{
+			auto iter = _listDataBlock.rbegin();
+			if (iter == _listDataBlock.rend() || (*iter)->GetSize() == 0)
+			{
+				auto block = _dataBlockPool.GetObj();
+				AddDataBlock(block);
+				return block;
+			}
+
+			return *iter;
 		}
 
 		bool AddDataBlock(std::shared_ptr<DataBlock>& block)
 		{
+			auto blockSize = block->GetDataSize();
 			_listDataBlock.push_back(block);
-			_size += block->GetSize();
+			_size += blockSize;
 		}
 
 		bool GetNetMessage(Header& header, std::vector<char>& message)
@@ -78,18 +111,18 @@ namespace bugat::net
 				auto headerPtr = reinterpret_cast<char*>(&_header) + sizeof(Header) - _remainHeaderSize;
 				for (auto iter = _listDataBlock.begin(); iter != _listDataBlock.end();)
 				{
-					auto blockSize = (*iter)->GetSize();
+					auto blockSize = (*iter)->GetDataSize();
 					if (blockSize < _remainHeaderSize)
 					{
-						memcpy(headerPtr, (*iter)->GetBuf(), blockSize);
+						memcpy(headerPtr, (*iter)->GetData(), blockSize);
 						_size -= blockSize;
 						_remainHeaderSize -= blockSize;
 						headerPtr += blockSize;
-						iter = _listDataBlock.erase(iter);
+						iter = PopBlock(iter);
 					}
 					else
 					{
-						memcpy(headerPtr, (*iter)->GetBuf(), _remainHeaderSize);
+						memcpy(headerPtr, (*iter)->GetData(), _remainHeaderSize);
 						_size -= _remainHeaderSize;
 						(*iter)->Consume(_remainHeaderSize);
 						_remainHeaderSize = 0;
@@ -106,18 +139,19 @@ namespace bugat::net
 			auto remainSize = _header.size;
 			for (auto iter = _listDataBlock.begin(); iter != _listDataBlock.end();)
 			{
-				auto blockSize = (*iter)->GetSize();
+				auto blockSize = (*iter)->GetDataSize();
+
 				if (blockSize < remainSize)
 				{
-					memcpy(messageBuf, (*iter)->GetBuf(), blockSize);
+					memcpy(messageBuf, (*iter)->GetData(), blockSize);
 					_size -= blockSize;
 					remainSize -= blockSize;
 					messageBuf += blockSize;
-					iter = _listDataBlock.erase(iter);
+					iter = PopBlock(iter);
 				}
 				else
 				{
-					memcpy(messageBuf, (*iter)->GetBuf(), remainSize);
+					memcpy(messageBuf, (*iter)->GetData(), remainSize);
 					_size -= remainSize;
 					(*iter)->Consume(remainSize);
 					remainSize = 0;
@@ -130,13 +164,21 @@ namespace bugat::net
 
 			return true;
 		}
+	private:
+		std::list<std::shared_ptr<DataBlock>>::iterator PopBlock(std::list<std::shared_ptr<DataBlock>>::iterator& iter)
+		{
+			if((*iter)->GetSize() == 0 && (*iter)->GetDataSize() == 0)
+				return _listDataBlock.erase(iter);
+
+			return iter;
+		}
 
 	private:
 		Header _header;
 		int _remainHeaderSize;
 
 		std::list<std::shared_ptr<DataBlock>> _listDataBlock;
-		bugat::ObjectPool<DataBlock, 10> _dataBlockPool;
+		bugat::ObjectPool<DataBlock, 1> _dataBlockPool;
 		int _size = 0;
 	};
 }

@@ -2,9 +2,19 @@
 //
 #include "stdafx.h"
 #include <iostream>
+#include "Client.h"
+#include "boost/asio/io_context.hpp"
 
+using namespace bugat;
 int main()
 {
+    boost::asio::io_context context;
+
+    test::Client client;
+    client.Connect(context, "127.0.0.1", 5000);
+
+    context.run();
+
     std::cout << "Hello World!\n";
 }
 

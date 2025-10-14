@@ -16,9 +16,9 @@ namespace bugat::test
 		return _connection->Connect(ip, port);
 	}
 
-	void Client::Send(char* buf, int size)
+	void Client::Send(int type, std::shared_ptr<flatbuffers::FlatBufferBuilder>& fb)
 	{
-		_connection->Send(buf, size);
+		_connection->Send(net::Packet(type, fb));
 	}
 
 	void Client::PushMsg(const bugat::net::Header& header, const std::vector<char>& msg)

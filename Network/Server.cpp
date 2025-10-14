@@ -63,7 +63,7 @@ namespace bugat::net
 
 	void Server::Accept(std::shared_ptr<Connection>& conn)
 	{
-		conn->Read();
+		conn->Start();
 		AfterAccept(conn);
 	}
 }

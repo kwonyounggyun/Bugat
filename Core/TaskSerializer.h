@@ -74,7 +74,14 @@ namespace bugat
 
 	public:
 		TaskSerializer() : _que(1024) {}
-		~TaskSerializer() {}
+		virtual ~TaskSerializer()
+		{
+			AnyTask* task = nullptr;
+			while (_que.pop(task))
+			{
+				delete task;
+			}
+		}
 
 		template<typename Func, typename CompletionToken = void>
 		requires std::invocable<CompletionToken, std::invoke_result_t<Func>>

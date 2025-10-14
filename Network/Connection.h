@@ -4,6 +4,8 @@
 #include "..\Core\ObjectId.h"
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/io_context.hpp>
+#include <boost/lockfree/queue.hpp>
+#include <boost/asio/buffer.hpp>
 
 namespace bugat::net
 {
@@ -16,19 +18,33 @@ namespace bugat::net
 		Connected,
 	};
 
+	class AnySendPacket;
+	class AnyConnectionFactory;
+
 	class Connection : std::enable_shared_from_this<Connection>
 	{
 		friend class Server;
 		friend class AnyConnectionFactory;
-		friend struct SocketGetter;
+		friend struct MessageReader;
+		friend struct MessageWriter;
 		friend struct MessageProcessor;
-		friend struct SocketCloser;
+		friend struct ConnectionCloser;
 	public:
-		Connection() : _socket(nullptr), _state(ConnectionState::Connecting) {}
-		~Connection() {}
+		Connection() : _socket(nullptr), _state(ConnectionState::Connecting), _sendQue(1024) {}
+		virtual ~Connection() {}
 
 		bool Connect(std::string ip, short port);
-		void Send(char* buf, int size);
+
+		/*
+		* T는 반드시 std::vector<std::tuple<uint8_t*, size_t>> data() 함수를 구현해야한다.
+		*/
+		template<typename T>
+		void Send(T&& packet)
+		{ 
+			_sendQue.push(new AnySendPacket(packet));
+			SendNotify();
+		}
+
 		void Close();
 
 		auto GetId() const { return _id; }
@@ -36,19 +52,83 @@ namespace bugat::net
 		bool Disconnected() const { return _state == ConnectionState::Disconnected; }
 
 	protected:
-		void Read();
+		void Start();
 
-		/*
-		* Close에서 호출된다. Close호출이후 들어오는 클라이언트 처리 패킷은 모두 무시한다.
-		* Close 호출 자체가 유저가 종료했을때나 비정상 종료로 호출되는것이므로 이후 들어오는 패킷은 유저가 발생시킨 이벤트로 생각하지 않는다.
-		*/
-		virtual void AfterClose() {};
-		virtual void ProcessMsg(const Header& header, const std::vector<char>& msg) {};
+		virtual void OnAccept() {}
+		virtual void OnClose() {};
+		virtual void OnRead(const Header& header, const std::vector<char>& msg) {};
+
+	private:
+		void SendNotify();
 
 	private:
 		std::unique_ptr<tcp::socket> _socket;
 		core::ObjectId<Connection> _id;
-		ConnectionState _state;
+		std::atomic<ConnectionState> _state;
+		boost::lockfree::queue<AnySendPacket*> _sendQue;
+		AnySendPacket* sendingPacket{ nullptr };
+		std::unique_ptr<boost::asio::steady_timer> _sendTimer;
+	};
+
+	class SendPacketConcept
+	{
+	public:
+		virtual ~SendPacketConcept() {}
+		virtual std::vector<std::tuple<uint8_t*, size_t>> GetBufs() = 0;
+	};
+
+	template<typename T>
+	class SendPacketModel : public SendPacketConcept
+	{
+	public:
+		SendPacketModel(T& packet) : _packet(std::move(packet)) {}
+		virtual ~SendPacketModel() {}
+		virtual std::vector<std::tuple<uint8_t*, size_t>> GetBufs() override { return _packet.data(); }
+
+		T _packet;
+	};
+
+	class AnySendPacket
+	{
+	public:
+		AnySendPacket() {}
+		~AnySendPacket() {}
+
+		template<typename T>
+		AnySendPacket(T& packet) : _ptr(std::make_unique<SendPacketModel<T>>(packet)) 
+		{
+			auto bufs = _ptr->GetBufs();
+			for (auto iter = bufs.begin(); iter != bufs.end(); iter++)
+				_bufs.push_back(boost::asio::buffer(std::get<0>(*iter), std::get<1>(*iter)));
+		};
+
+		auto GetBufs() const { return _bufs; }
+		void Update(size_t size)
+		{
+			for (auto iter = _bufs.begin(); iter != _bufs.end();)
+			{
+				auto bufSize = iter->size();
+				if (size > bufSize)
+				{
+					iter = _bufs.erase(iter);
+					size -= bufSize;
+					continue;
+				}
+
+				const char* ptr = static_cast<const char*>(iter->data());
+				*iter = boost::asio::buffer(ptr + size, bufSize - size);
+				break;
+			}
+		}
+
+		bool IsEmpty()
+		{
+			return _bufs.empty();
+		}
+
+	private:
+		std::list<boost::asio::const_buffer> _bufs;
+		std::unique_ptr<SendPacketConcept> _ptr;
 	};
 
 	/*

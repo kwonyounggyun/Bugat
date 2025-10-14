@@ -1,6 +1,6 @@
 #pragma once
 #include "..\Core\SerializeObject.h"
-#include "../Network/Header.h"
+#include "../Network/Packet.h"
 
 namespace boost
 {
@@ -24,7 +24,7 @@ namespace bugat::test
 		virtual ~Client();
 
 		bool Connect(boost::asio::io_context& io, std::string ip, short port);
-		void Send(char* buf, int size);
+		void Send(int type, std::shared_ptr<flatbuffers::FlatBufferBuilder>& fb);
 
 		void PushMsg(const bugat::net::Header& header, const std::vector<char>& msg);
 

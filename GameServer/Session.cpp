@@ -3,19 +3,20 @@
 
 namespace bugat
 {
-	void Session::Send(int size, char* buf)
+	void Session::Send(int type, std::shared_ptr<flatbuffers::FlatBufferBuilder>& fb)
 	{
-		_connection->Send(buf, size);
+		_connection->Send(net::Packet(type, fb));
 	}
 
 	void Session::Close()
 	{
-		_messageBlock = true;
-
 		if (_connection)
 		{
 			_connection->Close();
 			_connection = nullptr;
 		}
+	}
+	void Session::HandleMsg(const net::Header& header, const std::vector<char>& msg)
+	{
 	}
 }
