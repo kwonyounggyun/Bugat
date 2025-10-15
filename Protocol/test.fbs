@@ -1,4 +1,4 @@
-namespace bugat.packet.game;
+namespace bugat.protocol.game;
 
 enum Color:byte { Red = 0, Green, Blue = 2 }
 

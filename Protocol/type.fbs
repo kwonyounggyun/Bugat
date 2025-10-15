@@ -1,6 +1,8 @@
-namespace bugat.packet.game;
+namespace bugat.protocol.game;
 
 enum Type:short {
-	Weapon = 1,
-	Monster = 2,
+	REQ_CA_LOGIN = 1,
+	RES_AC_LOGIN = 2,
+	Weapon = 2,
+	Monster = 3,
 }

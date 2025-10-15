@@ -1,14 +1,12 @@
-namespace bugat.packet.game;
+namespace bugat.protocol.game;
 
-table ReqCS_Login{
+table Req_CA_Login{
 	id:string;
 	pw:string;
 }
 
-root_type ReqCS_Login;
+root_type Req_CA_Login;
 
-table ResSC_Login{
+table Res_AC_Login{
 	pid:uint64; 
 }
-
-root_type ResSC_Login;
