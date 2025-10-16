@@ -30,7 +30,7 @@ void fnCore()
 		auto testObj4 = k2.GetObj();
 	}
 
-	bugat::TaskSerializer serial;
+	bugat::core::TaskSerializer serial;
 	std::function<void()> func = []() {};
 	serial.Post(func);
 	serial.Post([]() {});

@@ -3,20 +3,18 @@
 
 namespace bugat
 {
-	class GameSession;
-	class GameConnection : public BaseConnection
+	class LoginSession;
+	class LoginConnection : public BaseConnection
 	{
 	public:
-		GameConnection() : _gameSession(nullptr) {}
-		virtual ~GameConnection() {}
-
+		LoginConnection() : _loginSession(nullptr) {}
+		virtual ~LoginConnection() {}
 	protected:
 		virtual void OnAccept() override;
 		virtual void OnClose() override;
 		virtual void OnRead(const net::Header& header, const std::vector<char>& msg) override;
 
 	private:
-		std::shared_ptr<GameSession> _gameSession;
+		std::shared_ptr<LoginSession> _loginSession;
 	};
 }
-

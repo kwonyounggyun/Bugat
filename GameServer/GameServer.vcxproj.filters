@@ -13,65 +13,65 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="AuthServer">
+    <Filter Include="Common">
+      <UniqueIdentifier>{4487d63b-3c4a-4ef0-9ef3-aa3083cc9d64}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Connection">
+      <UniqueIdentifier>{496a1a3c-9a70-4d6a-9f13-3f14181b1896}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Handle">
+      <UniqueIdentifier>{991fc2d6-4128-4d5c-a7e0-ca283759dd8d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="LoginServer">
       <UniqueIdentifier>{29efccf0-af30-4e25-bd89-af868f1e6814}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MainServer">
+      <UniqueIdentifier>{c4048dba-b565-4ae7-b4fe-e5d46876304d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameServer.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="AuthServer.cpp">
-      <Filter>AuthServer</Filter>
-    </ClCompile>
-    <ClCompile Include="AuthHandler.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="BaseServer.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="SessionManager.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Session.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="GameConnection.cpp">
-      <Filter>소스 파일</Filter>
+    <ClCompile Include="LoginServer.cpp">
+      <Filter>LoginServer</Filter>
     </ClCompile>
     <ClCompile Include="User.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="BaseServer.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
     <ClCompile Include="BaseConnection.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="GameConnection.cpp">
+      <Filter>Connection</Filter>
+    </ClCompile>
+    <ClCompile Include="Session.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="GameSession.cpp">
+      <Filter>Connection</Filter>
+    </ClCompile>
+    <ClCompile Include="GameAuth.cpp">
+      <Filter>Handle</Filter>
+    </ClCompile>
+    <ClCompile Include="LoginHandler.cpp">
       <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="LoginConnection.cpp">
+      <Filter>LoginServer</Filter>
+    </ClCompile>
+    <ClCompile Include="LoginSession.cpp">
+      <Filter>LoginServer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AuthServer.h">
-      <Filter>AuthServer</Filter>
-    </ClInclude>
-    <ClInclude Include="AuthHandler.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="BaseServer.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="SessionManager.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Session.h">
-      <Filter>헤더 파일</Filter>
+    <ClInclude Include="LoginServer.h">
+      <Filter>LoginServer</Filter>
     </ClInclude>
     <ClInclude Include="stdafx.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="PlayerId.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="GameConnection.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="BaseConnection.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="GameHandler.h">
@@ -79,6 +79,39 @@
     </ClInclude>
     <ClInclude Include="User.h">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseServer.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseConnection.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="GameConnection.h">
+      <Filter>Connection</Filter>
+    </ClInclude>
+    <ClInclude Include="Session.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerId.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="GameSession.h">
+      <Filter>Connection</Filter>
+    </ClInclude>
+    <ClInclude Include="GameAuth.h">
+      <Filter>Handle</Filter>
+    </ClInclude>
+    <ClInclude Include="MainServer.h">
+      <Filter>MainServer</Filter>
+    </ClInclude>
+    <ClInclude Include="LoginHandler.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="LoginSession.h">
+      <Filter>LoginServer</Filter>
+    </ClInclude>
+    <ClInclude Include="LoginConnection.h">
+      <Filter>LoginServer</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

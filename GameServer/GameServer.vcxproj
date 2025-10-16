@@ -110,6 +110,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>Core.lib;Network.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(TargetDir)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -127,25 +128,32 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AuthHandler.cpp" />
-    <ClCompile Include="AuthServer.cpp" />
+    <ClCompile Include="LoginConnection.cpp" />
+    <ClCompile Include="LoginHandler.cpp" />
+    <ClCompile Include="LoginServer.cpp" />
     <ClCompile Include="BaseConnection.cpp" />
     <ClCompile Include="BaseServer.cpp" />
+    <ClCompile Include="GameAuth.cpp" />
     <ClCompile Include="GameConnection.cpp" />
-    <ClCompile Include="SessionManager.cpp" />
+    <ClCompile Include="GameSession.cpp" />
+    <ClCompile Include="LoginSession.cpp" />
     <ClCompile Include="GameServer.cpp" />
     <ClCompile Include="Session.cpp" />
     <ClCompile Include="User.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AuthHandler.h" />
-    <ClInclude Include="AuthServer.h" />
+    <ClInclude Include="LoginConnection.h" />
+    <ClInclude Include="LoginHandler.h" />
+    <ClInclude Include="LoginServer.h" />
     <ClInclude Include="BaseConnection.h" />
     <ClInclude Include="BaseServer.h" />
+    <ClInclude Include="GameAuth.h" />
     <ClInclude Include="GameConnection.h" />
     <ClInclude Include="GameHandler.h" />
+    <ClInclude Include="GameSession.h" />
+    <ClInclude Include="LoginSession.h" />
+    <ClInclude Include="MainServer.h" />
     <ClInclude Include="PlayerId.h" />
-    <ClInclude Include="SessionManager.h" />
     <ClInclude Include="Session.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="User.h" />

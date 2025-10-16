@@ -2,6 +2,7 @@
 
 #include "Header.h"
 #include "..\Core\ObjectId.h"
+#include "Server.h"
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/lockfree/queue.hpp>
@@ -20,7 +21,7 @@ namespace bugat::net
 
 	class AnySendPacket;
 	class AnyConnectionFactory;
-
+	class Server;
 	class Connection : std::enable_shared_from_this<Connection>
 	{
 		friend class Server;
@@ -45,14 +46,12 @@ namespace bugat::net
 			SendNotify();
 		}
 
+		void Start();
 		void Close();
 
 		auto GetId() const { return _id; }
 
 		bool Disconnected() const { return _state == ConnectionState::Disconnected; }
-
-	protected:
-		void Start();
 
 		virtual void OnAccept() {}
 		virtual void OnClose() {};
@@ -65,6 +64,7 @@ namespace bugat::net
 		std::unique_ptr<tcp::socket> _socket;
 		core::ObjectId<Connection> _id;
 		std::atomic<ConnectionState> _state;
+
 		boost::lockfree::queue<AnySendPacket*> _sendQue;
 		AnySendPacket* sendingPacket{ nullptr };
 		std::unique_ptr<boost::asio::steady_timer> _sendTimer;

@@ -15,7 +15,10 @@ namespace bugat
 			_connection->Close();
 			_connection = nullptr;
 		}
+
+		OnClose();
 	}
+
 	void Session::HandleMsg(const net::Header& header, const std::vector<char>& msg)
 	{
 	}

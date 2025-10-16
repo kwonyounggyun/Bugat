@@ -1,23 +1,49 @@
 #pragma once
 #include "../Network/Server.h"
-#include "Session.h"
+#include "../Core/Context.h"
 
 #include <map>
+#include <boost/thread.hpp>
 
 namespace bugat
 {
-	class BaseServer : public bugat::net::Server
+	namespace net
+	{
+		class Connection;
+		class AnyConnectionFactory;
+		class Configure;
+	}
+
+	template<typename Context, typename ConnectionFactory>
+	class BaseServer : public net::Server
 	{
 	public:
-		BaseServer() {};
-		virtual ~BaseServer() {};
-		virtual void AfterAccept(std::shared_ptr<bugat::net::Connection>& conn) override 
+		BaseServer() {}
+		virtual ~BaseServer() {}
+		
+		void Start(net::Configure& config)
 		{
-			
-		};
+			net::Server::Start(ConnectionFactory(), config);
+			for (int i = 0; i < 5; i++)
+			{
+				_logicThreads.create_thread([this]()
+					{
+						while (true)
+						{
+							_logicContext.run();
+						}
+					});
+			}
+		}
 
+		void Post(std::function<void()>&& func)
+		{
+			_logicContext.post(func);
+		}
+		
 	private:
-		std::map<uint64_t, std::shared_ptr<bugat::net::Connection>> _waitAuth;
+		Context _logicContext;
+		boost::thread_group _logicThreads;
 	};
 }
 

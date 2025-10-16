@@ -7,6 +7,7 @@ namespace bugat::net
 	struct Configure;
 	class Connection;
 	class AnyConnectionFactory;
+
 	class Server
 	{
 	public:
@@ -16,7 +17,7 @@ namespace bugat::net
 
 		void Accept(std::shared_ptr<Connection>& conn);
 		//楷搬等 Connection 包府 肺流 累己
-		virtual void AfterAccept(std::shared_ptr<Connection>& conn) {}
+		virtual void OnAccept(std::shared_ptr<Connection>& conn) {}
 
 	private:
 		boost::asio::io_context _ioContext;
