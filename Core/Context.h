@@ -3,9 +3,11 @@
 #include <functional>
 #include <memory>
 #include <type_traits>
+#include <deque>
 #include "Executor.h"
+#include "SerializeObject.h"
 
-namespace bugat
+namespace bugat::core
 {
 	class ContextConcept
 	{

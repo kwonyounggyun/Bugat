@@ -5,7 +5,7 @@
 namespace bugat::core
 {
 	template <typename T>
-	class SerializeObject : public TaskSerializer, public std::enable_shared_from_this<T>
+	class SerializeObject : public TaskSerializer
 	{
 	public:
 		SerializeObject() {}
@@ -15,7 +15,7 @@ namespace bugat::core
 		{
 			if (remainCount > 0)
 			{
-
+				//이거면 로컬 큐에
 			}
 		}
 
@@ -23,7 +23,7 @@ namespace bugat::core
 		{
 			if (remainCount == 1)
 			{
-
+				//이거면 글로벌 큐에
 			}
 		}
 

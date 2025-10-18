@@ -142,6 +142,7 @@
     <ClCompile Include="User.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Context.h" />
     <ClInclude Include="LoginConnection.h" />
     <ClInclude Include="LoginHandler.h" />
     <ClInclude Include="LoginServer.h" />

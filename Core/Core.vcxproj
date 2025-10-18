@@ -149,6 +149,7 @@
     <ClInclude Include="Context.h" />
     <ClInclude Include="Executor.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="Log.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="NonCopyable.h" />
     <ClInclude Include="ObjectId.h" />
@@ -168,6 +169,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="DateTime.cpp" />
+    <ClCompile Include="DateTime.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

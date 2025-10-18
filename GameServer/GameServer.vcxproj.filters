@@ -113,5 +113,8 @@
     <ClInclude Include="LoginConnection.h">
       <Filter>LoginServer</Filter>
     </ClInclude>
+    <ClInclude Include="Context.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
