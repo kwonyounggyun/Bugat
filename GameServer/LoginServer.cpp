@@ -18,7 +18,7 @@ namespace bugat
 		auto castConn = std::dynamic_pointer_cast<LoginConnection>(conn);
 		if (castConn)
 		{
-			auto session = std::make_shared<LoginSession>(castConn);
+			auto session = CreateSerializeObject<LoginSession>();
 			session->SetServer(this);
 			castConn->SetSession(session.get());
 			castConn->Start();

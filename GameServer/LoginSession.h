@@ -14,5 +14,5 @@ namespace bugat
 
 	private:
 		std::shared_ptr<LoginConnection> _loginConnection;
-	}
+	};
 }

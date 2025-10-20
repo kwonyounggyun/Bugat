@@ -3,7 +3,6 @@
 #include "Context.h"
 
 #include <map>
-#include <boost/thread.hpp>
 
 namespace bugat
 {
@@ -20,27 +19,18 @@ namespace bugat
 		BaseServer() {}
 		virtual ~BaseServer() {}
 		
-		void Start(net::AnyConnectionFactory factory, net::Configure& config)
-		{
-			net::Server::Start(factory, config);
-			for (int i = 0; i < 5; i++)
-			{
-				_logicThreads.create_thread([this]()
-					{
-						_logicContext.run();
-					});
-			}
-		}
+		virtual void Start(net::AnyConnectionFactory&& factory, net::Configure& config);
 
-		template <typename ObjectType>
-		void post(std::shared_ptr<SerializeObject<ObjectType>>& serializeObject)
+		template<typename T>
+		auto CreateSerializeObject()
 		{
-			_logicContext.post(serializeObject);
+			auto object = std::make_shared<T>();
+			object->SetContext(&_context);
+			return object;
 		}
 		
 	private:
-		LogicContext _logicContext;
-		boost::thread_group _logicThreads;
+		Context _context;
 	};
 }
 

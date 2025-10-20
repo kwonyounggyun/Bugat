@@ -1,5 +1,5 @@
 #pragma once
-#include "..\Core\SerializeObject.h"
+#include "../GameServer/SerializeObject.h"
 #include "../Network/Packet.h"
 
 namespace boost
@@ -17,7 +17,7 @@ namespace bugat::net
 
 namespace bugat::test
 {
-	class Client : public bugat::core::SerializeObject<Client>
+	class Client : public bugat::SerializeObject<Client>
 	{
 	public:
 		Client() {};

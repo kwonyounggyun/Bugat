@@ -33,7 +33,7 @@ namespace bugat::net
 	{
 	}
 
-	void Server::Start(AnyConnectionFactory factory, Configure config)
+	void Server::Start(AnyConnectionFactory&& factory, Configure config)
 	{
 		for (int i = 0; i < config.ioThreadCount; i++)
 		{

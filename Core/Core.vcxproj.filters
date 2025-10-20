@@ -36,22 +36,16 @@
     <ClInclude Include="TaskSerializer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Context.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Executor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Singleton.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SerializeObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ObjectId.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Log.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DateTime.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -64,9 +58,6 @@
     </ClCompile>
     <ClCompile Include="Math.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DateTime.h">
-      <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="DateTime.cpp">
       <Filter>Source Files</Filter>

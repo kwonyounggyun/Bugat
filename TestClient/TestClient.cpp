@@ -4,16 +4,28 @@
 #include <iostream>
 #include "Client.h"
 #include "boost/asio/io_context.hpp"
+#include "../GameServer/Context.h"
 
 using namespace bugat;
 int main()
 {
-    boost::asio::io_context context;
+
+    Context logicContext;
+
+    boost::asio::io_context ioContext;
 
     test::Client client;
-    client.Connect(context, "127.0.0.1", 5000);
+    client.SetContext(&logicContext);
 
-    context.run();
+    client.Connect(ioContext, "127.0.0.1", 5000);
+
+    std::thread t([&logicContext]() {
+        logicContext.run();
+        });
+
+    ioContext.run();
+    
+    t.join();
 
     std::cout << "Hello World!\n";
 }

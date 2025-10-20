@@ -8,7 +8,7 @@ namespace bugat
 	{
 	public:
 		GameSession(std::shared_ptr<GameConnection>& gameConnection);
-		virtual ~GameSession() {}
+		virtual ~GameSession();
 
 	private:
 		std::shared_ptr<GameConnection> _gameConnection;

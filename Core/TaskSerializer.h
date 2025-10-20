@@ -101,38 +101,31 @@ namespace bugat::core
 		/*
 		* 반드시 하나의 스레드에서만 호출되어야 한다.
 		*/
-		int Run()
+		int64_t Run()
 		{
 			while (true == _runningGuard.test_and_set(std::memory_order_acquire));
 
-			auto executeCount = _taskCount.load(std::memory_order_acquire);
-			auto count = executeCount;
-			while (count > 0)
-			{
-				_que.consume_one([](AnyTask* task) 
+			auto executeCount = _que.consume_all([](AnyTask* task) 
 				{
 					task->Run(); 
-					delete task; 
+					delete task;
 				});
-				count--;
-			}
 
 			auto preCount = _taskCount.fetch_sub(executeCount, std::memory_order_release);
 			_runningGuard.clear(std::memory_order_release);
 
 			OnRun(preCount - executeCount);
-
 			return executeCount;
 		}
 
-		virtual void OnRun(int remainCount) {}
-		virtual void OnPost(int remainCount) {}
+		virtual void OnRun(int64_t remainCount) {}
+		virtual void OnPost(int64_t remainCount) {}
 
-		int GetCount() const { return _taskCount; }
+		int64_t GetCount() const { return _taskCount; }
 
 	private:
 		boost::lockfree::queue<AnyTask*> _que;
-		std::atomic<int> _taskCount{ 0 };
+		std::atomic<int64_t> _taskCount{ 0 };
 		std::atomic_flag _runningGuard;
 	};
 }

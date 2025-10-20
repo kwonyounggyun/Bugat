@@ -13,7 +13,7 @@ namespace bugat::net
 	public:
 		Server();
 		~Server();
-		void Start(AnyConnectionFactory factory, Configure config);
+		virtual void Start(AnyConnectionFactory&& factory, Configure config);
 
 		void Accept(std::shared_ptr<Connection>& conn);
 		//楷搬等 Connection 包府 肺流 累己

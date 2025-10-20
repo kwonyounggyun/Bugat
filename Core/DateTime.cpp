@@ -46,6 +46,7 @@ namespace bugat
 		auto tm = boost::posix_time::to_tm(time);
 		return tm.tm_mon;
 	}
+
 	std::tm DateTime::GetTm(int64_t sec)
 	{
 		boost::posix_time::ptime time = epoch + boost::posix_time::seconds(sec);

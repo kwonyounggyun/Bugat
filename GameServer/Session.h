@@ -1,12 +1,12 @@
 #pragma once
 #include "../Network/Connection.h"
 #include "../Network/Packet.h"
-#include "../Core/SerializeObject.h"
+#include "SerializeObject.h"
 #include "BaseServer.h"
 
 namespace bugat
 {
-	class Session : public bugat::core::SerializeObject<Session>
+	class Session : public SerializeObject<Session>
 	{
 	public:
 		Session() {};

@@ -155,6 +155,7 @@
     <ClInclude Include="LoginSession.h" />
     <ClInclude Include="MainServer.h" />
     <ClInclude Include="PlayerId.h" />
+    <ClInclude Include="SerializeObject.h" />
     <ClInclude Include="Session.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="User.h" />

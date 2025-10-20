@@ -116,5 +116,8 @@
     <ClInclude Include="Context.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="SerializeObject.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

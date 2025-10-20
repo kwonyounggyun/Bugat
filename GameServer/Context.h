@@ -1,20 +1,19 @@
 #pragma once
-#include "../Core/SerializeObject.h"
+#include "SerializeObject.h"
 #include "../Core/RWLockObject.h"
 #include <deque>
 #include <queue>
 #include <unordered_map>
-#include <vector>
+#include <array>
 #include <atomic>
+#include <type_traits>
 #include <boost/lockfree/queue.hpp>
 
 namespace bugat
 {
-	template<typename T>
-	using SerializeObject = core::SerializeObject<T>;
 	using TaskSerializer = core::TaskSerializer;
 
-	class LogicContext
+	class Context
 	{
 		struct WeakWrapper
 		{
@@ -25,6 +24,9 @@ namespace bugat
 
 		struct SpecialQueue
 		{
+			SpecialQueue() : _que(1024) {}
+			~SpecialQueue() {}
+
 			int64_t run()
 			{
 				int64_t count = 0;
@@ -39,27 +41,32 @@ namespace bugat
 				return count;
 			}
 
-			void push(std::weak_ptr<TaskSerializer>& val)
+			bool push(std::weak_ptr<TaskSerializer>& val)
 			{
-				_que.push(new WeakWrapper(val));
+				auto ptr = new WeakWrapper(val);
+				if (false == _que.push(ptr))
+				{
+					delete ptr;
+					return false;
+				}
+
+				return true;
 			}
 
 			boost::lockfree::queue<WeakWrapper*> _que;
 		};
 
 	public:
-		LogicContext() {};
-		virtual ~LogicContext() = default;
+		Context() : _threadCount(0), _waitQue(1024) {};
+		virtual ~Context() = default;
 
 		void Initialize(uint32_t threadCount)
 		{
-			_globalQue.reserve(threadCount);
-			for (int i = 0; i < threadCount; i++)
-				_globalQue.push_back(std::atomic<std::shared_ptr<SpecialQueue>>(std::make_shared<SpecialQueue>()));
-
-			auto lock = _waitQue.LockWrite();
-			for (int i = 0; i < threadCount; i++)
-				lock->push(std::make_shared<SpecialQueue>());
+			for (int i = 0; i < threadCount * 2; i++)
+			{
+				_globalQue[i].store(new SpecialQueue(), std::memory_order_seq_cst);
+				_waitQue.push(new SpecialQueue());
+			}
 
 			_globalCounter.store(0);
 			_threadCounter.store(0);
@@ -71,44 +78,37 @@ namespace bugat
 		void run()
 		{
 			auto threadIdx = _threadCounter.fetch_add(1);
-			_localQue = std::make_shared<SpecialQueue>();
+			_localQue = new SpecialQueue();
 
 			while (true)
 			{
-				{
-					auto lock = _waitQue.LockWrite();
+				auto swapIndx = _swapCounter.fetch_add(1) % _threadCount;
+				auto expect = _globalQue[swapIndx].load();
+				while (false == _globalQue[swapIndx].compare_exchange_strong(expect, _localQue));
 
-					auto swapIndx = _swapCounter.fetch_add(1) % _globalQue.size();
-					auto swap = _globalQue[swapIndx].load(std::memory_order_acquire);
-					_globalQue[swapIndx].store(_localQue, std::memory_order_acq_rel);
-					lock->push(swap);
-					if (false == lock->empty())
-					{
-						_localQue = lock->front();
-						lock->pop();
-					}
-				}
-
-				_localQue->run();
+				_waitQue.push(expect);
+				if(true == _waitQue.pop(_localQue))
+					auto count = _localQue->run();
 			}
 		}
 
-		template <typename ObjectType>
-		void post(std::shared_ptr<SerializeObject<ObjectType>>& serializeObject)
+		void post(std::weak_ptr<TaskSerializer> serializeObject)
 		{
-			auto idx = _globalCounter.fetch_add(1) % _globalQue.size();
-			_globalQue[idx].load()->push(serializeObject);
+			auto idx = _globalCounter.fetch_add(1) % _threadCount;
+			auto que = _globalQue[idx].load();
+			while(false == que->push(serializeObject))
+				auto que = _globalQue[++idx].load();
 		}
 
 	private:
-		std::vector<std::atomic<std::shared_ptr<SpecialQueue>>> _globalQue;
-		RWLockObject<std::queue<std::shared_ptr<SpecialQueue>>> _waitQue;
+		std::array<std::atomic<SpecialQueue*>, 100> _globalQue;
+		boost::lockfree::queue<SpecialQueue*> _waitQue;
 
 		std::atomic<uint32_t> _swapCounter;
 		std::atomic<uint32_t> _globalCounter;
 		std::atomic<uint32_t> _threadCounter;
 
 		int _threadCount;
-		thread_local static std::shared_ptr<SpecialQueue> _localQue;
+		thread_local static SpecialQueue* _localQue;
 	};
 }

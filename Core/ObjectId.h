@@ -1,5 +1,6 @@
 #pragma once
 #include <atomic>
+#include "DateTime.h"
 
 namespace bugat::core
 {
@@ -17,7 +18,7 @@ namespace bugat::core
 
 		ObjectId()
 		{
-			timestamp = 0;
+			timestamp = DateTime::NowSec();
 			count = GetCount();
 		}
 	};
