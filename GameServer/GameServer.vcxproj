@@ -128,6 +128,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Context.cpp" />
     <ClCompile Include="LoginConnection.cpp" />
     <ClCompile Include="LoginHandler.cpp" />
     <ClCompile Include="LoginServer.cpp" />

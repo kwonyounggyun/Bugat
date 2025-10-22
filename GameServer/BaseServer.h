@@ -20,15 +20,9 @@ namespace bugat
 		virtual ~BaseServer() {}
 		
 		virtual void Start(net::AnyConnectionFactory&& factory, net::Configure& config);
-
-		template<typename T>
-		auto CreateSerializeObject()
-		{
-			auto object = std::make_shared<T>();
-			object->SetContext(&_context);
-			return object;
-		}
+		virtual void OnAccept(std::shared_ptr<bugat::net::Connection>& conn) override {}
 		
+		auto& GetContext() { return _context; }
 	private:
 		Context _context;
 	};

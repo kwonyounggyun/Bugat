@@ -66,6 +66,9 @@
     <ClCompile Include="LoginSession.cpp">
       <Filter>LoginServer</Filter>
     </ClCompile>
+    <ClCompile Include="Context.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LoginServer.h">

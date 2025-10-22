@@ -3,8 +3,86 @@
 #include "stdafx.h"
 #include <iostream>
 
+#include "Context.h"
+#include <thread>
+#include "../Core/ObjectPool.h"
+
+#include "../Core/TaskSerializer.h"
+
+#include <boost/lockfree/queue.hpp>
+
+using namespace bugat;
+
+struct Test : public SerializeObject<Test>
+{
+    int value[1000];
+};
+
 int main()
 {
+
+    boost::lockfree::queue<bugat::core::AnyTask*> queue(10);
+    boost::lockfree::queue<bugat::core::AnyTask*> queue1(100);
+    boost::lockfree::queue<bugat::core::AnyTask*> queue2(1000);
+
+    Context context;
+
+    context.Initialize(10);
+
+    std::vector<std::thread*> threads;
+
+    auto tsize = sizeof(bugat::TaskSerializer);
+    auto asize = sizeof(bugat::core::AnyTask);
+    auto pool = ObjectPoolFactory::Create<Test, 100000>();
+    std::vector<std::shared_ptr<Test>> objects(100000);
+    objects[0] = pool->Get();
+    for (int j = 1; j < 100000; j++)
+    {
+        objects[j] = std::move(pool->Get());
+        objects[j]->SetContext(&context);
+    }
+
+    for(int i = 0; i < 10; i++)
+    {
+        threads.push_back(new std::thread([&context]() {
+            context.run();
+            }));
+	}
+
+    
+    std::vector<std::thread*> testThreads;
+    for (int i = 0; i < 10; i++)
+    {
+        testThreads.push_back(new std::thread([&context, &objects, i]() {
+            auto id = std::this_thread::get_id();
+            for (int j = 0; j < 1000; j++)
+            {
+                for (int k = i * 10000; k < i * 10000 + 10000; k++)
+                {
+                    objects[j]->Post([id, i]() {
+						//std::cout << "Thread ID: " << id << ", Object Index: " << i << std::endl;
+                        auto k = i + 100;
+
+                        });
+                }
+            }
+
+            while (true);
+            }));
+    }
+
+    for(auto thread : testThreads)
+    {
+        thread->join();
+        delete thread;
+	}
+
+    for (auto thread : threads)
+    {
+        thread->join();
+        delete thread;
+	}
+
     std::cout << "Hello World!\n";
 }
 

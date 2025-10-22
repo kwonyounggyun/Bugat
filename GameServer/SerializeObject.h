@@ -7,6 +7,7 @@
 namespace bugat
 {
 	class Context;
+
 	template <typename T>
 	class SerializeObject : public core::TaskSerializer, public std::enable_shared_from_this<T>
 	{

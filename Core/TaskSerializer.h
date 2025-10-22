@@ -12,25 +12,26 @@ namespace bugat::core
 		virtual void Run() = 0;
 	};
 
-	template<typename Func, typename ComplitionToken = void>
+	template<typename Func, typename ...ARGS>
 	class TaskModel : public TaskConcept
 	{
+		using ReturnType = std::invoke_result_t<Func, ARGS...>;
 	public:
-		TaskModel(Func&& task, ComplitionToken&& token = {}) : _task(std::forward<Func>(task)), _compl(std::forward<ComplitionToken>(token)) {}
+		TaskModel(Func&& task, ARGS&&... args) : _task(std::bind(std::forward<Func>(task), std::forward<ARGS>(args)...)) {}
 		virtual ~TaskModel() {}
 		virtual void Run() override
 		{
-			_compl(_task());
+			_task();
 		}
 
 	private:
-		Func _task;
-		ComplitionToken _compl;
+		std::function<ReturnType()> _task;
 	};
 
-	template<typename Func>
+	/*template<typename Func>
 	class TaskModel<Func, void> : public TaskConcept
 	{
+		using ReturnType = std::invoke_result_t<Func>;
 	public:
 		TaskModel(Func&& task) : _task(std::forward<Func>(task)) {}
 		virtual ~TaskModel() {}
@@ -40,25 +41,25 @@ namespace bugat::core
 		}
 
 	private:
-		Func _task;
-	};
+		std::function<ReturnType()> _task;
+	};*/
 
 	class AnyTask
 	{
 	public:
-		template<typename Func, typename CompletionToken>
-		AnyTask(Func&& func, CompletionToken&& token)
-			: _task(std::make_unique<TaskModel<Func, CompletionToken>>(std::forward<Func>(func), std::forward<CompletionToken>(token)))
+		template<typename Func, typename ...ARGS>
+		AnyTask(Func&& func, ARGS&&... args)
+			: _task(std::make_unique<TaskModel<Func, ARGS...>>(std::forward<Func>(func), std::forward<ARGS>(args)...))
 		{
 
 		}
 
-		template<typename Func>
+		/*template<typename Func>
 		AnyTask(Func&& func)
 			: _task(std::make_unique<TaskModel<Func, void>>(std::forward<Func>(func)))
 		{
 
-		}
+		}*/
 
 		void Run()
 		{
@@ -82,19 +83,11 @@ namespace bugat::core
 			}
 		}
 
-		template<typename Func, typename CompletionToken = void>
-		requires std::invocable<CompletionToken, std::invoke_result_t<Func>>
-		void Post(Func&& func, CompletionToken&& token)
+		template<typename Func, typename ...ARGS>
+		requires std::invocable<Func, ARGS&...>
+		void Post(Func&& func, ARGS&&... args)
 		{
-			_que.push(new AnyTask(std::forward<Func>(func), std::forward<CompletionToken>(token)));
-			OnPost(_taskCount.fetch_add(1, std::memory_order_release) + 1);
-		}
-
-		template<typename Func>
-		requires std::invocable<Func>
-		void Post(Func&& func)
-		{
-			_que.push(new AnyTask(std::forward<Func>(func)));
+			_que.push(new AnyTask(std::forward<Func>(func), std::forward<ARGS>(args)...));
 			OnPost(_taskCount.fetch_add(1, std::memory_order_release) + 1);
 		}
 

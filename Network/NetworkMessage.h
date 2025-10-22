@@ -68,11 +68,14 @@ namespace bugat::net
 		};
 
 	public:
-		NetworkMessage() : _size(0), _remainHeaderSize(sizeof(Header)) {}
+		NetworkMessage() : _size(0), _remainHeaderSize(sizeof(Header)) 
+		{
+			_dataBlockPool = ObjectPoolFactory::Create<DataBlock, 1>();
+		}
 		~NetworkMessage()
 		{
 			_listDataBlock.clear();
-			_dataBlockPool.Release();
+			_dataBlockPool = nullptr;
 		}
 
 		void Update(std::shared_ptr<DataBlock>& block, int size)
@@ -86,7 +89,7 @@ namespace bugat::net
 			auto iter = _listDataBlock.rbegin();
 			if (iter == _listDataBlock.rend() || (*iter)->GetSize() == 0)
 			{
-				auto block = _dataBlockPool.GetObj();
+				auto block = _dataBlockPool->Get();
 				AddDataBlock(block);
 				return block;
 			}
@@ -178,7 +181,7 @@ namespace bugat::net
 		int _remainHeaderSize;
 
 		std::list<std::shared_ptr<DataBlock>> _listDataBlock;
-		bugat::ObjectPool<DataBlock, 1> _dataBlockPool;
+		std::shared_ptr<bugat::ObjectPool<DataBlock, 1>> _dataBlockPool;
 		int _size = 0;
 	};
 }

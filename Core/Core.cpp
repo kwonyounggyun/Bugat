@@ -21,13 +21,13 @@ void fnCore()
 	bugat::RWLockObject<std::map<int, int>> obj;
 	auto lock = obj.LockRead();
 
-	bugat::ObjectPool<int, 10> k2;
+	auto k2 = bugat::ObjectPoolFactory::Create<int, 10>();
 
 	{
-		auto testObj1 = k2.GetObj();
-		auto testObj2 = k2.GetObj();
-		auto testObj3 = k2.GetObj();
-		auto testObj4 = k2.GetObj();
+		auto testObj1 = k2->Get();
+		auto testObj2 = k2->Get();
+		auto testObj3 = k2->Get();
+		auto testObj4 = k2->Get();
 	}
 
 	bugat::core::TaskSerializer serial;
@@ -35,9 +35,13 @@ void fnCore()
 	serial.Post(func);
 	serial.Post([]() {});
 
-	serial.Post([]()->int {
+	serial.Post([](int a)->int {
 		return 1;
-		}, [](int result) {});
+		}, 1);
+
+	auto s = std::string("test");
+	serial.Post([](std::string a) {}, std::string("test"));
+	serial.Post([](std::string a) {}, s);
 	serial.Run();
 	//std::make_unique<TaskModel<std::function<void()>, void>>(func);
 	//serial.Post(std::bind(add, 1));
