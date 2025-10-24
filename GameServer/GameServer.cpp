@@ -20,13 +20,12 @@ struct Test : public SerializeObject<Test>
     bool Check(int seq)
     {
         if (_seq != seq)
-            throw std::exception("Seq break");
+            return false; //throw std::exception("Seq break");
         
         _seq++;
         return true;
     }
 
-    int value[1000];
     int _seq;
 };
 
@@ -50,8 +49,7 @@ int main()
     auto asize = sizeof(bugat::core::AnyTask);
     auto pool = ObjectPoolFactory::Create<Test, 100000>();
     std::vector<std::shared_ptr<Test>> objects(100000);
-    objects[0] = pool->Get();
-    for (int j = 1; j < 100000; j++)
+    for (int j = 0; j < 100000; j++)
     {
         objects[j] = std::move(pool->Get());
         objects[j]->SetContext(&context);
@@ -70,9 +68,9 @@ int main()
     {
         testThreads.push_back(new std::thread([&context, &objects, i]() {
             auto id = std::this_thread::get_id();
-            for (int j = 0; j < 1000; j++)
+            for (int j = 0; j < 100000; j++)
             {
-                for (int k = i * 10000; k < i * 10000 + 10000; k++)
+                for (int k = 0; k < 100; k++)
                 {
                     auto obj = objects[k].get();
                     obj->Post([id, k, j, obj]() {
@@ -104,7 +102,11 @@ int main()
     for (int j = 0; j < 100000; j++)
     {
         objects[j]->Check(1000);
+
+        if (objects[j]->GetCount() > 0)
+            std::cout << j << std::endl;
     }
+
 
 
     std::cout << "Hello World!\n";

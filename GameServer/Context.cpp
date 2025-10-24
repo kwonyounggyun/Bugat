@@ -15,13 +15,13 @@ namespace bugat
 
 	struct SpecialQueue
 	{
-		SpecialQueue() : _que(1024) {}
+		SpecialQueue() {}
 		~SpecialQueue() {}
 
 		int64_t run()
 		{
 			int64_t count = 0;
-			_que.consume_all([&count](WeakWrapper* weakWrapper)
+			_que.ConsumeAll([&count](WeakWrapper* weakWrapper)
 				{
 					if (auto sptr = weakWrapper->_weak.lock(); sptr)
 					{
@@ -37,16 +37,12 @@ namespace bugat
 		bool push(std::weak_ptr<TaskSerializer>& val)
 		{
 			auto ptr = new WeakWrapper(val);
-			if (false == _que.push(ptr))
-			{
-				delete ptr;
-				return false;
-			}
+			_que.Push(ptr);
 
 			return true;
 		}
 
-		boost::lockfree::queue<WeakWrapper*> _que;
+		LockFreeQueue<WeakWrapper*> _que;
 	};
 
 	void Context::Initialize(uint32_t threadCount)
@@ -55,7 +51,7 @@ namespace bugat
 		for (int i = 0; i < _globalQueSize; i++)
 		{
 			_globalQue[i].store(new SpecialQueue(), std::memory_order_seq_cst);
-			_waitQue.push(new SpecialQueue());
+			_waitQue.Push(new SpecialQueue());
 		}
 
 		_globalCounter.store(0);
@@ -78,13 +74,12 @@ namespace bugat
 			auto expect = _globalQue[swapIndx].load();
 			while (false == _globalQue[swapIndx].compare_exchange_strong(expect, _localQue));
 
-			_waitQue.push(expect);
-			if (true == _waitQue.pop(_localQue))
+			_waitQue.Push(expect);
+			if (true == _waitQue.Pop(_localQue))
 			{
 				auto count = _localQue->run();
-				auto preCount = _executeTaskCounter.fetch_add(count);
-				if ((preCount + count) >= 100000000)
-					stop();
+				if (count > 0)
+					_executeTaskCounter.fetch_add(count);
 			}
 
 			std::this_thread::sleep_for(std::chrono::microseconds(1));
@@ -94,8 +89,7 @@ namespace bugat
 	{
 		auto idx = _globalCounter.fetch_add(1) % _globalQueSize;
 		auto que = _globalQue[idx].load();
-		while (false == que->push(serializeObject))
-			auto que = _globalQue[++idx].load();
+		que->push(serializeObject);
 	}
 
 	void Context::stop()

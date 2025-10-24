@@ -17,19 +17,19 @@ namespace bugat
 
 		virtual void OnRun(int64_t remainCount) 
 		{
-			if (remainCount <= 0)
-				return;
-
-			if(_context)
-				_context->post(std::static_pointer_cast<TaskSerializer>(this->shared_from_this()));
+			if (remainCount > 0)
+			{
+				if (_context)
+					_context->post(std::static_pointer_cast<TaskSerializer>(this->shared_from_this()));
+			}
 		}
-		virtual void OnPost(int64_t remainCount) 
+		virtual void OnPost(int64_t remainCount)
 		{
 			if (remainCount == 1)
-				return;
-
-			if (_context)
-				_context->post(std::static_pointer_cast<TaskSerializer>(this->shared_from_this()));
+			{
+				if (_context)
+					_context->post(std::static_pointer_cast<TaskSerializer>(this->shared_from_this()));
+			}
 		}
 
 		void SetContext(Context* context)

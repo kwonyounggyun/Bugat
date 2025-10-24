@@ -18,10 +18,16 @@ namespace bugat
             _head = _tail = new Node();
         }
 
+        void Push(T& value)
+        {
+            auto v = value;
+            Push(std::move(v));
+        }
+
         void Push(T&& value)
         {
             auto node = new Node();
-            node->_value = std::forward<T>(value);
+            node->_value = std::move(value);
             node->_next = nullptr;
 
             auto tail = _tail.load(std::memory_order_acquire);
@@ -63,7 +69,7 @@ namespace bugat
         int64_t ConsumeAll(Func&& func)
         {
             int64_t count = 0;
-            while (ConsumeOne(std::forward<Func>(func))) count++;
+            while (ConsumeOne(func)) count++;
 
             return count;
         }

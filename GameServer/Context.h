@@ -3,7 +3,7 @@
 #include <queue>
 #include <array>
 #include <atomic>
-#include <boost/lockfree/queue.hpp>
+#include "../Core/LockFreeQueue.h"
 
 namespace bugat
 {
@@ -13,7 +13,7 @@ namespace bugat
 	class Context
 	{
 	public:
-		Context() : _threadCount(0), _waitQue(1024), _stop(false) {};
+		Context() : _threadCount(0), _stop(false) {};
 		virtual ~Context() = default;
 
 		void Initialize(uint32_t threadCount);
@@ -23,13 +23,13 @@ namespace bugat
 
 	private:
 		std::array<std::atomic<SpecialQueue*>, 100> _globalQue;
-		boost::lockfree::queue<SpecialQueue*> _waitQue;
+		LockFreeQueue<SpecialQueue*> _waitQue;
 
 		std::atomic<uint32_t> _swapCounter;
 		std::atomic<uint32_t> _globalCounter;
 		std::atomic<uint32_t> _threadCounter;
 
-		std::atomic<uint32_t> _executeTaskCounter;
+		std::atomic<uint64_t> _executeTaskCounter;
 
 		uint32_t _threadCount;
 		uint32_t _globalQueSize;
