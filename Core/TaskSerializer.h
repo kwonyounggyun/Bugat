@@ -1,5 +1,6 @@
 #pragma once
-#include <boost/lockfree/queue.hpp>
+#include "LockFreeQueue.h"
+#include <functional>
 #include <type_traits>
 
 namespace bugat::core
@@ -47,19 +48,14 @@ namespace bugat::core
 	class AnyTask
 	{
 	public:
+		AnyTask() {};
+
 		template<typename Func, typename ...ARGS>
 		AnyTask(Func&& func, ARGS&&... args)
 			: _task(std::make_unique<TaskModel<Func, ARGS...>>(std::forward<Func>(func), std::forward<ARGS>(args)...))
 		{
 
 		}
-
-		/*template<typename Func>
-		AnyTask(Func&& func)
-			: _task(std::make_unique<TaskModel<Func, void>>(std::forward<Func>(func)))
-		{
-
-		}*/
 
 		void Run()
 		{
@@ -73,21 +69,17 @@ namespace bugat::core
 	class TaskSerializer
 	{
 	public:
-		TaskSerializer() : _que(1024) {}
+		TaskSerializer() {}
 		virtual ~TaskSerializer()
 		{
-			AnyTask* task = nullptr;
-			while (_que.pop(task))
-			{
-				delete task;
-			}
+			_que.Clear();
 		}
 
 		template<typename Func, typename ...ARGS>
 		requires std::invocable<Func, ARGS&...>
 		void Post(Func&& func, ARGS&&... args)
 		{
-			_que.push(new AnyTask(std::forward<Func>(func), std::forward<ARGS>(args)...));
+			_que.Push(AnyTask(std::forward<Func>(func), std::forward<ARGS>(args)...));
 			OnPost(_taskCount.fetch_add(1, std::memory_order_release) + 1);
 		}
 
@@ -98,10 +90,9 @@ namespace bugat::core
 		{
 			while (true == _runningGuard.test_and_set(std::memory_order_acquire));
 
-			auto executeCount = _que.consume_all([](AnyTask* task) 
+			auto executeCount = _que.ConsumeAll([](AnyTask& task) 
 				{
-					task->Run(); 
-					delete task;
+					task.Run();
 				});
 
 			auto preCount = _taskCount.fetch_sub(executeCount, std::memory_order_release);
@@ -117,7 +108,7 @@ namespace bugat::core
 		int64_t GetCount() const { return _taskCount; }
 
 	private:
-		boost::lockfree::queue<AnyTask*> _que;
+		LockFreeQueue<AnyTask> _que;
 		std::atomic<int64_t> _taskCount{ 0 };
 		std::atomic_flag _runningGuard;
 	};

@@ -13,12 +13,13 @@ namespace bugat
 	class Context
 	{
 	public:
-		Context() : _threadCount(0), _waitQue(1024) {};
+		Context() : _threadCount(0), _waitQue(1024), _stop(false) {};
 		virtual ~Context() = default;
 
 		void Initialize(uint32_t threadCount);
 		void run();
 		void post(std::weak_ptr<TaskSerializer> serializeObject);
+		void stop();
 
 	private:
 		std::array<std::atomic<SpecialQueue*>, 100> _globalQue;
@@ -32,6 +33,9 @@ namespace bugat
 
 		uint32_t _threadCount;
 		uint32_t _globalQueSize;
+		
+		std::atomic<bool> _stop;
+
 	public:
 		thread_local static SpecialQueue* _localQue;
 	};

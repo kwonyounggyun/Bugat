@@ -72,7 +72,7 @@ namespace bugat
 		auto threadIdx = _threadCounter.fetch_add(1);
 		_localQue = new SpecialQueue();
 
-		while (true)
+		while (false == _stop.load())
 		{
 			auto swapIndx = _swapCounter.fetch_add(1) % _globalQueSize;
 			auto expect = _globalQue[swapIndx].load();
@@ -82,7 +82,9 @@ namespace bugat
 			if (true == _waitQue.pop(_localQue))
 			{
 				auto count = _localQue->run();
-				_executeTaskCounter.fetch_add(count);
+				auto preCount = _executeTaskCounter.fetch_add(count);
+				if ((preCount + count) >= 100000000)
+					stop();
 			}
 
 			std::this_thread::sleep_for(std::chrono::microseconds(1));
@@ -94,5 +96,10 @@ namespace bugat
 		auto que = _globalQue[idx].load();
 		while (false == que->push(serializeObject))
 			auto que = _globalQue[++idx].load();
+	}
+
+	void Context::stop()
+	{
+		_stop.store(true);
 	}
 }

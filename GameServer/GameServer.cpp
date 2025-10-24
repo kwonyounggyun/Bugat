@@ -15,11 +15,26 @@ using namespace bugat;
 
 struct Test : public SerializeObject<Test>
 {
+    Test() : _seq(0) {}
+
+    bool Check(int seq)
+    {
+        if (_seq != seq)
+            throw std::exception("Seq break");
+        
+        _seq++;
+        return true;
+    }
+
     int value[1000];
+    int _seq;
 };
+
+
 
 int main()
 {
+    LockFreeQueue<int> que;
 
     boost::lockfree::queue<bugat::core::AnyTask*> queue(10);
     boost::lockfree::queue<bugat::core::AnyTask*> queue1(100);
@@ -59,29 +74,38 @@ int main()
             {
                 for (int k = i * 10000; k < i * 10000 + 10000; k++)
                 {
-                    objects[j]->Post([id, i]() {
-						//std::cout << "Thread ID: " << id << ", Object Index: " << i << std::endl;
-                        auto k = i + 100;
-
+                    auto obj = objects[k].get();
+                    obj->Post([id, k, j, obj]() {
+                        obj->Check(j);
                         });
                 }
             }
-
-            while (true);
             }));
     }
 
+    auto start = DateTime::NowSec();
     for(auto thread : testThreads)
     {
         thread->join();
         delete thread;
 	}
+    auto end = DateTime::NowSec();
+    std::cout << "All PushTime : " << end - start << std::endl;
 
     for (auto thread : threads)
     {
         thread->join();
         delete thread;
-	}
+    }
+
+    auto end2 = DateTime::NowSec();
+    std::cout << "All Consume Time : " << end2 - start << std::endl;
+
+    for (int j = 0; j < 100000; j++)
+    {
+        objects[j]->Check(1000);
+    }
+
 
     std::cout << "Hello World!\n";
 }

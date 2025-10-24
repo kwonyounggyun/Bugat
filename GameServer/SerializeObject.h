@@ -12,7 +12,7 @@ namespace bugat
 	class SerializeObject : public core::TaskSerializer, public std::enable_shared_from_this<T>
 	{
 	public:
-		SerializeObject() {}
+		SerializeObject() : _context(nullptr) {}
 		virtual ~SerializeObject() {}
 
 		virtual void OnRun(int64_t remainCount) 
