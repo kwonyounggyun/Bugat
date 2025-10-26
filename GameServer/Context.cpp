@@ -4,45 +4,36 @@
 
 namespace bugat
 {
-	thread_local SpecialQueue* Context::_localQue = nullptr;
+	thread_local SerializerQueue* Context::_localQue = nullptr;
 
-	struct WeakWrapper
+	struct SerializerQueue
 	{
-		WeakWrapper(std::weak_ptr<TaskSerializer>& weak) : _weak(weak) {}
-		~WeakWrapper() {}
-		std::weak_ptr<TaskSerializer> _weak;
-	};
-
-	struct SpecialQueue
-	{
-		SpecialQueue() {}
-		~SpecialQueue() {}
+		SerializerQueue() {}
+		~SerializerQueue() {}
 
 		int64_t run()
 		{
 			int64_t count = 0;
-			_que.ConsumeAll([&count](WeakWrapper* weakWrapper)
+			_que.ConsumeAll([&count](std::weak_ptr<TaskSerializer>& weak)
 				{
-					if (auto sptr = weakWrapper->_weak.lock(); sptr)
+					if (auto sptr = weak.lock(); sptr)
 					{
 						auto executeTaskCount = sptr->Run();
 						count += executeTaskCount;
 					}
-					delete weakWrapper;
 				});
 
 			return count;
 		}
 
-		bool push(std::weak_ptr<TaskSerializer>& val)
+		bool push(std::weak_ptr<TaskSerializer>&& val)
 		{
-			auto ptr = new WeakWrapper(val);
-			_que.Push(ptr);
+			_que.Push(std::move(val));
 
 			return true;
 		}
 
-		LockFreeQueue<WeakWrapper*> _que;
+		LockFreeQueue<std::weak_ptr<TaskSerializer>> _que;
 	};
 
 	void Context::Initialize(uint32_t threadCount)
@@ -50,8 +41,8 @@ namespace bugat
 		_globalQueSize = threadCount * 2;
 		for (int i = 0; i < _globalQueSize; i++)
 		{
-			_globalQue[i].store(new SpecialQueue(), std::memory_order_seq_cst);
-			_waitQue.Push(new SpecialQueue());
+			_globalQue[i].store(new SerializerQueue(), std::memory_order_seq_cst);
+			_waitQue.Push(new SerializerQueue());
 		}
 
 		_globalCounter.store(0);
@@ -66,7 +57,7 @@ namespace bugat
 	void Context::run()
 	{
 		auto threadIdx = _threadCounter.fetch_add(1);
-		_localQue = new SpecialQueue();
+		_localQue = new SerializerQueue();
 
 		while (false == _stop.load())
 		{
@@ -89,7 +80,7 @@ namespace bugat
 	{
 		auto idx = _globalCounter.fetch_add(1) % _globalQueSize;
 		auto que = _globalQue[idx].load();
-		que->push(serializeObject);
+		que->push(std::move(serializeObject));
 	}
 
 	void Context::stop()

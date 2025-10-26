@@ -20,8 +20,15 @@ namespace bugat
 
         void Push(T& value)
         {
-            auto v = value;
-            Push(std::move(v));
+            auto node = new Node();
+            node->_value = value;
+            node->_next = nullptr;
+
+            auto tail = _tail.load(std::memory_order_acquire);
+            while (false == _tail.compare_exchange_strong(tail, node));
+            tail->_next.store(node, std::memory_order_release);
+
+            _size.fetch_add(1, std::memory_order_release);
         }
 
         void Push(T&& value)

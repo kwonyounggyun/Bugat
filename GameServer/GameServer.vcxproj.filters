@@ -120,7 +120,7 @@
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="SerializeObject.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

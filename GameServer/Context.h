@@ -9,7 +9,7 @@ namespace bugat
 {
 	using TaskSerializer = core::TaskSerializer;
 
-	struct SpecialQueue;
+	struct SerializerQueue;
 	class Context
 	{
 	public:
@@ -22,8 +22,8 @@ namespace bugat
 		void stop();
 
 	private:
-		std::array<std::atomic<SpecialQueue*>, 100> _globalQue;
-		LockFreeQueue<SpecialQueue*> _waitQue;
+		std::array<std::atomic<SerializerQueue*>, 100> _globalQue;
+		LockFreeQueue<SerializerQueue*> _waitQue;
 
 		std::atomic<uint32_t> _swapCounter;
 		std::atomic<uint32_t> _globalCounter;
@@ -37,6 +37,6 @@ namespace bugat
 		std::atomic<bool> _stop;
 
 	public:
-		thread_local static SpecialQueue* _localQue;
+		thread_local static SerializerQueue* _localQue;
 	};
 }
