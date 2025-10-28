@@ -13,14 +13,8 @@ namespace bugat::net
 	public:
 		Server();
 		~Server();
-		virtual void Start(AnyConnectionFactory&& factory, Configure config);
 
-		void Accept(std::shared_ptr<Connection>& conn);
 		//楷搬等 Connection 包府 肺流 累己
-		virtual void OnAccept(std::shared_ptr<Connection>& conn) {}
-
-	private:
-		boost::asio::io_context _ioContext;
-		std::vector<::std::thread> _ioThreads;
+		virtual void OnAccept(std::shared_ptr<Connection>& conn) = 0;
 	};
 }

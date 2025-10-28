@@ -6,9 +6,9 @@
 #include <boost/asio/write.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/co_spawn.hpp>
-#include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/connect.hpp>
 #include <boost/asio.hpp>
+#include <boost/asio/io_context.hpp>
 
 namespace bugat::net
 {
@@ -29,7 +29,7 @@ namespace bugat::net
 			auto& packet = connection->sendingPacket;
 			if (packet == nullptr)
 			{
-				if (false == connection->_sendQue.pop(packet))
+				if (false == connection->_sendQue.Pop(packet))
 				{
 					connection->_sendTimer->expires_at(std::chrono::steady_clock::time_point::max());
 					boost::system::error_code ec;
@@ -113,9 +113,10 @@ namespace bugat::net
 		ConnectionCloser()(shared_from_this());
 	}
 
-    void Connection::Start()
+    bool Connection::Start()
     {
 		_sendTimer = std::make_unique< boost::asio::steady_timer>(_socket->get_executor(), std::chrono::steady_clock::time_point::max());
+		
 		boost::asio::co_spawn(_socket->get_executor(), [connection = shared_from_this()]()->boost::asio::awaitable<void> {
 			NetworkMessage msg;
 			Header header;
@@ -126,8 +127,8 @@ namespace bugat::net
 				*/
 				auto messageReader = MessageReader();
 				auto messageProcessor = MessageProcessor();
-				
-				while(false == connection->Disconnected())
+
+				while (false == connection->Disconnected())
 				{
 					auto block = msg.GetDataBlock();
 					auto readSize = co_await messageReader(connection, block->GetBuf(), block->GetSize());
@@ -162,11 +163,13 @@ namespace bugat::net
 			ConnectionCloser()(connection);
 			});
 
+		auto expect = ConnectionState::Connecting;
+		if (false == _state.compare_exchange_strong(expect, ConnectionState::Connected, std::memory_order_acq_rel))
+			return false;
+
 		OnAccept();
 
-		auto expect = ConnectionState::Connecting;
-		if (false == _state.compare_exchange_strong(expect, ConnectionState::Connected, std::memory_order_acq_rel));
-			return;
+		return true;
     }
 
 	void Connection::SendNotify()

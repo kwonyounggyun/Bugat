@@ -1,12 +1,16 @@
 #pragma once
 
 #include "Header.h"
-#include "..\Core\ObjectId.h"
+#include "../Core/ObjectId.h"
+#include "../Core/LockFreeQueue.h"
 #include "Server.h"
 #include <boost/asio/ip/tcp.hpp>
-#include <boost/asio/io_context.hpp>
-#include <boost/lockfree/queue.hpp>
 #include <boost/asio/buffer.hpp>
+
+namespace boost::asio
+{
+	class io_context;
+}
 
 namespace bugat::net
 {
@@ -20,9 +24,8 @@ namespace bugat::net
 	};
 
 	class AnySendPacket;
-	class AnyConnectionFactory;
 	class Server;
-	class Connection : std::enable_shared_from_this<Connection>
+	class Connection : public std::enable_shared_from_this<Connection>
 	{
 		friend class Server;
 		friend class AnyConnectionFactory;
@@ -31,7 +34,7 @@ namespace bugat::net
 		friend struct MessageProcessor;
 		friend struct ConnectionCloser;
 	public:
-		Connection() : _socket(nullptr), _state(ConnectionState::Connecting), _sendQue(1024) {}
+		Connection() : _socket(nullptr), _state(ConnectionState::Connecting) {}
 		virtual ~Connection() {}
 
 		bool Connect(std::string ip, short port);
@@ -42,11 +45,11 @@ namespace bugat::net
 		template<typename T>
 		void Send(T&& packet)
 		{ 
-			_sendQue.push(new AnySendPacket(packet));
+			_sendQue.Push(new AnySendPacket(packet));
 			SendNotify();
 		}
 
-		void Start();
+		bool Start();
 		void Close();
 
 		auto GetId() const { return _id; }
@@ -65,7 +68,7 @@ namespace bugat::net
 		core::ObjectId<Connection> _id;
 		std::atomic<ConnectionState> _state;
 
-		boost::lockfree::queue<AnySendPacket*> _sendQue;
+		LockFreeQueue<AnySendPacket*> _sendQue;
 		AnySendPacket* sendingPacket{ nullptr };
 		std::unique_ptr<boost::asio::steady_timer> _sendTimer;
 	};
@@ -95,7 +98,7 @@ namespace bugat::net
 		~AnySendPacket() {}
 
 		template<typename T>
-		AnySendPacket(T& packet) : _ptr(std::make_unique<SendPacketModel<T>>(packet)) 
+		AnySendPacket(T& packet) : _ptr(std::make_unique<SendPacketModel<T>>(packet))
 		{
 			auto bufs = _ptr->GetBufs();
 			for (auto iter = bufs.begin(); iter != bufs.end(); iter++)
@@ -158,9 +161,8 @@ namespace bugat::net
 		template<typename T>
 		AnyConnectionFactory(ConnectionFactory<T> factory) : _ptr(std::make_unique<ConnectionFactory<T>>(std::move(factory))) {};
 
-		std::shared_ptr<Connection> Create(boost::asio::io_context& io) const
+		std::shared_ptr<Connection> Create(std::unique_ptr<tcp::socket>& socket) const
 		{
-			auto socket = std::make_unique<tcp::socket>(io);
 			auto connection = _ptr->Create();
 			connection->_socket = std::move(socket);
 			return connection;
