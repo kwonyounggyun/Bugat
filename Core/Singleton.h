@@ -1,17 +1,18 @@
 #pragma once
-template <typename T>
-class Singleton
+#include "NonCopyable.h"
+namespace bugat
 {
-public:
-	Singleton() = default;
-	virtual ~Singleton() = 0 {};
-
-	static T& Instance()
+	template <typename T>
+	class Singleton : NonCopyable
 	{
-		static T instance;
-		return instance;
-	}
+	public:
+		Singleton() = default;
+		virtual ~Singleton() = 0 {};
 
-	Singleton(const Singleton&) = delete;
-	Singleton& operator=(const Singleton&) = delete;
-};
+		static T& Instance()
+		{
+			static T instance;
+			return instance;
+		}
+	};
+}

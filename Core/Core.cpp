@@ -7,6 +7,7 @@
 #include <map>
 #include "ObjectPool.h"
 #include "TaskSerializer.h"
+#include "ThreadGroup.h"
 
 // TODO: This is an example of a library function
 
@@ -43,6 +44,11 @@ void fnCore()
 	serial.Post([](std::string a) {}, std::string("test"));
 	serial.Post([](std::string a) {}, s);
 	serial.Run();
+
+	bugat::ThreadGroup t;
+	t.Add(5, [](bugat::ThreadInfo& threadInfo, std::string& s) {}, s);
+
+
 	//std::make_unique<TaskModel<std::function<void()>, void>>(func);
 	//serial.Post(std::bind(add, 1));
 }
