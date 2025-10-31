@@ -7,9 +7,7 @@
 namespace bugat
 {
 	class Context;
-
-	template <typename T>
-	class SerializeObject : public core::TaskSerializer, public std::enable_shared_from_this<T>
+	class SerializeObject : public core::TaskSerializer, public std::enable_shared_from_this<SerializeObject>
 	{
 	public:
 		SerializeObject() : _context(nullptr) {}
@@ -20,7 +18,7 @@ namespace bugat
 			if (remainCount > 0)
 			{
 				if (_context)
-					_context->post(std::static_pointer_cast<TaskSerializer>(this->shared_from_this()));
+					_context->post(shared_from_this());
 			}
 		}
 		virtual void OnPost(int64_t remainCount)
@@ -28,7 +26,7 @@ namespace bugat
 			if (remainCount == 1)
 			{
 				if (_context)
-					_context->post(std::static_pointer_cast<TaskSerializer>(this->shared_from_this()));
+					_context->post(shared_from_this());
 			}
 		}
 
@@ -39,16 +37,11 @@ namespace bugat
 
 		auto GetObjectId() const
 		{
-			return objectId;
-		}
-
-		auto& GetObjectType() const
-		{
-			return typeid(core::ObjectId<T>);
+			return _objectId;
 		}
 
 	private:
-		core::ObjectId<T> objectId;
+		core::ObjectId<SerializeObject> _objectId;
 		Context* _context;
 	};
 }

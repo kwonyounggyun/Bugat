@@ -3,14 +3,12 @@
 
 namespace bugat
 {
-	class GameConnection;
 	class GameSession : public Session
 	{
 	public:
-		GameSession(std::shared_ptr<GameConnection>& gameConnection);
+		GameSession();
 		virtual ~GameSession();
 
-	private:
-		std::shared_ptr<GameConnection> _gameConnection;
+		virtual void HandleMsg(const net::Header& header, const std::vector<char>& msg) override;
 	};
 }

@@ -7,12 +7,9 @@ namespace bugat
 	class LoginSession : public bugat::Session
 	{
 	public:
-		LoginSession(std::shared_ptr<LoginConnection>& loginConnection) : _loginConnection(loginConnection) {};
+		LoginSession() {}
 		virtual ~LoginSession() {}
 
 		virtual void OnClose() override;
-
-	private:
-		std::shared_ptr<LoginConnection> _loginConnection;
 	};
 }

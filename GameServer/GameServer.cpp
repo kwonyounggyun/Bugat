@@ -7,13 +7,14 @@
 #include <thread>
 #include "../Core/ObjectPool.h"
 
-#include "../Core/TaskSerializer.h"
+#include "SerializeObject.h"
 
 #include <boost/lockfree/queue.hpp>
+#include "WorldServer.h"
 
 using namespace bugat;
 
-struct Test : public SerializeObject<Test>
+struct Test : public SerializeObject
 {
     Test() : _seq(0) {}
 
@@ -33,6 +34,8 @@ struct Test : public SerializeObject<Test>
 
 int main()
 {
+    GetWorld.Initialize();
+
     LockFreeQueue<int> que;
 
     boost::lockfree::queue<bugat::core::AnyTask*> queue(10);
@@ -45,7 +48,6 @@ int main()
 
     std::vector<std::thread*> threads;
 
-    auto tsize = sizeof(bugat::TaskSerializer);
     auto asize = sizeof(bugat::core::AnyTask);
     auto pool = ObjectPoolFactory::Create<Test, 100000>();
     std::vector<std::shared_ptr<Test>> objects(100000);

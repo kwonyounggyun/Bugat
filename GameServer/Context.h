@@ -1,24 +1,21 @@
 #pragma once
-#include "SerializeObject.h"
-#include <queue>
-#include <array>
 #include <atomic>
+#include <array>
 #include "../Core/LockFreeQueue.h"
 
 namespace bugat
 {
-	using TaskSerializer = core::TaskSerializer;
-
 	struct SerializerQueue;
+	class SerializeObject;
 	class Context
 	{
 	public:
-		Context() : _threadCount(0), _stop(false) {};
+		Context() : _stop(false) {};
 		virtual ~Context() = default;
 
-		void Initialize(uint32_t threadCount);
+		void Initialize(uint32_t queCount = 100);
 		void run();
-		void post(std::weak_ptr<TaskSerializer> serializeObject);
+		void post(std::weak_ptr<SerializeObject> serializeObject);
 		void stop();
 
 	private:
@@ -30,8 +27,7 @@ namespace bugat
 		std::atomic<uint32_t> _threadCounter;
 
 		std::atomic<uint64_t> _executeTaskCounter;
-
-		uint32_t _threadCount;
+		 
 		uint32_t _globalQueSize;
 		
 		std::atomic<bool> _stop;

@@ -7,7 +7,7 @@ namespace bugat
 	class GameConnection : public BaseConnection
 	{
 	public:
-		GameConnection() : _gameSession(nullptr) {}
+		GameConnection() {}
 		virtual ~GameConnection() {}
 
 	protected:
@@ -15,8 +15,7 @@ namespace bugat
 		virtual void OnClose() override;
 		virtual void OnRead(const net::Header& header, const std::vector<char>& msg) override;
 
-	private:
-		std::shared_ptr<GameSession> _gameSession;
+		void Auth(const net::Header& header, const std::vector<char>& msg);
 	};
 }
 

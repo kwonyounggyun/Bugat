@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include	"Context.h"
 #include <thread>
+#include "SerializeObject.h"
 
 namespace bugat
 {
@@ -14,7 +15,7 @@ namespace bugat
 		int64_t run()
 		{
 			int64_t count = 0;
-			_que.ConsumeAll([&count](std::weak_ptr<TaskSerializer>& weak)
+			_que.ConsumeAll([&count](std::weak_ptr<SerializeObject>& weak)
 				{
 					if (auto sptr = weak.lock(); sptr)
 					{
@@ -26,19 +27,19 @@ namespace bugat
 			return count;
 		}
 
-		bool push(std::weak_ptr<TaskSerializer>&& val)
+		bool push(std::weak_ptr<SerializeObject>&& val)
 		{
 			_que.Push(std::move(val));
 
 			return true;
 		}
 
-		LockFreeQueue<std::weak_ptr<TaskSerializer>> _que;
+		LockFreeQueue<std::weak_ptr<SerializeObject>> _que;
 	};
 
-	void Context::Initialize(uint32_t threadCount)
+	void Context::Initialize(uint32_t queCount)
 	{
-		_globalQueSize = threadCount * 2;
+		_globalQueSize = queCount;
 		for (int i = 0; i < _globalQueSize; i++)
 		{
 			_globalQue[i].store(new SerializerQueue(), std::memory_order_seq_cst);
@@ -48,8 +49,6 @@ namespace bugat
 		_globalCounter.store(0);
 		_threadCounter.store(0);
 		_swapCounter.store(0);
-
-		_threadCount = threadCount;
 
 		_executeTaskCounter.store(0);
 	}
@@ -76,7 +75,7 @@ namespace bugat
 			std::this_thread::sleep_for(std::chrono::microseconds(1));
 		}
 	}
-	void Context::post(std::weak_ptr<TaskSerializer> serializeObject)
+	void Context::post(std::weak_ptr<SerializeObject> serializeObject)
 	{
 		auto idx = _globalCounter.fetch_add(1) % _globalQueSize;
 		auto que = _globalQue[idx].load();
