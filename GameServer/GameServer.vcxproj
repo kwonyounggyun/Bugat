@@ -133,6 +133,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Context.cpp" />
+    <ClCompile Include="PlayerHandle.cpp" />
     <ClCompile Include="WorldServer.cpp" />
     <ClCompile Include="LoginConnection.cpp" />
     <ClCompile Include="LoginHandler.cpp" />
@@ -147,6 +148,7 @@
     <ClCompile Include="User.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BaseHandle.h" />
     <ClInclude Include="Context.h" />
     <ClInclude Include="SessionManger.h" />
     <ClInclude Include="WorldServer.h" />

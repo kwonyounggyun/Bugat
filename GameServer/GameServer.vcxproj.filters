@@ -72,6 +72,9 @@
     <ClCompile Include="WorldServer.cpp">
       <Filter>WorldServer</Filter>
     </ClCompile>
+    <ClCompile Include="PlayerHandle.cpp">
+      <Filter>Handle</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LoginServer.h">
@@ -130,6 +133,9 @@
     </ClInclude>
     <ClInclude Include="SessionManger.h">
       <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseHandle.h">
+      <Filter>Handle</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

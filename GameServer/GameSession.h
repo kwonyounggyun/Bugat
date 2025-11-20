@@ -10,5 +10,6 @@ namespace bugat
 		virtual ~GameSession();
 
 		virtual void HandleMsg(const net::Header& header, const std::vector<char>& msg) override;
+		virtual void OnClose() {}
 	};
 }

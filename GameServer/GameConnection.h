@@ -16,6 +16,8 @@ namespace bugat
 		virtual void OnRead(const net::Header& header, const std::vector<char>& msg) override;
 
 		void Auth(const net::Header& header, const std::vector<char>& msg);
+
+		std::shared_ptr<GameSession> _session;
 	};
 }
 

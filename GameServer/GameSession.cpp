@@ -18,8 +18,8 @@ namespace bugat
 		Post([weak = weak_from_this()](const net::Header& header, const std::vector<char>& msg) mutable {
 			if (auto sPtr = weak.lock(); sPtr != nullptr)
 			{
-				auto gameSession = std::static_pointer_cast<GameSession>(std::move(sPtr));
-				GameHandler::Handle(gameSession, header, msg);
+				auto session = std::static_pointer_cast<Session>(sPtr);
+				GameHandler::Instance().Handle(session, header, msg);
 			}
 			}, header, msg);
 	}

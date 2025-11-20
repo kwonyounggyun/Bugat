@@ -1,31 +1,21 @@
 #pragma once
 #include <memory>
 #include <unordered_map>
-#include "../Network/Header.h"
+#include "BaseHandle.h"
+#include "../Core/Singleton.h"
 
 namespace bugat
 {
-	namespace net
-	{
-		struct Header;
-	}
-
 	class GameSession;
-	class GameHandler
+	class GameHandler : public Singleton<GameHandler>
 	{
 	public:
-		static void Handle(std::shared_ptr<Session>& session, const net::Header& header, const std::vector<char>& msg);
+		void Handle(std::shared_ptr<Session>& session, const net::Header& header, const std::vector<char>& msg);
+		void Init();
 
 	private:
-		static std::unordered_map<int, BaseHandle*> _handles;
+		std::unordered_map<int, std::shared_ptr<BaseHandle>> _handles;
 	};
 
-	class BaseHandle
-	{
-		BaseHandle() {}
-		~BaseHandle() {}
-
-		void Handle(std::shared_ptr<Session>& session, const net::Header& header, const std::vector<char>& msg);
-
-	};
+	DEFINE_HANDLE(Req_CA_Login)
 }

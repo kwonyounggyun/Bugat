@@ -2,7 +2,6 @@
 #include "GameConnection.h"
 
 #include "GameSession.h"
-#include "GameAuth.h"
 
 namespace bugat
 {
@@ -12,22 +11,17 @@ namespace bugat
 
 	void GameConnection::OnClose()
 	{
-		if(_gameSession)
+		if(_session)
 		{
-			_gameSession->Close();
-			_gameSession = nullptr;
+			_session->Close();
+			_session = nullptr;
 		}
 	}
 
 	void GameConnection::OnRead(const net::Header& header, const std::vector<char>& msg)
 	{
-		if (_gameSession)
-			_gameSession->HandleMsg(header, msg);
-		else
-		{
-			auto sPtr = shared_from_this();
-			GameAuth::Handle(sPtr, header, msg);
-		}
+		if (_session)
+			_session->HandleMsg(header, msg);
 	}
 
 	void GameConnection::Auth(const net::Header& header, const std::vector<char>& msg)

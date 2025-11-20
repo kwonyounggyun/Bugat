@@ -2,7 +2,8 @@
 pushd %~dp0
 del /F /Q Network\*_generated.h
 FOR /F "tokens=1" %%a IN ('dir /B "Protocol" ^| findstr .fbs') DO ( 
-	thirdparty\flatbuffers\bin\flatc.exe --cpp --cpp-std c++17 -o Network Protocol\%%a
+	thirdparty\flatbuffers\bin\flatc.exe --cpp --cpp-std=c++17 -o Network Protocol\%%a
+	thirdparty\flatbuffers\bin\flatc.exe --csharp -o ProtocolCS Protocol\%%a
 )
 echo #pragma once > Network\Protocol.h 
 FOR /F "tokens=1" %%a IN ('dir /B "Network\*_generated.h"') DO ( 

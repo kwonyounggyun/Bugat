@@ -14,11 +14,6 @@ namespace bugat
 		virtual void OnAccept() override {};
 		virtual void OnClose() override {};
 		virtual void OnRead(const net::Header& header, const std::vector<char>& msg) override;
-
-		void SetSession(std::shared_ptr<Session> session) { _session = session; }
-		auto& GetSession() { return _session; }
-
-		std::shared_ptr<Session> _session;
 	};
 }
 

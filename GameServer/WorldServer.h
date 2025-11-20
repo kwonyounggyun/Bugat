@@ -5,6 +5,7 @@
 #include "../Core/Singleton.h"
 #include "../Core/ThreadGroup.h"
 #include "SessionManger.h"
+#include "GameSession.h"
 
 namespace bugat
 {
@@ -25,8 +26,6 @@ namespace bugat
 		void OnAccept(std::shared_ptr<net::Connection>& conn) override;
 
 	private:
-
-
 		SessionManager<GameSession> _sessionManager;
 
 		// 클라이언트 메세지 처리용

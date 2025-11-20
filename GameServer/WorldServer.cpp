@@ -4,7 +4,6 @@
 #include "GameSession.h"
 #include "../Network/Configure.h"
 #include "Template.h"
-#include "GameAuth.h"
 
 namespace bugat
 {
@@ -34,6 +33,5 @@ namespace bugat
 	{
 		auto gameSession = CreateSerializeObject<GameSession>(WorldLogicContext);
 		gameSession->SetConnection(conn);
-		_sessionManager.
 	}
 }
