@@ -21,7 +21,7 @@ namespace bugat::net
 
 			char* GetBuf()
 			{
-				return &_buf[_tail - 1];
+				return &_buf[_tail];
 			}
 
 			int GetSize()
@@ -51,7 +51,7 @@ namespace bugat::net
 
 			bool Update(int size)
 			{
-				if ((_tail + size) > DefaultBlockSize)
+				if ((_tail + size) >= DefaultBlockSize)
 					return false;
 
 				_tail += size;
@@ -102,6 +102,8 @@ namespace bugat::net
 			auto blockSize = block->GetDataSize();
 			_listDataBlock.push_back(block);
 			_size += blockSize;
+
+			return true;
 		}
 
 		bool GetNetMessage(Header& header, std::vector<char>& message)

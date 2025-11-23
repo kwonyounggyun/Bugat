@@ -22,6 +22,9 @@ namespace bugat
 		auto& GetClientContext() { return _netClientContext; }
 		auto& GetServerContext() { return _netServerContext; }
 
+		void Stop() { _threadGroup.Stop(); }
+		void Join() { _threadGroup.Join(); }
+
 		// Server을(를) 통해 상속됨
 		void OnAccept(std::shared_ptr<net::Connection>& conn) override;
 

@@ -60,6 +60,8 @@ namespace bugat
 
 		while (false == _stop.load())
 		{
+			if (_localQue == nullptr)
+				return;
 			auto swapIndx = _swapCounter.fetch_add(1) % _globalQueSize;
 			auto expect = _globalQue[swapIndx].load();
 			while (false == _globalQue[swapIndx].compare_exchange_strong(expect, _localQue));

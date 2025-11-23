@@ -165,8 +165,8 @@ namespace bugat::net
     {
 		_sendTimer = std::make_unique< boost::asio::steady_timer>(_socket->get_executor(), std::chrono::steady_clock::time_point::max());
 		
-		boost::asio::co_spawn(_socket->get_executor(), std::bind(RecievePacket, shared_from_this()));
-		boost::asio::co_spawn(_socket->get_executor(), std::bind(SendPacket, shared_from_this()));
+		boost::asio::co_spawn(_socket->get_executor(), std::bind(RecievePacket, shared_from_this()), boost::asio::detached);
+		boost::asio::co_spawn(_socket->get_executor(), std::bind(SendPacket, shared_from_this()), boost::asio::detached);
 
 		auto expect = ConnectionState::Connecting;
 		if (false == _state.compare_exchange_strong(expect, ConnectionState::Connected, std::memory_order_acq_rel))

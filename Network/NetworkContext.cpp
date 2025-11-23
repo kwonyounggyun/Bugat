@@ -24,6 +24,7 @@ namespace bugat::net
 					co_await acceptor.async_accept(*socket, boost::asio::use_awaitable);
 					auto connection = factory.Create(socket);
 					server->OnAccept(connection);
+					connection->Start();
 				}
 			}
 		, boost::asio::detached);

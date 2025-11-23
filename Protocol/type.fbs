@@ -1,8 +1,16 @@
 namespace bugat.protocol.game;
 
 enum Type:short {
-	REQ_CA_LOGIN = 1,
-	RES_AC_LOGIN = 2,
-	Weapon = 2,
-	Monster = 3,
+	REQ_CS_LOGIN = 1,
+	RES_SC_LOGIN = 2,
+	
+	REQ_CS_MOVE = 3,
+	RES_SC_MOVE = 4,
+	
+	REQ_CS_EQUIP = 5,
+	RES_SC_EQUIP = 6,
+	
+	
+	//Broad Cast
+	Bcast_SC_Move = 600,
 }

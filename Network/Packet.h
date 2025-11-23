@@ -10,6 +10,7 @@ namespace bugat::net
 		{
 			_header.type = type;
 			_header.size = fb->GetSize();
+			_fb = fb;
 		}
 		std::vector<std::tuple<uint8_t*, size_t>> data()
 		{

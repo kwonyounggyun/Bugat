@@ -10,10 +10,6 @@ namespace bugat
 	public:
 		BaseConnection() {}
 		virtual ~BaseConnection() = 0 {}
-
-		virtual void OnAccept() override {};
-		virtual void OnClose() override {};
-		virtual void OnRead(const net::Header& header, const std::vector<char>& msg) override;
 	};
 }
 

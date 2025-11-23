@@ -1,0 +1,21 @@
+namespace bugat.protocol.game;
+
+struct FVec3{
+	x:float;
+	y:float;
+	z:float;
+}
+
+table Req_CS_Move{
+	pos:FVec3;
+}
+
+table Res_SC_Move{
+	pos:FVec3;
+}
+
+// 다른 액터 이동용
+table Bcast_SC_Move{
+	id:long;
+	pos:FVec3;
+}

@@ -3,6 +3,7 @@
 #include "Header.h"
 #include "../Core/ObjectId.h"
 #include "../Core/LockFreeQueue.h"
+#include "../Core/Event.h"
 #include "Server.h"
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/buffer.hpp>
@@ -33,6 +34,12 @@ namespace bugat::net
 		friend struct MessageWriter;
 		friend struct MessageProcessor;
 		friend struct ConnectionCloser;
+
+	public:
+		Event<> OnAccept;
+		Event<> OnClose;
+		Event<const Header&, const std::vector<char>&> OnRead;
+
 	public:
 		Connection() : _socket(nullptr), _state(ConnectionState::Connecting) {}
 		virtual ~Connection() {}
@@ -55,10 +62,6 @@ namespace bugat::net
 		auto GetId() const { return _id; }
 
 		bool Disconnected() const { return _state == ConnectionState::Disconnected; }
-
-		virtual void OnAccept() {}
-		virtual void OnClose() {};
-		virtual void OnRead(const Header& header, const std::vector<char>& msg) {};
 
 	private:
 		void SendNotify();

@@ -6,7 +6,7 @@ namespace bugat
 {
 	void GameHandler::Init()
 	{
-		_handles[static_cast<int>(bugat::protocol::game::Type::REQ_CA_LOGIN)] = MAKE_HANDLE(Req_CA_Login);
+		_handles[static_cast<int>(bugat::protocol::game::Type::REQ_CS_MOVE)] = MAKE_HANDLE(Req_CS_Move);
 	}
 
 	void GameHandler::Handle(std::shared_ptr<Session>& session, const net::Header& header, const std::vector<char>& msg)

@@ -44,5 +44,5 @@ namespace bugat
 #define DECLARE_HANDLE(className) \
 	void className##Handle::__Handle(std::shared_ptr<Session>& session, const bugat::protocol::game::className* data)
 
-#define MAKE_HANDLE(className) std::shared_ptr<className##Handle>()
+#define MAKE_HANDLE(className) std::make_shared<className##Handle>()
 }

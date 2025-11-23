@@ -11,6 +11,7 @@
 
 #include <boost/lockfree/queue.hpp>
 #include "WorldServer.h"
+#include "GameHandler.h"
 
 using namespace bugat;
 
@@ -34,9 +35,12 @@ struct Test : public SerializeObject
 
 int main()
 {
+    GameHandler::Instance().Init();
     GetWorld.Initialize();
+    GetWorld.Join();
+ /*   LockFreeQueue<int> que;
 
-    LockFreeQueue<int> que;
+    std::atomic<int> test;
 
     boost::lockfree::queue<bugat::core::AnyTask*> queue(10);
     boost::lockfree::queue<bugat::core::AnyTask*> queue1(100);
@@ -111,7 +115,7 @@ int main()
 
 
 
-    std::cout << "Hello World!\n";
+    std::cout << "Hello World!\n";*/
 }
 
 // 프로그램 실행: <Ctrl+F5> 또는 [디버그] > [디버깅하지 않고 시작] 메뉴

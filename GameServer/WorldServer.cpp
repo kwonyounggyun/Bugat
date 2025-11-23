@@ -7,6 +7,7 @@
 
 namespace bugat
 {
+
 	void WorldServer::Initialize()
 	{
 		GetLogicContext().Initialize(10);
@@ -33,5 +34,20 @@ namespace bugat
 	{
 		auto gameSession = CreateSerializeObject<GameSession>(WorldLogicContext);
 		gameSession->SetConnection(conn);
+		std::weak_ptr<GameSession> weak = gameSession;
+
+		conn->OnAccept += []() {};
+		conn->OnClose += [weak]() {
+			if (auto session = weak.lock(); session)
+				session->Close();
+			};
+		conn->OnRead += [weak](const net::Header& header, const std::vector<char>& msg) {
+			if(auto session = weak.lock(); session)
+				session->HandleMsg(header, msg);
+			};
+
+		PlayerId temp;
+		temp.pid = 1;
+		_sessionManager.AddSession(temp, gameSession);
 	}
 }
