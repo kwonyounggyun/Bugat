@@ -8,8 +8,8 @@
 #include <sstream>
 #define MAX_LOG_LENGTH 1024
 
-#define ErrorLog(data, ...) CLog::WriteLog(LogType::Error, _T(data), __VA_ARGS__)
-#define InfoLog(data, ...) CLog::WriteLog(LogType::Info, _T(data), __VA_ARGS__)
+#define ErrorLog(data, ...) CLog::WriteLog(LogType::Error, data, __VA_ARGS__)
+#define InfoLog(data, ...) CLog::WriteLog(LogType::Info, data, __VA_ARGS__)
 
 namespace bugat
 {

@@ -88,6 +88,54 @@ namespace bugat::net
 		}
 	};
 
+	boost::asio::awaitable<void> RecievePacket(std::shared_ptr<Connection> connection)
+	{
+		NetworkMessage msg;
+		Header header;
+		try
+		{
+			/*
+			* 외부 노출 하기 싫어서...
+			*/
+			auto messageReader = MessageReader();
+			auto messageProcessor = MessageProcessor();
+
+			while (false == connection->Disconnected())
+			{
+				auto block = msg.GetDataBlock();
+				auto readSize = co_await messageReader(connection, block->GetBuf(), block->GetSize());
+				if (readSize > 0)
+					msg.Update(block, readSize);
+
+				std::vector<char> recievedMsg;
+				if (msg.GetNetMessage(header, recievedMsg))
+					messageProcessor(connection, header, recievedMsg);
+			}
+		}
+		catch (std::exception&)
+		{
+		}
+
+		ConnectionCloser()(connection);
+	}
+
+	boost::asio::awaitable<void> SendPacket(std::shared_ptr<Connection> connection)
+	{
+		try
+		{
+			auto messageWriter = MessageWriter();
+			while (false == connection->Disconnected())
+			{
+				auto writeSize = co_await messageWriter(connection);
+			}
+		}
+		catch (std::exception&)
+		{
+		}
+
+		ConnectionCloser()(connection);
+	}
+
 	bool Connection::Connect(std::string ip, short port)
 	{
 		tcp::resolver resolver(_socket->get_executor());
@@ -117,51 +165,8 @@ namespace bugat::net
     {
 		_sendTimer = std::make_unique< boost::asio::steady_timer>(_socket->get_executor(), std::chrono::steady_clock::time_point::max());
 		
-		boost::asio::co_spawn(_socket->get_executor(), [connection = shared_from_this()]()->boost::asio::awaitable<void> {
-			NetworkMessage msg;
-			Header header;
-			try
-			{
-				/*
-				* 외부 노출 하기 싫어서...
-				*/
-				auto messageReader = MessageReader();
-				auto messageProcessor = MessageProcessor();
-
-				while (false == connection->Disconnected())
-				{
-					auto block = msg.GetDataBlock();
-					auto readSize = co_await messageReader(connection, block->GetBuf(), block->GetSize());
-					if (readSize > 0)
-						msg.Update(block, readSize);
-
-					std::vector<char> recievedMsg;
-					if (msg.GetNetMessage(header, recievedMsg))
-						messageProcessor(connection, header, recievedMsg);
-				}
-			}
-			catch (std::exception&)
-			{
-			}
-
-			ConnectionCloser()(connection);
-			});
-
-		boost::asio::co_spawn(_socket->get_executor(), [connection = shared_from_this()]()->boost::asio::awaitable<void> {
-			try
-			{
-				auto messageWriter = MessageWriter();
-				while (false == connection->Disconnected())
-				{
-					auto writeSize = co_await messageWriter(connection);
-				}
-			}
-			catch (std::exception&)
-			{
-			}
-
-			ConnectionCloser()(connection);
-			});
+		boost::asio::co_spawn(_socket->get_executor(), std::bind(RecievePacket, shared_from_this()));
+		boost::asio::co_spawn(_socket->get_executor(), std::bind(SendPacket, shared_from_this()));
 
 		auto expect = ConnectionState::Connecting;
 		if (false == _state.compare_exchange_strong(expect, ConnectionState::Connected, std::memory_order_acq_rel))

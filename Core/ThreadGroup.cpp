@@ -10,9 +10,6 @@ namespace bugat
 
 	bool ThreadGroup::Join()
 	{
-		if (false == IsStop())
-			return false;
-
 		for (auto& thread : _threads)
 		{
 			thread->join();
