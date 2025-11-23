@@ -9,6 +9,7 @@ echo #pragma once > Network\Protocol.h
 FOR /F "tokens=1" %%a IN ('dir /B "Network\*_generated.h"') DO ( 
 	echo #include "%%a" >> Network\Protocol.h 
 )
+echo #define FBCreate() std::make_shared^<flatbuffers::FlatBufferBuilder^>() >> Network\Protocol.h
 popd %~dp0
 
 pause

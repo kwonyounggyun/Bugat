@@ -22,8 +22,7 @@ namespace bugat
 
 	std::tm DateTime::NowTm()
 	{
-		boost::posix_time::ptime now = boost::posix_time::microsec_clock::universal_time();
-		return boost::posix_time::to_tm(now);
+		return GetTm(NowSec());
 	}
 
 	int32_t DateTime::GetDayOfWeek(int64_t sec)
@@ -50,6 +49,7 @@ namespace bugat
 	std::tm DateTime::GetTm(int64_t sec)
 	{
 		boost::posix_time::ptime time = epoch + boost::posix_time::seconds(sec);
-		return boost::posix_time::to_tm(time);
+		auto tm = boost::posix_time::to_tm(time);
+		return tm;
 	}
 }

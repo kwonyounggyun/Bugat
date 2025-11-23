@@ -65,14 +65,14 @@ namespace bugat::net
 		void operator()(const std::shared_ptr<Connection>& connection)
 		{
 			auto expect = ConnectionState::Connected;
-			while (expect != ConnectionState::Disconnected)
+			while (true)
 			{
-				if (true == connection->_state.compare_exchange_strong(expect, ConnectionState::Disconnected, std::memory_order_acquire))
+				if (true == connection->_state.compare_exchange_strong(expect, ConnectionState::Disconnected, std::memory_order_acq_rel, std::memory_order_acquire))
 					break;
-			}
 
-			if (expect == ConnectionState::Disconnected)
-				return;
+				if (expect == ConnectionState::Disconnected)
+					return;
+			}
 
 			if (connection->_socket != nullptr)
 			{
@@ -92,28 +92,36 @@ namespace bugat::net
 	{
 		NetworkMessage msg;
 		Header header;
-		try
-		{
-			/*
-			* 외부 노출 하기 싫어서...
-			*/
-			auto messageReader = MessageReader();
-			auto messageProcessor = MessageProcessor();
 
-			while (false == connection->Disconnected())
+		/*
+		* 외부 노출 하기 싫어서...
+		*/
+		auto messageReader = MessageReader();
+		auto messageProcessor = MessageProcessor();
+
+		while (false == connection->Disconnected())
+		{
+			auto block = msg.GetDataBlock();
+			size_t readSize = 0;
+			try
 			{
-				auto block = msg.GetDataBlock();
-				auto readSize = co_await messageReader(connection, block->GetBuf(), block->GetSize());
-				if (readSize > 0)
-					msg.Update(block, readSize);
-
-				std::vector<char> recievedMsg;
-				if (msg.GetNetMessage(header, recievedMsg))
-					messageProcessor(connection, header, recievedMsg);
+				readSize = co_await messageReader(connection, block->GetBuf(), block->GetSize());
 			}
-		}
-		catch (std::exception&)
-		{
+			catch(const boost::system::system_error& e)
+			{
+				if (e.code() != boost::asio::error::eof)
+					ErrorLog("Socket Close Error! Code : {}", e.what());
+
+				ConnectionCloser()(connection);
+				co_return;
+			}
+
+			if (readSize > 0)
+				msg.Update(block, readSize);
+
+			std::vector<char> recievedMsg;
+			if (msg.GetNetMessage(header, recievedMsg))
+				messageProcessor(connection, header, recievedMsg);
 		}
 
 		ConnectionCloser()(connection);
@@ -121,18 +129,23 @@ namespace bugat::net
 
 	boost::asio::awaitable<void> SendPacket(std::shared_ptr<Connection> connection)
 	{
-		try
+		auto messageWriter = MessageWriter();
+		while (false == connection->Disconnected())
 		{
-			auto messageWriter = MessageWriter();
-			while (false == connection->Disconnected())
+			try
 			{
 				auto writeSize = co_await messageWriter(connection);
 			}
-		}
-		catch (std::exception&)
-		{
-		}
+			catch (const boost::system::system_error& e)
+			{
+				if (e.code() != boost::asio::error::eof)
+					ErrorLog("Socket Close Error! Code : {}", e.what());
 
+				ConnectionCloser()(connection);
+				co_return;
+			}
+		}
+		
 		ConnectionCloser()(connection);
 	}
 

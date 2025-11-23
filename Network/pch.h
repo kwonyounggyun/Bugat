@@ -23,5 +23,6 @@
 #include <functional>
 #include <unordered_map>
 #include <unordered_set>
+#include "../Core/Log.h"
 
 #endif //PCH_H
