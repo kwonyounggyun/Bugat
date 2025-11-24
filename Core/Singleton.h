@@ -7,7 +7,7 @@ namespace bugat
 	{
 	public:
 		Singleton() = default;
-		virtual ~Singleton() = 0 {};
+		virtual ~Singleton() {};
 
 		static T& Instance()
 		{

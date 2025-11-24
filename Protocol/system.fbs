@@ -1,0 +1,32 @@
+namespace bugat.protocol.game;
+
+struct FVec3{
+	x:float;
+	y:float;
+	z:float;
+}
+
+struct StateParam{
+	type:int;
+	value:int;
+}
+
+struct EffectiveParam{
+	type:int;
+	min:int;
+	max:int;
+	cur:int;
+}
+
+table SpawnInfo{
+	aid:int64;	//액터 아이디
+	key:int;	//데이터 키
+	pos:FVec3	//위치
+	stateParams:[StateParam] //효과
+	effectiveParams:[EffectiveParam]; //최종적용
+}
+
+table Bcast_SC_Spawn
+{
+	infos : [SpawnInfo]
+}

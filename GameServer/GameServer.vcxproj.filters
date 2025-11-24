@@ -22,24 +22,18 @@
     <Filter Include="Handle">
       <UniqueIdentifier>{991fc2d6-4128-4d5c-a7e0-ca283759dd8d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="LoginServer">
-      <UniqueIdentifier>{29efccf0-af30-4e25-bd89-af868f1e6814}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="MainServer">
-      <UniqueIdentifier>{c4048dba-b565-4ae7-b4fe-e5d46876304d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="WorldServer">
       <UniqueIdentifier>{a119629f-66fd-49e1-8f4f-318b37697a48}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Manager">
+      <UniqueIdentifier>{b8880ed2-ae60-44fd-83f5-6719a1a5107d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object">
+      <UniqueIdentifier>{7a4855ff-8ebd-4a71-861b-d30f9be2c10f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameServer.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="LoginServer.cpp">
-      <Filter>LoginServer</Filter>
-    </ClCompile>
-    <ClCompile Include="User.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="BaseConnection.cpp">
@@ -50,15 +44,6 @@
     </ClCompile>
     <ClCompile Include="GameHandler.cpp">
       <Filter>Handle</Filter>
-    </ClCompile>
-    <ClCompile Include="LoginHandler.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="LoginConnection.cpp">
-      <Filter>LoginServer</Filter>
-    </ClCompile>
-    <ClCompile Include="LoginSession.cpp">
-      <Filter>LoginServer</Filter>
     </ClCompile>
     <ClCompile Include="Context.cpp">
       <Filter>Common</Filter>
@@ -75,15 +60,18 @@
     <ClCompile Include="PlayerHandle.cpp">
       <Filter>Handle</Filter>
     </ClCompile>
+    <ClCompile Include="ActorManager.cpp">
+      <Filter>Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="CObject.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="Actor.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="LoginServer.h">
-      <Filter>LoginServer</Filter>
-    </ClInclude>
     <ClInclude Include="stdafx.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="User.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="BaseConnection.h">
@@ -98,15 +86,6 @@
     <ClInclude Include="GameHandler.h">
       <Filter>Handle</Filter>
     </ClInclude>
-    <ClInclude Include="MainServer.h">
-      <Filter>MainServer</Filter>
-    </ClInclude>
-    <ClInclude Include="LoginSession.h">
-      <Filter>LoginServer</Filter>
-    </ClInclude>
-    <ClInclude Include="LoginConnection.h">
-      <Filter>LoginServer</Filter>
-    </ClInclude>
     <ClInclude Include="Context.h">
       <Filter>Common</Filter>
     </ClInclude>
@@ -115,9 +94,6 @@
     </ClInclude>
     <ClInclude Include="WorldHandler.h">
       <Filter>WorldServer</Filter>
-    </ClInclude>
-    <ClInclude Include="LoginHandler.h">
-      <Filter>LoginServer</Filter>
     </ClInclude>
     <ClInclude Include="GameConnection.h">
       <Filter>Connection</Filter>
@@ -136,6 +112,21 @@
     </ClInclude>
     <ClInclude Include="BaseHandle.h">
       <Filter>Handle</Filter>
+    </ClInclude>
+    <ClInclude Include="ActorManager.h">
+      <Filter>Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="CObject.h">
+      <Filter>Object</Filter>
+    </ClInclude>
+    <ClInclude Include="Actor.h">
+      <Filter>Object</Filter>
+    </ClInclude>
+    <ClInclude Include="Define.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Param.h">
+      <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

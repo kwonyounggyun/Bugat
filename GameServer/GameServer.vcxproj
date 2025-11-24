@@ -132,42 +132,39 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Actor.cpp" />
+    <ClCompile Include="ActorManager.cpp" />
+    <ClCompile Include="CObject.cpp" />
     <ClCompile Include="Context.cpp" />
     <ClCompile Include="PlayerHandle.cpp" />
     <ClCompile Include="WorldServer.cpp" />
-    <ClCompile Include="LoginConnection.cpp" />
-    <ClCompile Include="LoginHandler.cpp" />
-    <ClCompile Include="LoginServer.cpp" />
     <ClCompile Include="BaseConnection.cpp" />
     <ClCompile Include="GameHandler.cpp" />
     <ClCompile Include="GameConnection.cpp" />
     <ClCompile Include="GameSession.cpp" />
-    <ClCompile Include="LoginSession.cpp" />
     <ClCompile Include="GameServer.cpp" />
     <ClCompile Include="Session.cpp" />
-    <ClCompile Include="User.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Actor.h" />
+    <ClInclude Include="ActorManager.h" />
     <ClInclude Include="BaseHandle.h" />
+    <ClInclude Include="CObject.h" />
     <ClInclude Include="Context.h" />
+    <ClInclude Include="Define.h" />
+    <ClInclude Include="Param.h" />
     <ClInclude Include="SessionManger.h" />
     <ClInclude Include="WorldServer.h" />
-    <ClInclude Include="LoginConnection.h" />
-    <ClInclude Include="LoginHandler.h" />
-    <ClInclude Include="LoginServer.h" />
     <ClInclude Include="BaseConnection.h" />
     <ClInclude Include="GameHandler.h" />
     <ClInclude Include="GameConnection.h" />
     <ClInclude Include="WorldHandler.h" />
     <ClInclude Include="GameSession.h" />
-    <ClInclude Include="LoginSession.h" />
-    <ClInclude Include="MainServer.h" />
     <ClInclude Include="PlayerId.h" />
     <ClInclude Include="SerializeObject.h" />
     <ClInclude Include="Session.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Template.h" />
-    <ClInclude Include="User.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
