@@ -4,11 +4,11 @@
 using namespace bugat::protocol::game;
 namespace bugat
 {
-	DECLARE_HANDLE(Req_CS_Login)
+	DECLARE_FB_HANDLE(Req_CS_Login)
 	{
 	}
 
-	DECLARE_HANDLE(Req_CS_Move)
+	DECLARE_FB_HANDLE(Req_CS_Move)
 	{
 		auto pos = data->pos();
 		auto fb = FBCreate();

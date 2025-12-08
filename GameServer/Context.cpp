@@ -40,7 +40,7 @@ namespace bugat
 	void Context::Initialize(uint32_t queCount)
 	{
 		_globalQueSize = queCount;
-		for (int i = 0; i < _globalQueSize; i++)
+		for (uint32_t i = 0; i < _globalQueSize; i++)
 		{
 			_globalQue[i].store(new SerializerQueue(), std::memory_order_seq_cst);
 			_waitQue.Push(new SerializerQueue());

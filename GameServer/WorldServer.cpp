@@ -4,6 +4,7 @@
 #include "GameSession.h"
 #include "../Network/Configure.h"
 #include "Template.h"
+#include "../Core/Log.h"
 
 namespace bugat
 {
@@ -30,14 +31,21 @@ namespace bugat
 			});
 	}
 
+	std::atomic<int> worldcount = 0;
 	void WorldServer::OnAccept(std::shared_ptr<net::Connection>& conn)
 	{
 		auto gameSession = CreateSerializeObject<GameSession>(WorldLogicContext);
 		gameSession->SetConnection(conn);
 		std::weak_ptr<GameSession> weak = gameSession;
 
-		conn->OnAccept += []() {};
+		conn->OnAccept += []() {
+			auto value = worldcount.fetch_add(1);
+			InfoLog("{}", value + 1);
+			};
 		conn->OnClose += [weak]() {
+			auto value = worldcount.fetch_sub(1);
+			InfoLog("{}", value - 1);
+
 			if (auto session = weak.lock(); session)
 				session->Close();
 			};

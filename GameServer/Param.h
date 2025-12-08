@@ -10,95 +10,120 @@ namespace bugat
 	*/
 	class Param
 	{
+		using ValueType = int32_t;
 		static constexpr int32_t MAX = 1 << 30;
 		static constexpr int32_t MIN = -1 * MAX;
 		static constexpr int decimal = 10000;
 
 	public:
 		Param() : _value(0) {}
-		Param(int32_t value) : _value(value) {}
+		Param(float value) : _value(static_cast<ValueType>(value * decimal)) {}
 
 		template<typename T>
-		requires std::is_integral_v<T>
+		requires std::is_integral_v<T> || std::is_floating_point_v<T>
 		void operator-=(T delta)
 		{
-			_value = _value - delta * decimal;
+			(*this) -= Param(delta);
 		}
 
 		void operator-=(const Param& delta)
 		{
-			_value = _value - delta._value;
+			(*this) - delta;
 		}
 
 		template<typename T>
-		requires std::is_integral_v<T>
+		requires std::is_integral_v<T> || std::is_floating_point_v<T>
 		void operator+=(T delta)
 		{
-			_value = _value + delta * decimal;
+			(*this) += Param(delta);
 		}
 
 		void operator+=(const Param& delta)
 		{
-			_value = _value + delta._value;
+			(*this) + delta;
 		}
 
 		template<typename T>
-		requires std::is_integral_v<T>
+		requires std::is_integral_v<T> || std::is_floating_point_v<T>
 		void operator*=(T delta)
 		{
-			_value = _value * delta;
+			(*this) *= Param(delta);
 		}
 
 		void operator*=(const Param& delta)
 		{
-			_value = _value * delta.GetFValue();
+			(*this) * delta;
 		}
 
 		template<typename T>
-		requires std::is_integral_v<T>
+		requires std::is_integral_v<T> || std::is_floating_point_v<T>
 		void operator/=(T delta)
 		{
-			_value = _value / delta;
+			(*this) /= Param(delta);
 		}
 
 		void operator/=(const Param& delta)
 		{
-			_value = _value / delta.GetFValue();
+			(*this) / delta;
 		}
 
-		template<typename T>
-		Param& operator-(T delta)
+		Param& operator-(const Param& delta)
 		{
-			_value -= delta;
+			int64_t value = _value - delta._value;
+			if (value > MAX)
+				value = MAX;
+			else if (value < MIN)
+				value = MIN;
+
+			_value = static_cast<ValueType>(value);
 			return *this;
 		}
 
-		template<typename T>
-		Param& operator+(T delta)
+		Param& operator+(const Param& delta)
 		{
-			_value += delta;
+			int64_t value = _value + delta._value;
+			if (value > MAX)
+				value = MAX;
+			else if (value < MIN)
+				value = MIN;
+
+			_value = static_cast<ValueType>(value);
 			return *this;
 		}
 
-		template<typename T>
-		Param& operator*(T delta)
+		Param& operator*(const Param& delta)
 		{
-			_value *= delta;
+			auto v = delta.GetValue();
+			int64_t value = static_cast<int64_t>((double)_value * v / decimal);
+			if (value > MAX)
+				value = MAX;
+			else if (value < MIN)
+				value = MIN;
+
+			_value = static_cast<ValueType>(value);
 			return *this;
 		}
 
-		template<typename T>
-		Param & operator/(T delta)
+		Param & operator/(const Param& delta)
 		{
-			_value /= delta;
+			auto v = delta.GetValue();
+			if (v == 0)
+				v = 1;
+
+			int64_t value = static_cast<int64_t>((double)_value / v / decimal);
+			if (value > MAX)
+				value = MAX;
+			else if (value < MIN)
+				value = MIN;
+
+			_value = static_cast<ValueType>(value);
 			return *this;
 		}
 
-		int32_t GetValue() const { return _value / decimal; }
-		float GetFValue() const { return _value / decimal; }
+		float GetValue() const { return (float)_value / decimal; }
 
 	protected:
-		int32_t _value;
+		ValueType _value;
 	};
 
 	class EventParam : public NonCopyable
