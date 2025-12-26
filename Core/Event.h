@@ -42,12 +42,7 @@ namespace bugat
             Subscribe(handle);
         }
 
-        void operator=(Handler handle)
-        {
-            _nextId = 0;
-            _handlers.clear();
-            Subscribe(handle);
-        }
+        void operator=(Handler handle) = delete;
 
         // C#처럼 operator()로도 부를 수 있게
         void operator()(Args... args) { Invoke(std::forward<Args>(args)...); }

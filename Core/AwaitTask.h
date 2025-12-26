@@ -1,10 +1,11 @@
 #pragma once
-#include <optional>
 #include <coroutine>
-#include <memory>
+#include "Event.h"
 
 namespace bugat
 {
+	class TaskSerializer;
+
 	template<typename T>
 	class AwaitTask
 	{
@@ -27,6 +28,7 @@ namespace bugat
 				if (_continuation)
 					_continuation.resume();
 
+				_OnCompleted();
 				return std::suspend_always{}; 
 			}
 
@@ -39,6 +41,7 @@ namespace bugat
 
 			T _value;
 			std::coroutine_handle<> _continuation;
+			Event<> _OnCompleted;
 		};
 
 		struct Awaiter
@@ -76,6 +79,11 @@ namespace bugat
 			return Awaiter{ _h };
 		}
 
+		void AddCompletedHandler(const std::function<void()>& handler)
+		{
+			_h.promise()._OnCompleted += handler;
+		}
+
 	private:
 		HandleType _h;
 	};
@@ -102,6 +110,7 @@ namespace bugat
 				if (_continuation)
 					_continuation.resume();
 
+				_OnCompleted();
 				return std::suspend_always{};
 			}
 
@@ -110,6 +119,7 @@ namespace bugat
 			void unhandled_exception() {}
 
 			std::coroutine_handle<> _continuation;
+			Event<> _OnCompleted;
 		};
 
 		struct Awaiter
@@ -144,7 +154,24 @@ namespace bugat
 			return Awaiter{ _h };
 		}
 
+		void AddCompletedHandler(const std::function<void()>& handler)
+		{
+			_h.promise()._OnCompleted += handler;
+		}
+
 	private:
 		HandleType _h;
 	};
+
+	template<typename Executor, typename AwaitTask>
+	requires std::is_convertible_v<Executor, std::shared_ptr<TaskSerializer>>
+	void CoSpawn(Executor& executor, AwaitTask&& awaitable)
+	{
+		auto sptr = std::make_shared<AwaitTask>(std::move(awaitable));
+		sptr->AddCompletedHandler([executor, sptr]()
+		{
+			// 완료되면 다시 실행 컨텍스트로 복귀
+			executor->Post([sptr]() {});
+			});
+	}
 }

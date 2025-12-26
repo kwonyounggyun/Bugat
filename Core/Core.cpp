@@ -8,6 +8,7 @@
 #include "ObjectPool.h"
 #include "TaskSerializer.h"
 #include "ThreadGroup.h"
+#include "AwaitTask.h"
 
 // TODO: This is an example of a library function
 
@@ -15,6 +16,21 @@ int add(int i)
 {
 	return i;
 }
+
+bugat::AwaitTask<int> Test1()
+{
+	co_return 1;
+}
+
+bugat::AwaitTask<void> Test2()
+{
+	auto result = co_await Test1();
+	co_return;
+}
+
+class TestSerializer : public bugat::TaskSerializer
+{
+};
 
 void fnCore()
 {
@@ -31,10 +47,14 @@ void fnCore()
 		auto testObj4 = k2->Get();
 	}
 
-	bugat::core::TaskSerializer serial;
+	bugat::TaskSerializer serial;
 	std::function<void()> func = []() {};
 	serial.Post(func);
 	serial.Post([]() {});
+	serial.Post(Test1());
+	serial.Post(Test2());
+	auto test = std::make_shared<TestSerializer>();
+	bugat::CoSpawn(test, Test2());
 
 	serial.Post([](int a)->int {
 		return 1;

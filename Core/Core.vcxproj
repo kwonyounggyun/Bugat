@@ -154,6 +154,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AwaitTask.h" />
     <ClInclude Include="DateTime.h" />
     <ClInclude Include="Event.h" />
     <ClInclude Include="framework.h" />
@@ -166,6 +167,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="RWLockObject.h" />
     <ClInclude Include="Singleton.h" />
+    <ClInclude Include="Task.h" />
     <ClInclude Include="TaskSerializer.h" />
     <ClInclude Include="ThreadGroup.h" />
   </ItemGroup>

@@ -20,7 +20,7 @@ namespace bugat
             _tail = temp;
         }
 
-        void Push(T& value)
+        int64_t Push(T& value)
         {
             auto node = new Node();
             node->_value = value;
@@ -30,10 +30,11 @@ namespace bugat
             while (false == _tail.compare_exchange_strong(tail, node, std::memory_order_acq_rel, std::memory_order_acquire));
             tail->_next.store(std::shared_ptr<Node>(node), std::memory_order_release);
 
-            _size.fetch_add(1, std::memory_order_release);
+            auto size = _size.fetch_add(1, std::memory_order_release);
+            return size + 1;
         }
 
-        void Push(T&& value)
+        int64_t Push(T&& value)
         {
             auto node = new Node();
             node->_value = std::move(value);
@@ -43,7 +44,8 @@ namespace bugat
             while (false == _tail.compare_exchange_strong(tail, node, std::memory_order_acq_rel, std::memory_order_acquire));
             tail->_next.store(std::shared_ptr<Node>(node), std::memory_order_release);
 
-            _size.fetch_add(1, std::memory_order_release);
+            auto size = _size.fetch_add(1, std::memory_order_release);
+            return size + 1;
         }
 
         bool Pop(T& output)
