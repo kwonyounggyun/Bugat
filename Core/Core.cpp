@@ -38,13 +38,13 @@ void fnCore()
 	bugat::RWLockObject<std::map<int, int>> obj;
 	auto lock = obj.LockRead();
 
-	auto k2 = bugat::ObjectPoolFactory::Create<int, 10>();
+	bugat::ObjectPool<int, 10> k2;
 
 	{
-		auto testObj1 = k2->Get();
-		auto testObj2 = k2->Get();
-		auto testObj3 = k2->Get();
-		auto testObj4 = k2->Get();
+		auto testObj1 = k2.Get();
+		auto testObj2 = k2.Get();
+		auto testObj3 = k2.Get();
+		auto testObj4 = k2.Get();
 	}
 
 	bugat::TaskSerializer serial;

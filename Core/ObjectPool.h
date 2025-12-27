@@ -2,156 +2,107 @@
 #include <stack>
 #include <vector>
 #include <memory>
+#include <atomic>
+#include "LockFreeQueue.h"
 
 namespace bugat
 {
 	template<typename T, int AllocSize>
 	class ObjectPool
 	{
-		friend class ObjectPoolFactory;
-
-		struct MemoryBlock
+		class Pool : public std::enable_shared_from_this<Pool>
 		{
-			MemoryBlock(std::weak_ptr<ObjectPool>& pool, void* p) : _pool(pool), _ptr(p) {}
-			~MemoryBlock()
+			struct MemoryBlock
 			{
-				delete[] _ptr;
+				MemoryBlock(void* p) : _ptr(p) {}
+				~MemoryBlock()
+				{
+					delete[] _ptr;
+				}
+
+				void* _ptr;
+			};
+
+			struct Member : public std::enable_shared_from_this<Member>
+			{
+				Member(std::weak_ptr<Pool> pool, std::shared_ptr<MemoryBlock>& block, T* ptr) : _pool(pool), _block(block), _ptr(ptr) {}
+				~Member()
+				{
+					// 반환 시 Pool에 다시 푸시
+					if (auto sptr = _pool.lock(); sptr)
+						sptr->Push(_block, _ptr);
+				}
+
+				std::shared_ptr<T> Get()
+				{
+					// 커스텀 삭제자를 사용하여 Pool이 살아있는 동안만 메모리가 유지되도록 함, ptr은 MemoryBlock이 관리하기 때문에 delete 하지 않음.
+					return std::shared_ptr<T>(_ptr, [mem = this->shared_from_this()](T* ptr) {
+						});
+				}
+
+				std::weak_ptr<Pool> _pool;
+				std::shared_ptr<MemoryBlock> _block;
+				T* _ptr;
+			};
+
+		public:
+			Pool() {}
+			~Pool()
+			{
+				_mems.Clear();
+				_blocks.clear();
 			}
 
-			void SetIdx(int idx) { _idx = idx; }
-			void Push(T* ptr)
+			template<typename ...Args>
+			std::shared_ptr<T> Get(Args&&... args)
 			{
-				_pool.lock()->Push(ptr, _idx);
+				std::shared_ptr<Member> mem;
+				while(false == _mems.Pop(mem))
+					Alloc();
+
+				auto sptr = mem->Get();
+				new(sptr.get())T(std::forward<Args>(args)...);
+				return sptr;
 			}
 
-			std::weak_ptr<ObjectPool> _pool;
-			void* _ptr;
-			int _idx;
+		private:
+			void Push(std::shared_ptr<MemoryBlock>& block, T* ptr)
+			{
+				_mems.Push(std::make_shared<Member>(this->weak_from_this(), block, ptr));
+			}
+
+			void Alloc()
+			{
+				if (true == _isAllocating.test_and_set(std::memory_order_acquire))
+					return;
+
+				void* memoryBlock = operator new(sizeof(T) * AllocSize);
+				auto blockPtr = std::make_shared<MemoryBlock>(memoryBlock);
+				_blocks.push_back(blockPtr);
+
+				auto castBlock = static_cast<T*>(memoryBlock);
+				for (int i = 0; i < AllocSize; i++)
+					Push(blockPtr, castBlock + i);
+
+				_isAllocating.clear(std::memory_order_release);
+			}
+
+		private:
+			LockFreeQueue<std::shared_ptr<Member>> _mems;
+			std::vector<std::shared_ptr<MemoryBlock>> _blocks;
+			std::atomic_flag _isAllocating;
 		};
 
-		ObjectPool() : _allocCount(0) {}
 	public:
-		~ObjectPool()
-		{
-			while(!_mems.empty())
-				_mems.pop();
-
-			_blocks.clear();
-		}
+		ObjectPool() : _pool(std::make_shared<Pool>()) {}
 
 		template<typename ...Args>
 		std::shared_ptr<T> Get(Args&&... args)
 		{
-			if (_mems.empty())
-				Alloc();
-
-			auto [memory, blockIdx] = _mems.top();
-			_mems.pop();
-
-			auto blockPtr = _blocks[blockIdx];
-			new(memory)T(std::forward<Args>(args)...);
-			auto blockPtr1 = _blocks[blockIdx];
-			auto blockPtr2 = _blocks[blockIdx];
-			auto blockPtr3 = _blocks[blockIdx];
-			auto blockPtr4 = _blocks[blockIdx];
-			auto blockPtr5 = _blocks[blockIdx];
-			return std::shared_ptr<T>(memory, [blockPtr](T* ptr) {
-				ptr->~T();
-				blockPtr->Push(ptr);
-				});
+			return _pool->Get(std::forward(args)...);
 		}
 
 	private:
-		void Push(T* ptr, int blockIdx)
-		{
-			_mems.emplace(ptr, blockIdx);
-		}
-
-		void Alloc()
-		{
-			void* memoryBlock = operator new(sizeof(T) * AllocSize);
-			auto blockPtr = std::make_shared<MemoryBlock>(_self, memoryBlock);
-			_blocks.push_back(blockPtr);
-			auto idx = _blocks.size() - 1;
-			blockPtr->SetIdx(idx);
-
-			auto castBlock = static_cast<T*>(memoryBlock);
-			for (int i = 0; i < AllocSize; i++)
-				Push(castBlock + i, idx);
-		}
-
-	private:
-		std::stack<std::tuple<T*, int>> _mems;
-		std::vector<std::shared_ptr<MemoryBlock>> _blocks;
-		uint32_t _allocCount;
-
-		std::weak_ptr<ObjectPool> _self;
+		std::shared_ptr<Pool> _pool;
 	};
-
-	class ObjectPoolFactory
-	{
-	public:
-		template<typename T, int AllocSize = 10>
-		static std::shared_ptr<ObjectPool<T, AllocSize>> Create()
-		{
-			auto ptr = new ObjectPool<T, AllocSize>();
-			auto sptr = std::shared_ptr<ObjectPool<T, AllocSize>>(ptr);
-			sptr->_self = sptr;
-			return sptr;
-		}
-	};
-
-	/*template<typename T, int AllocSize>
-	class ObjectPool<T, true, AllocSize>
-	{
-	public:
-		std::shared_ptr<T> GetObj()
-		{
-			std::lock_guard lock(_mtx);
-			if (_mems.empty())
-				Alloc();
-
-			auto top = _mems.top();
-			_mems.pop();
-
-			return std::shared_ptr<T>(top, [this](T* ptr) {
-				std::lock_guard lock(_mtx);
-				Push(ptr);
-				});
-		}
-
-		void Release()
-		{
-			std::lock_guard lock(_mtx);
-			_release = true;
-			while (!_mems.empty())
-			{
-				auto top = _mems.top();
-				_mems.pop();
-				delete top;
-			}
-		}
-
-	private:
-		void Push(T* ptr)
-		{
-			if (_release)
-				delete ptr;
-
-			_mems.push(ptr);
-		}
-
-		void Alloc()
-		{
-			T* newMem = new T[AllocSize];
-
-			for (int i = 0; i < AllocSize; i++)
-				Push(newMem + i);
-		}
-
-	private:
-		std::shared_mutex _mtx;
-		std::stack<T*> _mems;
-		bool _release;
-	};*/
 }
