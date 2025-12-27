@@ -37,6 +37,7 @@ namespace bugat
 				{
 					// 커스텀 삭제자를 사용하여 Pool이 살아있는 동안만 메모리가 유지되도록 함, ptr은 MemoryBlock이 관리하기 때문에 delete 하지 않음.
 					return std::shared_ptr<T>(_ptr, [mem = this->shared_from_this()](T* ptr) {
+						ptr->~T();
 						});
 				}
 
