@@ -36,7 +36,8 @@ namespace bugat
 		{
 			while (true == _runningGuard.test_and_set(std::memory_order_acquire));
 
-			auto executeCount = _que.ConsumeAll([](AnyTask& task) 
+			auto size = _taskCount.load(std::memory_order_acquire);
+			auto executeCount = _que.Consume(size, [](AnyTask& task)
 				{
 					task.Run();
 				});

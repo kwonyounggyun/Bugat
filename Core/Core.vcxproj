@@ -155,6 +155,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AwaitTask.h" />
+    <ClInclude Include="Counter.h" />
     <ClInclude Include="DateTime.h" />
     <ClInclude Include="Event.h" />
     <ClInclude Include="framework.h" />

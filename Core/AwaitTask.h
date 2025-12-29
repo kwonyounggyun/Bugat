@@ -4,8 +4,6 @@
 
 namespace bugat
 {
-	class TaskSerializer;
-
 	template<typename T>
 	class AwaitTask
 	{
@@ -163,6 +161,7 @@ namespace bugat
 		HandleType _h;
 	};
 
+	class TaskSerializer;
 	template<typename Executor, typename AwaitTask>
 	requires std::is_convertible_v<Executor, std::shared_ptr<TaskSerializer>>
 	void CoSpawn(Executor& executor, AwaitTask&& awaitable)

@@ -65,6 +65,7 @@ namespace bugat
             return true;
         }
 
+		//작업 하나를 소비한다.
         template<typename Func>
         bool ConsumeOne(Func&& func)
         {
@@ -76,6 +77,7 @@ namespace bugat
             return true;
         }
 
+		//큐가 빌때까지 모든 작업을 소비한다.
         template<typename Func>
         int64_t ConsumeAll(Func&& func)
         {
@@ -83,6 +85,22 @@ namespace bugat
             while (ConsumeOne(func)) count++;
 
             return count;
+        }
+
+		//지정한 수만 큼 소비하는데 큐가 비었으면 멈춘다.
+        template<typename Func>
+        int64_t Consume(int64_t count, Func&& func)
+        {
+            int64_t progressCount = 0;
+            while (progressCount < count)
+            {
+                if (ConsumeOne(func))
+                    progressCount++;
+                else
+                    break;
+            }
+
+            return progressCount;
         }
 
         void Clear()
