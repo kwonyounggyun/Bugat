@@ -8,6 +8,9 @@ namespace bugat
         struct Node
         {
             Node() : _next(nullptr) {}
+            Node(const T& val) : _value(val), _next(nullptr) {}
+            Node(T&& val) : _value(std::move(val)), _next(nullptr) {}
+
             T _value;
             std::atomic<std::shared_ptr<Node>> _next;
         };
@@ -15,52 +18,50 @@ namespace bugat
     public:
         LockFreeQueue() : _size(0)
         {
-            auto temp = new Node();
-            _head = std::shared_ptr<Node>(temp);
+            auto temp = std::make_shared<Node>();
+            _head = temp;
             _tail = temp;
         }
 
         int64_t Push(T& value)
         {
-            auto node = new Node();
-            node->_value = value;
-            node->_next = nullptr;
-
-            auto tail = _tail.load(std::memory_order_acquire);
-            while (false == _tail.compare_exchange_strong(tail, node, std::memory_order_acq_rel, std::memory_order_acquire));
-            tail->_next.store(std::shared_ptr<Node>(node), std::memory_order_release);
-
-            auto size = _size.fetch_add(1, std::memory_order_release);
-            return size + 1;
+            auto node = std::make_shared<Node>(value);
+            return InternalPush(node);
         }
 
         int64_t Push(T&& value)
         {
-            auto node = new Node();
-            node->_value = std::move(value);
-            node->_next = nullptr;
-
-            auto tail = _tail.load(std::memory_order_acquire);
-            while (false == _tail.compare_exchange_strong(tail, node, std::memory_order_acq_rel, std::memory_order_acquire));
-            tail->_next.store(std::shared_ptr<Node>(node), std::memory_order_release);
-
-            auto size = _size.fetch_add(1, std::memory_order_release);
-            return size + 1;
+            auto node = std::make_shared<Node>(std::move(value));
+            return InternalPush(node);
         }
 
         bool Pop(T& output)
         {
             auto head = _head.load(std::memory_order_acquire);
-            std::shared_ptr<Node> popNode = nullptr;
-            do
+            while (true)
             {
-                if (popNode = head->_next.load(std::memory_order_acquire); popNode == nullptr)
-                    return false;
-            } while (false == _head.compare_exchange_strong(head, popNode, std::memory_order_acq_rel, std::memory_order_acquire));
-            _size.fetch_sub(1, std::memory_order_release);
+                auto tail = _tail.load(std::memory_order_acquire);
+                auto popNode = head->_next.load(std::memory_order_acquire);
 
-            output = std::move(popNode->_value);
-            head->_next = nullptr;
+                if (popNode == nullptr)
+                    return false;
+
+                if (head == tail)
+                {
+                    _tail.compare_exchange_strong(tail, popNode, std::memory_order_acq_rel);
+                    head = _head.load(std::memory_order_acquire);
+                    continue;
+                }
+
+                if (false == _head.compare_exchange_strong(head, popNode, std::memory_order_acq_rel, std::memory_order_acquire))
+                    continue;
+
+                _size.fetch_sub(1, std::memory_order_relaxed);
+                output = std::move(popNode->_value);
+
+                head->_next.store(nullptr, std::memory_order_release);
+                break;
+            }
 
             return true;
         }
@@ -113,8 +114,28 @@ namespace bugat
         int64_t GetSize() { return _size; }
 
     private:
+        int64_t InternalPush(std::shared_ptr<Node>& node)
+        {
+            while (true)
+            {
+                auto tail = _tail.load(std::memory_order_acquire);
+                std::shared_ptr<Node> next = nullptr;
+                if (tail->_next.compare_exchange_strong(next, node, std::memory_order_acq_rel, std::memory_order_acquire))
+                {
+                    _tail.compare_exchange_strong(tail, node, std::memory_order_acq_rel, std::memory_order_acquire);
+                    break;
+                }
+                else
+                    _tail.compare_exchange_strong(tail, next, std::memory_order_acq_rel, std::memory_order_acquire);
+            }
+
+            auto size = _size.fetch_add(1, std::memory_order_relaxed);
+            return size + 1;
+        }
+
+    private:
         std::atomic<std::shared_ptr<Node>> _head;
-        std::atomic<Node*> _tail;
+        std::atomic<std::shared_ptr<Node>> _tail;
         std::atomic<int64_t> _size;
     };
 }

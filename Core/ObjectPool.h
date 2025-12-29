@@ -7,34 +7,44 @@
 
 namespace bugat
 {
-	template<typename T, int AllocSize>
+	template<typename T, int AllocSize = 10>
 	class ObjectPool
 	{
 		class Pool : public std::enable_shared_from_this<Pool>
 		{
 			struct MemoryBlock
 			{
-				MemoryBlock(void* p) : _ptr(p) {}
+				MemoryBlock(std::weak_ptr<Pool> pool, void* p) : _pool(pool), _ptr(p) {}
 				~MemoryBlock()
 				{
-					delete[] _ptr;
+					::operator delete(_ptr);
 				}
 
+				std::shared_ptr<Pool> GetPool()
+				{
+					return _pool.load(std::memory_order_acquire).lock();
+				}
+
+				void Release()
+				{
+					_pool.store(std::weak_ptr<Pool>(), std::memory_order_release);
+				}
+
+				std::atomic<std::weak_ptr<Pool>> _pool;
 				void* _ptr;
 			};
 
 			struct Member
 			{
-				Member(std::weak_ptr<Pool> pool, std::shared_ptr<MemoryBlock>& block) : _pool(pool), _block(block) {}
+				Member(std::shared_ptr<MemoryBlock>& block) : _block(block) {}
 				~Member() 
 				{
-					_pool.reset();
 					_block.reset();
 				}
 
 				bool Return()
 				{
-					if (auto sptr = _pool.lock(); sptr)
+					if (auto sptr = _block->GetPool(); sptr)
 					{
 						sptr->Push(this);
 						return true;
@@ -57,27 +67,40 @@ namespace bugat
 						});
 				}
 
-				std::weak_ptr<Pool> _pool;
 				std::shared_ptr<MemoryBlock> _block; //집나간동안 해제되면안됨..
 				T obj;
 			};
 
 		public:
-			Pool() {}
+			Pool() 
+			{
+			}
+
 			~Pool()
 			{
 				_mems.ConsumeAll([](Member* mem) {
 					mem->~Member();
 					});
-				_blocks.clear();
+				while(!_blocks.empty())
+					_blocks.pop();
+			}
+
+			void Init(int defaultPoolSize)
+			{
+				Alloc(defaultPoolSize);
 			}
 
 			template<typename ...Args>
 			std::shared_ptr<T> Get(Args&&... args)
 			{
 				Member* mem;
-				while(false == _mems.Pop(mem))
-					Alloc();
+				while (false == _mems.Pop(mem))
+				{
+					if (_mems.GetSize() > 0)
+						continue;
+					
+					Alloc(AllocSize);
+				}
 
 				auto sptr = mem->Get();
 				new(sptr.get())T(std::forward<Args>(args)...);
@@ -90,19 +113,19 @@ namespace bugat
 				_mems.Push(member);
 			}
 
-			void Alloc()
+			void Alloc(int size)
 			{
 				if (true == _isAllocating.test_and_set(std::memory_order_acquire))
 					return;
 
-				void* memoryBlock = operator new(sizeof(Member) * AllocSize);
-				auto blockPtr = std::make_shared<MemoryBlock>(memoryBlock);
-				_blocks.push_back(blockPtr);
+				void* memoryBlock = ::operator new(sizeof(Member) * size);
+				auto blockPtr = std::make_shared<MemoryBlock>(this->weak_from_this(), memoryBlock);
+				_blocks.push(blockPtr);
 
 				auto castBlock = static_cast<Member*>(memoryBlock);
-				for (int i = 0; i < AllocSize; i++)
+				for (int i = 0; i < size; i++)
 				{
-					new(castBlock + i)Member(this->weak_from_this(), blockPtr);
+					new(castBlock + i)Member(blockPtr);
 					Push(castBlock + i);
 				}
 
@@ -111,12 +134,19 @@ namespace bugat
 
 		private:
 			LockFreeQueue<Member*> _mems;
-			std::vector<std::shared_ptr<MemoryBlock>> _blocks;
+			std::stack<std::shared_ptr<MemoryBlock>> _blocks;
 			std::atomic_flag _isAllocating;
 		};
 
 	public:
-		ObjectPool() : _pool(std::make_shared<Pool>()) {}
+		ObjectPool() : _pool(std::make_shared<Pool>()) 
+		{
+		}
+
+		void Init(int DefaultBlockSize = 0)
+		{
+			_pool->Init(DefaultBlockSize);
+		}
 
 		template<typename ...Args>
 		std::shared_ptr<T> Get(Args&&... args)
