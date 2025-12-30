@@ -74,24 +74,90 @@ namespace bugat
 		std::tuple<BoostError, size_t> _result;
 	};
 
-	AwaitTask<void> Connection::Connect(const Executor& executor, std::string ip, short port)
+	namespace Net
 	{
-		_socket = std::make_unique<Socket>(executor);
-		Resolver resolver(executor);
-		EndPoint ep(boost::asio::ip::make_address(ip), port);
-		Resolver::results_type endpoints = resolver.resolve(ep);
-
-		auto error = co_await AwaitConnect(this, endpoints);
-		if (error)
+		AwaitTask<void> Connect(std::shared_ptr<Connection> connection, Resolver::results_type endpoints)
 		{
-			ErrorLog("Socket Connect Error[{}]! message {}", error.value(), error.message());
-			_socket.reset();
+			auto error = co_await AwaitConnect(connection.get(), endpoints);
+			if (error)
+			{
+				ErrorLog("Socket Connect Error[{}]! message {}", error.value(), error.message());
+				connection->Close();
+				co_return;
+			}
+
+			connection->OnConnect();
+			connection->Start();
 			co_return;
 		}
 
-		OnConnect();
-		Start();
-		co_return;
+		AwaitTask<void> Send(std::shared_ptr<Connection> connection)
+		{
+			AnySendPacket* sendingPacket = nullptr;
+			while (false == connection->Disconnected())
+			{
+				if (sendingPacket == nullptr)
+				{
+					if (false == connection->PopSendPacket(sendingPacket))
+					{
+						co_await AwaitAlways(connection.get());
+						continue;
+					}
+				}
+
+				auto [error, transfer] = co_await AwaitSend(connection.get(), sendingPacket);
+				if (error)
+				{
+					auto id = connection->GetObjectId();
+					if (error.value() == boost::asio::error::eof)
+						InfoLog("Socket Close ID[{}]! message {}", error.value(), error.message(), id.String());
+					else
+						ErrorLog("Socket Close Error[{}] ID[{}]! message {}", error.value(), error.message(), id.String());
+
+					break;
+				}
+
+				sendingPacket->Update(transfer);
+
+				if (sendingPacket->IsEmpty())
+				{
+					delete sendingPacket;
+					sendingPacket = nullptr;
+				}
+			}
+
+			connection->Close();
+			co_return;
+		}
+
+		AwaitTask<void> Recv(std::shared_ptr<Connection> connection)
+		{
+			NetworkMessage msg;
+			while (false == connection->Disconnected())
+			{
+				auto bufInfo = msg.GetBufInfo();
+				auto [error, transper] = co_await AwaitRecv(connection.get(), bufInfo.buf, bufInfo.size);
+				if (error)
+				{
+					auto id = connection->GetObjectId();
+					if (error.value() == boost::asio::error::eof)
+						InfoLog("Socket Close ID[{}]! message {}", error.value(), error.message(), id.String());
+					else
+						ErrorLog("Socket Close Error[{}] ID[{}]! message {}", error.value(), error.message(), id.String());
+
+					break;
+				}
+
+				msg.Update(transper);
+
+				std::shared_ptr<RecvPacket> packet = nullptr;
+				if (msg.GetNetMessage(packet))
+					connection->OnRead(packet);
+			}
+
+			connection->Close();
+			co_return;
+		}
 	}
 
 	void Connection::Close()
@@ -119,66 +185,20 @@ namespace bugat
 		OnClose();
 	}
 
-	AwaitTask<void> Connection::Send()
+	void Connection::Connect(const Executor& executor, std::string ip, short port)
 	{
-		AnySendPacket* sendingPacket = nullptr;
-		while (false == Disconnected())
-		{
-			if (sendingPacket == nullptr)
-			{
-				if (false == _sendQue.Pop(sendingPacket))
-				{
-					co_await AwaitAlways(this);
-					continue;
-				}
-			}
+		_socket = std::make_unique<Socket>(executor);
+		Resolver resolver(executor);
+		EndPoint ep(boost::asio::ip::make_address(ip), port);
+		Resolver::results_type endpoints = resolver.resolve(ep);
 
-			auto [error, transfer] = co_await AwaitSend(this, sendingPacket);
-			if(error)
-			{
-				if (error.value() != boost::asio::error::eof)
-					ErrorLog("Socket Close Error[{}]! message {}", error.value(), error.message());
-
-				break;
-			}
-
-			sendingPacket->Update(transfer);
-
-			if (sendingPacket->IsEmpty())
-			{
-				delete sendingPacket;
-				sendingPacket = nullptr;
-			}
-		}
-		
-		Close();
-		co_return;
+		auto sptr = std::static_pointer_cast<Connection>(shared_from_this());
+		CoSpawn(*this, Net::Connect(sptr, endpoints));
 	}
 
-	AwaitTask<void> Connection::Recv()
+	bool Connection::PopSendPacket(AnySendPacket*& packet)
 	{
-		NetworkMessage msg;
-		while (false == Disconnected())
-		{
-			auto bufInfo = msg.GetBufInfo();
-			auto [error, transper] = co_await AwaitRecv(this, bufInfo.buf, bufInfo.size);
-			if (error)
-			{
-				if (error.value() != boost::asio::error::eof)
-					ErrorLog("Socket Close Error[{}]! message {}", error.value(), error.message());
-
-				break;
-			}
-
-			msg.Update(transper);
-
-			std::shared_ptr<RecvPacket> packet = nullptr;
-			if (msg.GetNetMessage(packet))
-				OnRead(packet);
-		}
-
-		Close();
-		co_return;
+		return _sendQue.Pop(packet);
 	}
 
 	bool Connection::Start()
@@ -187,8 +207,9 @@ namespace bugat
 		if (false == _state.compare_exchange_strong(expect, ConnectionState::Connected, std::memory_order_acq_rel))
 			return false;
 
-		CoSpawn(*this, Send());
-		CoSpawn(*this, Recv());
+		auto sptr = std::static_pointer_cast<Connection>(shared_from_this());
+		CoSpawn(*this, Net::Send(sptr));
+		CoSpawn(*this, Net::Recv(sptr));
 
 		return true;
     }

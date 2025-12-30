@@ -20,10 +20,10 @@ namespace bugat
 
 	class AnySendPacket;
 	class Server;
+
 	class Connection : public SerializeObject
 	{
 		friend class Server;
-		friend class AnyConnectionFactory;
 		
 		friend struct AwaitConnect;
 		friend struct AwaitRecv;
@@ -39,7 +39,7 @@ namespace bugat
 		Connection() : _socket(nullptr), _state(ConnectionState::Connecting) {}
 		virtual ~Connection() {}
 
-		AwaitTask<void> Connect(const Executor& executor, std::string ip, short port);
+		void Connect(const Executor& executor, std::string ip, short port);
 
 		/*
 		* T는 반드시 std::vector<std::tuple<uint8_t*, size_t>> data() 함수를 구현해야한다.
@@ -50,6 +50,8 @@ namespace bugat
 			_sendQue.Push(new AnySendPacket(packet));
 		}
 
+		bool PopSendPacket(AnySendPacket*& packet);
+
 		bool Start();
 		void Close();
 
@@ -57,10 +59,7 @@ namespace bugat
 
 		bool Disconnected() const { return _state == ConnectionState::Disconnected; }
 		bool Connected() const { return _state == ConnectionState::Connected; }
-
-	private:
-		AwaitTask<void> Send();
-		AwaitTask<void> Recv();
+		void SetSocket(std::unique_ptr<Socket>& socket) { _socket = std::move(socket); }
 
 	private:
 		std::unique_ptr<Socket> _socket;
@@ -164,11 +163,15 @@ namespace bugat
 	public:
 		template<typename T>
 		AnyConnectionFactory(ConnectionFactory<T> factory) : _ptr(std::make_unique<ConnectionFactory<T>>(std::move(factory))) {};
+		AnyConnectionFactory(AnyConnectionFactory&& other) 
+		{ 
+			_ptr = std::move(other._ptr);
+		}
 
 		std::shared_ptr<Connection> Create(std::unique_ptr<Socket>& socket) const
 		{
 			auto connection = _ptr->Create();
-			connection->_socket = std::move(socket);
+			connection->SetSocket(socket);
 			return connection;
 		}
 

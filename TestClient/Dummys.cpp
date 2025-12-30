@@ -39,7 +39,7 @@ namespace bugat
 
 			connection->OnClose += [client]() { client->Close(); };
 
-			CoSpawn(*connection, connection->Connect(netContext.GetExecutor(), config.ip, config.port));
+			connection->Connect(netContext.GetExecutor(), config.ip, config.port);
 		}
 	}
 

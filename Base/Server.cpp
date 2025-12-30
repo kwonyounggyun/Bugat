@@ -34,6 +34,30 @@ namespace bugat
 		BoostError _result;
 	};
 
+	namespace Net
+	{
+		AwaitTask<void> Accept(std::shared_ptr<Server> server, const Executor& executor, AnyConnectionFactory factory, Configure config)
+		{
+			Acceptor acceptor(executor, { TCP::v4(), config.port });
+			for (;;)
+			{
+				auto socket = std::make_unique<Socket>(executor);
+				auto error = co_await AwaitAccept{ server.get(), acceptor, socket.get()};
+				if (error)
+				{
+					break;
+				}
+
+				auto connection = factory.Create(socket);
+				server->OnAccept(connection);
+				connection->OnAccept();
+				connection->Start();
+			}
+
+			co_return;
+		}
+	}
+
 	Server::Server()
 	{
 	}
@@ -42,23 +66,9 @@ namespace bugat
 	{
 	}
 
-	AwaitTask<void> Server::Accept(const Executor& executor, AnyConnectionFactory factory, Configure config)
+	void Server::Accept(const Executor& executor, AnyConnectionFactory factory, Configure config)
 	{
-		Acceptor acceptor(executor, { TCP::v4(), config.port });
-		for (;;)
-		{
-			auto socket = std::make_unique<Socket>(executor);
-			auto error = co_await AwaitAccept{ this, acceptor, socket.get() };
-			if (error)
-			{
-				
-				break;
-			}
-
-			auto connection = factory.Create(socket);
-			OnAccept(connection);
-			connection->OnAccept();
-			connection->Start();
-		}
+		auto sptr = std::static_pointer_cast<Server>(shared_from_this());
+		CoSpawn(*this, Net::Accept(sptr, executor, std::move(factory), config));
 	}
 }

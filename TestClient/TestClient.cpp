@@ -19,6 +19,7 @@ using namespace bugat;
 AwaitTask<void> SendingPacket(Client* client)
 {
     auto id = client->GetObjectId();
+    InfoLog("Send [{}]", id.String());
     auto fb = FBCreate();
     auto pos = bugat::protocol::game::FVec3(id.timestamp, id.count, 0);
     fb->Finish(bugat::protocol::game::CreateReq_CS_Move(*fb, &pos));
@@ -29,6 +30,7 @@ AwaitTask<void> SendingPacket(Client* client)
 int main()
 {
     Context logicContext;
+    logicContext.Initialize(10);
     NetworkContext networkContext;
 
     ClientHandler::Instance().Init();
@@ -39,14 +41,15 @@ int main()
     Configure config;
     config.ip = "127.0.0.1";
     config.port = 9000;
-    dummy.Start(10, ClientConnectionFactory(logicContext), networkContext, config);
+    dummy.Start(7000, ClientConnectionFactory(logicContext), networkContext, config);
+
 
     ThreadGroup group;
-    group.Add(1, [&logicContext](ThreadInfo& info) {
-        logicContext.RunOne();
+    group.Add(10, [&logicContext](ThreadInfo& info) {
+        logicContext.Run();
         });
 
-    group.Add(1, [&networkContext](ThreadInfo& info) {
+    group.Add(10, [&networkContext](ThreadInfo& info) {
         networkContext.RunOne();
         });
 

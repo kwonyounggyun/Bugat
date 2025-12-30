@@ -40,7 +40,7 @@ void fnNetwork()
 	Configure config;
 	config.port = 9000;
 
-	bugat::CoSpawn(*server, server->Accept(_network.GetExecutor(), ConnectionFactory<Connection>(_logic), config));
+	server->Accept(_network.GetExecutor(), ConnectionFactory<Connection>(_logic), config);
 	EventParam param;
 	Param param1;
 }

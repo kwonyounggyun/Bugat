@@ -22,6 +22,11 @@ namespace bugat
 			count = GetCount();
 		}
 
+		std::string String()
+		{
+			return std::format("{} {}", timestamp, count);
+		}
+
 		bool operator==(const ObjectId& other) const
 		{ 
 			return timestamp == other.timestamp && count == other.count;

@@ -40,17 +40,18 @@ struct Test : public SerializeObject
 int main()
 {
     ThreadGroup threads;
+    LogicContext.Initialize(10);
     threads.Add(10, [](ThreadInfo& info) {
-        LogicContext.RunOne();
+        LogicContext.Run();
         });
 
     threads.Add(10, [](ThreadInfo& info) {
         NetClientContext.RunOne();
         });
 
-    threads.Add(10, [](ThreadInfo& info) {
+ /*   threads.Add(1, [](ThreadInfo& info) {
         NetServerContext.RunOne();
-        });
+        });*/
 
     WorldInstance.SetContext(&LogicContext);
 
@@ -58,7 +59,7 @@ int main()
     WorldInstance.Initialize();
     Configure config;
     config.port = 9000;
-    CoSpawn(WorldInstance, WorldInstance.Accept(NetClientContext.GetExecutor(), ConnectionFactory<GameConnection>(LogicContext), config));
+    WorldInstance.Accept(NetClientContext.GetExecutor(), ConnectionFactory<GameConnection>(LogicContext), config);
     
 
     threads.Join();
