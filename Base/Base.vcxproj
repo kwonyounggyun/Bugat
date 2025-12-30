@@ -24,6 +24,7 @@
     <ProjectGuid>{7b8eb30d-0529-4606-ae41-da1cbfa3313b}</ProjectGuid>
     <RootNamespace>Network</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
+    <ProjectName>Base</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -152,28 +153,38 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Boost.h" />
     <ClInclude Include="Configure.h" />
     <ClInclude Include="Connection.h" />
+    <ClInclude Include="Context.h" />
+    <ClInclude Include="DataBlock.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="Handle.h" />
     <ClInclude Include="Header.h" />
     <ClInclude Include="NetworkContext.h" />
     <ClInclude Include="NetworkMessage.h" />
     <ClInclude Include="Packet.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Protocol.h" />
+    <ClInclude Include="SerializeObject.h" />
     <ClInclude Include="Server.h" />
+    <ClInclude Include="Session.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Connection.cpp" />
-    <ClCompile Include="Network.cpp" />
+    <ClCompile Include="Context.cpp" />
+    <ClCompile Include="Base.cpp" />
     <ClCompile Include="NetworkContext.cpp" />
+    <ClCompile Include="NetworkMessage.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="SerializeObject.cpp" />
     <ClCompile Include="Server.cpp" />
+    <ClCompile Include="Session.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

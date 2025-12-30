@@ -54,7 +54,6 @@ void fnCore()
 	serial.Post(Test1());
 	serial.Post(Test2());
 	auto test = std::make_shared<TestSerializer>();
-	bugat::CoSpawn(test, Test2());
 
 	serial.Post([](int a)->int {
 		return 1;

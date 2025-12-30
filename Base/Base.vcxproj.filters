@@ -45,9 +45,27 @@
     <ClInclude Include="NetworkContext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DataBlock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Context.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SerializeObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Boost.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Handle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Session.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Network.cpp">
+    <ClCompile Include="Base.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
@@ -60,6 +78,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="NetworkContext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NetworkMessage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Context.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SerializeObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Session.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

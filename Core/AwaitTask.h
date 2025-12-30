@@ -12,12 +12,32 @@ namespace bugat
 
 		struct promise_type;
 		using HandleType = std::coroutine_handle<promise_type>;
+
+		struct FinalDestroyer : std::suspend_always {
+			void await_suspend(HandleType h) const noexcept {
+				auto s = std::move(h.promise()._self);
+			}
+		};
+
+		struct HandleHolder
+		{
+			HandleHolder(HandleType h) : _h(h) {}
+			~HandleHolder()
+			{
+				if (_h)
+					_h.destroy();
+			}
+
+			HandleType _h;
+		};
 		
 		struct promise_type
 		{
 			AwaitTask get_return_object()
 			{
-				return AwaitTask{ HandleType::from_promise(*this) };
+				auto h = HandleType::from_promise(*this);
+				_self = std::make_shared<HandleHolder>(h);
+				return AwaitTask{ h };
 			}
 
 			auto initial_suspend() { return std::suspend_always{}; }
@@ -26,8 +46,7 @@ namespace bugat
 				if (_continuation)
 					_continuation.resume();
 
-				_OnCompleted();
-				return std::suspend_always{}; 
+				return FinalDestroyer{};
 			}
 
 			void return_value(T value) 
@@ -39,7 +58,7 @@ namespace bugat
 
 			T _value;
 			std::coroutine_handle<> _continuation;
-			Event<> _OnCompleted;
+			std::shared_ptr<HandleHolder> _self;
 		};
 
 		struct Awaiter
@@ -59,16 +78,9 @@ namespace bugat
 			HandleType _h;
 		};
 
-		AwaitTask(HandleType handle) : _h(handle) {}
-		~AwaitTask()
+		void resume() const
 		{
-			if (_h)
-				_h.destroy();
-		}
-
-		void resume()
-		{
-			if (!_h.done())
+			if (_h && !_h.done())
 				_h.resume();
 		}
 
@@ -77,12 +89,6 @@ namespace bugat
 			return Awaiter{ _h };
 		}
 
-		void AddCompletedHandler(const std::function<void()>& handler)
-		{
-			_h.promise()._OnCompleted += handler;
-		}
-
-	private:
 		HandleType _h;
 	};
 
@@ -95,11 +101,31 @@ namespace bugat
 		struct promise_type;
 		using HandleType = std::coroutine_handle<promise_type>;
 
+		struct FinalDestroyer : std::suspend_always {
+			void await_suspend(HandleType h) const noexcept {
+				auto s = std::move(h.promise()._self);
+			}
+		};
+
+		struct HandleHolder
+		{
+			HandleHolder(HandleType h) : _h(h) {}
+			~HandleHolder()
+			{
+				if (_h)
+					_h.destroy();
+			}
+
+			HandleType _h;
+		};
+
 		struct promise_type
 		{
 			AwaitTask get_return_object()
 			{
-				return AwaitTask{ HandleType::from_promise(*this) };
+				auto h = HandleType::from_promise(*this);
+				_self = std::make_shared<HandleHolder>(h);
+				return AwaitTask{ h };
 			}
 
 			auto initial_suspend() { return std::suspend_always{}; }
@@ -108,8 +134,7 @@ namespace bugat
 				if (_continuation)
 					_continuation.resume();
 
-				_OnCompleted();
-				return std::suspend_always{};
+				return FinalDestroyer{};
 			}
 
 			void return_void() {}
@@ -117,7 +142,7 @@ namespace bugat
 			void unhandled_exception() {}
 
 			std::coroutine_handle<> _continuation;
-			Event<> _OnCompleted;
+			std::shared_ptr<HandleHolder> _self;
 		};
 
 		struct Awaiter
@@ -134,16 +159,9 @@ namespace bugat
 			HandleType _h;
 		};
 
-		AwaitTask(HandleType handle) : _h(handle) {}
-		~AwaitTask()
+		void resume() const
 		{
-			if (_h)
-				_h.destroy();
-		}
-
-		void resume()
-		{
-			if (!_h.done())
+			if (_h && !_h.done())
 				_h.resume();
 		}
 
@@ -152,25 +170,6 @@ namespace bugat
 			return Awaiter{ _h };
 		}
 
-		void AddCompletedHandler(const std::function<void()>& handler)
-		{
-			_h.promise()._OnCompleted += handler;
-		}
-
-	private:
 		HandleType _h;
 	};
-
-	class TaskSerializer;
-	template<typename Executor, typename AwaitTask>
-	requires std::is_convertible_v<Executor, std::shared_ptr<TaskSerializer>>
-	void CoSpawn(Executor& executor, AwaitTask&& awaitable)
-	{
-		auto sptr = std::make_shared<AwaitTask>(std::move(awaitable));
-		sptr->AddCompletedHandler([executor, sptr]()
-		{
-			// 완료되면 다시 실행 컨텍스트로 복귀
-			executor->Post([sptr]() {});
-			});
-	}
 }

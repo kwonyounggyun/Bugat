@@ -1,0 +1,28 @@
+#pragma once
+#include <atomic>
+#include <array>
+#include "../Core/LockFreeQueue.h"
+#include "../Core/Counter.h"
+
+namespace bugat
+{
+	class SerializeObject;
+	class Context
+	{
+	public:
+		Context() : _stop(false) {};
+		virtual ~Context() = default;
+
+		void Initialize();
+		void Run();
+		bool RunOne();
+		void Post(std::weak_ptr<SerializeObject> serializeObject);
+		void Stop();
+
+	private:
+		LockFreeQueue<std::weak_ptr<SerializeObject>> _que;
+		Counter<1000> _executeTaskCounter;
+		
+		std::atomic<bool> _stop;
+	};
+}

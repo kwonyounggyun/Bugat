@@ -1,10 +1,12 @@
 #include "stdafx.h"
 #include "ClientConnection.h"
+#include "Client.h"
+#include "ClientManager.h"
 
-namespace bugat::test
+namespace bugat
 {
-	void ClientConnection::ProcessMsg(const bugat::net::Header& header, const std::vector<char>& msg)
+	ClientConnection::ClientConnection()
 	{
-		_client->PushMsg(header, msg);
 	}
+
 }

@@ -1,22 +1,16 @@
 #pragma once
 
-#include "Header.h"
 #include "../Core/ObjectId.h"
 #include "../Core/LockFreeQueue.h"
 #include "../Core/Event.h"
-#include "Server.h"
-#include <boost/asio/ip/tcp.hpp>
-#include <boost/asio/buffer.hpp>
 
-namespace boost::asio
+#include "../Core/AwaitTask.h"
+#include "SerializeObject.h"
+#include "Packet.h"
+#include "Boost.h"
+
+namespace bugat
 {
-	class io_context;
-}
-
-namespace bugat::net
-{
-	using boost::asio::ip::tcp;
-
 	enum class ConnectionState
 	{
 		Disconnected,
@@ -26,25 +20,25 @@ namespace bugat::net
 
 	class AnySendPacket;
 	class Server;
-	class Connection : public std::enable_shared_from_this<Connection>
+	class Connection : public SerializeObject
 	{
 		friend class Server;
 		friend class AnyConnectionFactory;
-		friend struct MessageReader;
-		friend struct MessageWriter;
-		friend struct MessageProcessor;
-		friend struct ConnectionCloser;
+		
+		friend struct AwaitConnect;
+		friend struct AwaitRecv;
+		friend struct AwaitSend;
 
 	public:
 		Event<> OnAccept;
 		Event<> OnClose;
-		Event<const Header&, const std::vector<char>&> OnRead;
+		Event<const std::shared_ptr<RecvPacket>&> OnRead;
 
-	public:
+
 		Connection() : _socket(nullptr), _state(ConnectionState::Connecting) {}
 		virtual ~Connection() {}
 
-		bool Connect(std::string ip, short port);
+		AwaitTask<void> Connect(const Executor& executor, std::string ip, short port);
 
 		/*
 		* T는 반드시 std::vector<std::tuple<uint8_t*, size_t>> data() 함수를 구현해야한다.
@@ -53,7 +47,6 @@ namespace bugat::net
 		void Send(T&& packet)
 		{ 
 			_sendQue.Push(new AnySendPacket(packet));
-			SendNotify();
 		}
 
 		bool Start();
@@ -64,16 +57,15 @@ namespace bugat::net
 		bool Disconnected() const { return _state == ConnectionState::Disconnected; }
 
 	private:
-		void SendNotify();
+		AwaitTask<void> Send();
+		AwaitTask<void> Recv();
 
 	private:
-		std::unique_ptr<tcp::socket> _socket;
-		core::ObjectId<Connection> _id;
+		std::unique_ptr<Socket> _socket;
+		ObjectId<Connection> _id;
 		std::atomic<ConnectionState> _state;
 
 		LockFreeQueue<AnySendPacket*> _sendQue;
-		AnySendPacket* sendingPacket{ nullptr };
-		std::unique_ptr<boost::asio::steady_timer> _sendTimer;
 	};
 
 	class SendPacketConcept
@@ -93,6 +85,7 @@ namespace bugat::net
 
 		T _packet;
 	};
+
 
 	class AnySendPacket
 	{
@@ -164,7 +157,7 @@ namespace bugat::net
 		template<typename T>
 		AnyConnectionFactory(ConnectionFactory<T> factory) : _ptr(std::make_unique<ConnectionFactory<T>>(std::move(factory))) {};
 
-		std::shared_ptr<Connection> Create(std::unique_ptr<tcp::socket>& socket) const
+		std::shared_ptr<Connection> Create(std::unique_ptr<Socket>& socket) const
 		{
 			auto connection = _ptr->Create();
 			connection->_socket = std::move(socket);

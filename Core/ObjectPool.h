@@ -36,7 +36,7 @@ namespace bugat
 
 			struct Member
 			{
-				Member(std::shared_ptr<MemoryBlock>& block) : _block(block) {}
+				Member(std::shared_ptr<MemoryBlock>& block, T* ptr) : _block(block), _ptr(ptr) {}
 				~Member() 
 				{
 					_block.reset();
@@ -53,10 +53,12 @@ namespace bugat
 					return false;
 				}
 
-				std::shared_ptr<T> Get()
+				template<typename ...Args>
+				std::shared_ptr<T> Get(Args&&... args)
 				{
 					// ptr은 MemoryBlock이 관리하기 때문에 delete 하지 않음.
-					return std::shared_ptr<T>(&obj, [memPtr = this](T* ptr) {
+					new(_ptr)T(std::forward<Args>(args)...);
+					return std::shared_ptr<T>(_ptr, [memPtr = this](T* ptr) {
 						ptr->~T();
 						if (false == memPtr->Return())
 						{
@@ -68,7 +70,7 @@ namespace bugat
 				}
 
 				std::shared_ptr<MemoryBlock> _block; //집나간동안 해제되면안됨..
-				T obj;
+				T* _ptr;
 			};
 
 		public:
@@ -102,8 +104,7 @@ namespace bugat
 					Alloc(AllocSize);
 				}
 
-				auto sptr = mem->Get();
-				new(sptr.get())T(std::forward<Args>(args)...);
+				auto sptr = mem->Get(std::forward<Args>(args)...);
 				return sptr;
 			}
 
@@ -118,15 +119,19 @@ namespace bugat
 				if (true == _isAllocating.test_and_set(std::memory_order_acquire))
 					return;
 
-				void* memoryBlock = ::operator new(sizeof(Member) * size);
+				auto memberSize = sizeof(Member);
+				auto totalSize = memberSize + sizeof(T);
+
+				void* memoryBlock = ::operator new(totalSize * size);
 				auto blockPtr = std::make_shared<MemoryBlock>(this->weak_from_this(), memoryBlock);
 				_blocks.push(blockPtr);
 
-				auto castBlock = static_cast<Member*>(memoryBlock);
+				auto castPtr = static_cast<char*>(memoryBlock);
 				for (int i = 0; i < size; i++)
 				{
-					new(castBlock + i)Member(blockPtr);
-					Push(castBlock + i);
+					auto memberPtr = castPtr + (totalSize * i);
+					new(memberPtr)Member(blockPtr, reinterpret_cast<T*>(memberPtr + memberSize));
+					Push(reinterpret_cast<Member*>(memberPtr));
 				}
 
 				_isAllocating.clear(std::memory_order_release);

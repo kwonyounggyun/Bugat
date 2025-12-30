@@ -2,7 +2,7 @@
 #include <atomic>
 #include "DateTime.h"
 
-namespace bugat::core
+namespace bugat
 {
 	template<typename T>
 	struct ObjectId
@@ -20,6 +20,26 @@ namespace bugat::core
 		{
 			timestamp = DateTime::NowSec();
 			count = GetCount();
+		}
+
+		bool operator==(const ObjectId& other) const
+		{ 
+			return timestamp == other.timestamp && count == other.count;
+		}
+		
+		bool operator<(const ObjectId& other) const
+		{ 
+			return timestamp != other.timestamp ? timestamp < other.timestamp : count < other.count;
+		}
+
+		bool operator!=(const ObjectId& other) const
+		{ 
+			return timestamp != other.timestamp || count != other.count;
+		}
+
+		bool operator>(const ObjectId& other) const
+		{ 
+			return timestamp != other.timestamp ? timestamp > other.timestamp : count > other.count;
 		}
 	};
 }

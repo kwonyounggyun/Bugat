@@ -1,24 +1,24 @@
 #pragma once
 #include "../Core/Singleton.h"
-#include "../Network/Header.h"
-#include "../Network/Protocol.h"
+#include "../Base/Handle.h"
+#include "../Base/Packet.h"
+
 
 #include "Client.h"
 #include <unordered_map>
-#include <functional>
 
-namespace bugat::handle
+namespace bugat
 {
 	class ClientHandler : public Singleton<ClientHandler>
 	{
 	public:
-		ClientHandler();
-		virtual ~ClientHandler() {}
-		void Handle(const bugat::test::Client* client, const bugat::net::Header& header, const std::vector<char>& msg);
-
-		static void ResSC_Login(const bugat::test::Client* client, const bugat::net::Header& header, const std::vector<char>& msg);
+		void Handle(std::shared_ptr<Session>& session, const std::shared_ptr<RecvPacket>& packet);
+		void Init();
 
 	private:
-		std::unordered_map<int, void(*)(const bugat::test::Client* client, const bugat::net::Header&, const std::vector<char>&)> _handleMap;
+		std::unordered_map<int, std::shared_ptr<BaseHandle>> _handles;
 	};
+
+	DEFINE_FB_HANDLE(Req_CS_Login)
+	DEFINE_FB_HANDLE(Req_CS_Move)
 }

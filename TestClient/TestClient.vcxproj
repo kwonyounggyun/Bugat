@@ -102,15 +102,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>D:\Libraries\boost188\include\boost-1_88;D:\Libraries\openssl\include;$(SolutionDir)thirdparty\flatbuffers\flatbuffers-25.9.23\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp23</LanguageStandard>
+      <AdditionalIncludeDirectories>D:\Libraries\boost188\include\boost-1_88;D:\Libraries\openssl\include;$(SolutionDir)thirdparty\flatbuffers\flatbuffers-25.9.23\include;$(ProjectDir)Core;$(ProjectDir)Base;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>D:\Libraries\boost188\lib;$(TargetDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Core.lib;Network.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Core.lib;Base.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -131,13 +131,13 @@
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="ClientConnection.cpp" />
     <ClCompile Include="ClientHandler.cpp" />
-    <ClCompile Include="Packet_Client.cpp" />
     <ClCompile Include="TestClient.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h" />
     <ClInclude Include="ClientConnection.h" />
     <ClInclude Include="ClientHandler.h" />
+    <ClInclude Include="ClientManager.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

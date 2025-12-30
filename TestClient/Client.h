@@ -1,34 +1,22 @@
 #pragma once
-#include "../GameServer/SerializeObject.h"
-#include "../Network/Packet.h"
+#include "../Base/Session.h"
 
-namespace boost
-{
-	namespace asio
-	{
-		class io_context;
-	}
-}
-
-namespace bugat::net
+namespace bugat
 {
 	struct Connection;
 }
 
-namespace bugat::test
+namespace bugat
 {
-	class Client : public bugat::SerializeObject<Client>
+	class Client : public Session
 	{
 	public:
-		Client() {};
+		Client() 
+		{
+		};
+
 		virtual ~Client();
-
-		bool Connect(boost::asio::io_context& io, std::string ip, short port);
-		void Send(int type, std::shared_ptr<flatbuffers::FlatBufferBuilder>& fb);
-
-		void PushMsg(const bugat::net::Header& header, const std::vector<char>& msg);
-
-	private:
-		std::shared_ptr<bugat::net::Connection> _connection;
+		virtual void OnClose();
+		virtual void HandleMsg(const std::shared_ptr<RecvPacket>& packet);
 	};
 }

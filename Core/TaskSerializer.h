@@ -1,6 +1,7 @@
 #pragma once
 #include "LockFreeQueue.h"
 #include "Task.h"
+#include "AwaitTask.h"
 
 namespace bugat
 {

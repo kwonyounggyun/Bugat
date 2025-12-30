@@ -3,28 +3,24 @@
 #include "ClientConnection.h"
 #include "ClientHandler.h"
 
-namespace bugat::test
+namespace bugat
 {
 	Client::~Client()
 	{
 	}
 
-	bool Client::Connect(boost::asio::io_context& io, std::string ip, short port)
+	void Client::OnClose()
 	{
-		_connection = CreateClientConnection(io);
-		std::static_pointer_cast<ClientConnection>(_connection)->SetClient(shared_from_this());
-		return _connection->Connect(ip, port);
 	}
 
-	void Client::Send(int type, std::shared_ptr<flatbuffers::FlatBufferBuilder>& fb)
+	void Client::HandleMsg(const std::shared_ptr<RecvPacket>& packet)
 	{
-		_connection->Send(net::Packet(type, fb));
-	}
-
-	void Client::PushMsg(const bugat::net::Header& header, const std::vector<char>& msg)
-	{
-		Post([this, header, msg = std::move(msg)]() {
-			bugat::handle::ClientHandler::Instance().Handle(this, header, msg);
+		Post([weak = weak_from_this(), packet]() mutable {
+			if (auto sPtr = weak.lock(); sPtr != nullptr)
+			{
+				auto session = std::static_pointer_cast<Session>(sPtr);
+				ClientHandler::Instance().Handle(session, packet);
+			}
 			});
 	}
 }

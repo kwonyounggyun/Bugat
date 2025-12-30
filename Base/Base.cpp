@@ -8,36 +8,34 @@
 #include "Connection.h"
 #include "Server.h"
 #include "Configure.h"
+#include "Context.h"
 
 
 using namespace bugat;
-class TestServer : public bugat::net::Server
+class TestServer : public bugat::Server
 {
 public:
 	// Server을(를) 통해 상속됨
-	void OnAccept(std::shared_ptr<net::Connection>& conn) override
+	void OnAccept(std::shared_ptr<Connection>& conn) override
 	{
 	}
 
 	void Start()
 	{
-		net::Configure config;
-		config.ioThreadCount = 5;
-		config.port = 9000;
-
-		_context.Initialize(this, net::ConnectionFactory<net::Connection>(), config);
+		
 	}
-
-private:
-	net::NetworkContext _context;
 };
+
+Context _logic;
+NetworkContext _network;
 
 // TODO: This is an example of a library function
 void fnNetwork()
 {
-	TestServer server;
+	auto server = CreateSerializeObject<TestServer>(&_logic);
 	
-	
-	server.Start();
-	//bugat::net::NetworkMessage msg;
+	Configure config;
+	config.port = 9000;
+
+	bugat::CoSpawn(server, server->Accept(_network.GetExecutor(), ConnectionFactory<Connection>(), config));
 }

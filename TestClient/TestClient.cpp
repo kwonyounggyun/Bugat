@@ -3,29 +3,38 @@
 #include "stdafx.h"
 #include <iostream>
 #include "Client.h"
-#include "boost/asio/io_context.hpp"
-#include "../GameServer/Context.h"
+#include "ClientConnection.h"
+#include "../Base/Context.h"
+#include "../Base/NetworkContext.h"
 
 using namespace bugat;
 int main()
 {
-
     Context logicContext;
+    NetworkContext networkContext;
 
-    boost::asio::io_context ioContext;
+    auto clientConnection = CreateSerializeObject<ClientConnection>(&logicContext);
+    auto client = CreateSerializeObject<Client>(&logicContext);
+    clientConnection->OnAccept += [clientConnection, client] () {
+        client->SetConnection(clientConnection);
+        };
+    clientConnection->OnRead += [client](const std::shared_ptr<RecvPacket>& pack) {
+        client->HandleMsg(pack);
+        };
 
-    test::Client client;
-    client.SetContext(&logicContext);
 
-    client.Connect(ioContext, "127.0.0.1", 5000);
+    CoSpawn(clientConnection, clientConnection->Connect(networkContext.GetExecutor(), "127.0.0.1", 9000));
 
-    std::thread t([&logicContext]() {
-        logicContext.run();
+    std::thread logicThread([&logicContext]() {
+        logicContext.Run();
         });
 
-    ioContext.run();
+    std::thread networkThread([&networkContext]() {
+        networkContext.Run();
+        });
     
-    t.join();
+    logicThread.join();
+    networkThread.join();
 
     std::cout << "Hello World!\n";
 }
