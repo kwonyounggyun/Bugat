@@ -7,23 +7,34 @@
 
 namespace bugat
 {
+	struct SerializerQueue;
 	class SerializeObject;
-	class Context : public NonCopyable
+	class Context
 	{
 	public:
 		Context() : _stop(false) {};
 		virtual ~Context() = default;
 
-		void Initialize();
-		int64_t Run();
-		bool RunOne();
+		void Initialize(uint32_t queCount = 100);
+		void Run();
 		void Post(std::weak_ptr<SerializeObject> serializeObject);
 		void Stop();
 
 	private:
-		LockFreeQueue<std::weak_ptr<SerializeObject>> _que;
-		Counter<1000> _executeTaskCounter;
-		
+		std::array<std::atomic<SerializerQueue*>, 100> _globalQue;
+		LockFreeQueue<SerializerQueue*> _waitQue;
+
+		std::atomic<uint32_t> _swapCounter;
+		std::atomic<uint32_t> _globalCounter;
+		std::atomic<uint32_t> _threadCounter;
+
+		std::atomic<uint64_t> _executeTaskCounter;
+
+		uint32_t _globalQueSize;
+
 		std::atomic<bool> _stop;
+
+	public:
+		thread_local static SerializerQueue* _localQue;
 	};
 }
