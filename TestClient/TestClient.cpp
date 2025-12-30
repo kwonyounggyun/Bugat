@@ -2,39 +2,55 @@
 //
 #include "stdafx.h"
 #include <iostream>
-#include "Client.h"
-#include "ClientConnection.h"
+
+#include "../Core/ThreadGroup.h"
 #include "../Base/Context.h"
 #include "../Base/NetworkContext.h"
+#include "../Base/Protocol.h"
+
+#include "Client.h"
+#include "ClientConnection.h"
+#include "ClientHandler.h"
+#include "Dummys.h"
 
 using namespace bugat;
+
+
+AwaitTask<void> SendingPacket(Client* client)
+{
+    auto id = client->GetObjectId();
+    auto fb = FBCreate();
+    auto pos = bugat::protocol::game::FVec3(id.timestamp, id.count, 0);
+    fb->Finish(bugat::protocol::game::CreateReq_CS_Move(*fb, &pos));
+    client->Send(static_cast<int>(bugat::protocol::game::Type::REQ_CS_MOVE), fb);
+    co_return;
+}
+
 int main()
 {
     Context logicContext;
     NetworkContext networkContext;
 
-    auto clientConnection = CreateSerializeObject<ClientConnection>(&logicContext);
-    auto client = CreateSerializeObject<Client>(&logicContext);
-    clientConnection->OnAccept += [clientConnection, client] () {
-        client->SetConnection(clientConnection);
-        };
-    clientConnection->OnRead += [client](const std::shared_ptr<RecvPacket>& pack) {
-        client->HandleMsg(pack);
-        };
+    ClientHandler::Instance().Init();
 
+    Dummys dummy;
+    dummy.AddAction(SendingPacket);
 
-    CoSpawn(clientConnection, clientConnection->Connect(networkContext.GetExecutor(), "127.0.0.1", 9000));
+    Configure config;
+    config.ip = "127.0.0.1";
+    config.port = 9000;
+    dummy.Start(10, ClientConnectionFactory(logicContext), networkContext, config);
 
-    std::thread logicThread([&logicContext]() {
-        logicContext.Run();
+    ThreadGroup group;
+    group.Add(1, [&logicContext](ThreadInfo& info) {
+        logicContext.RunOne();
         });
 
-    std::thread networkThread([&networkContext]() {
-        networkContext.Run();
+    group.Add(1, [&networkContext](ThreadInfo& info) {
+        networkContext.RunOne();
         });
-    
-    logicThread.join();
-    networkThread.join();
+
+    group.Join();
 
     std::cout << "Hello World!\n";
 }

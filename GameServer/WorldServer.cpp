@@ -2,39 +2,21 @@
 #include "WorldServer.h"
 #include "GameConnection.h"
 #include "GameSession.h"
-#include "../Network/Configure.h"
-#include "Template.h"
 #include "../Core/Log.h"
+#include "../Base/PlayerId.h"
 
 namespace bugat
 {
 
 	void WorldServer::Initialize()
 	{
-		GetLogicContext().Initialize(10);
-		_threadGroup.Add(5, [this](ThreadInfo& info) {
-			GetLogicContext().run();
-			});
-
-		net::Configure client;
-		client.port = 5000;
-		GetClientContext().Initialize(this, net::ConnectionFactory<GameConnection>(), client);
-		_threadGroup.Add(5, [this](ThreadInfo& info) {
-			GetClientContext().Run();
-			});
-
-		net::Configure server;
-		server.port = 6000;
-		GetClientContext().Initialize(this, net::ConnectionFactory<GameConnection>(), server);
-		_threadGroup.Add(5, [this](ThreadInfo& info) {
-			GetClientContext().Run();
-			});
 	}
 
+	std::atomic<int> tempcount = 0;
 	std::atomic<int> worldcount = 0;
-	void WorldServer::OnAccept(std::shared_ptr<net::Connection>& conn)
+	void WorldServer::OnAccept(std::shared_ptr<Connection>& conn)
 	{
-		auto gameSession = CreateSerializeObject<GameSession>(WorldLogicContext);
+		auto gameSession = CreateSerializeObject<GameSession>(GetContext());
 		gameSession->SetConnection(conn);
 		std::weak_ptr<GameSession> weak = gameSession;
 
@@ -49,13 +31,16 @@ namespace bugat
 			if (auto session = weak.lock(); session)
 				session->Close();
 			};
-		conn->OnRead += [weak](const net::Header& header, const std::vector<char>& msg) {
+		conn->OnRead += [weak](const std::shared_ptr<RecvPacket>& packet) {
 			if(auto session = weak.lock(); session)
-				session->HandleMsg(header, msg);
+				session->HandleMsg(packet);
 			};
 
 		PlayerId temp;
-		temp.pid = 1;
+		temp.pid = tempcount.fetch_add(1);
 		_sessionManager.AddSession(temp, gameSession);
+	}
+	void WorldServer::Update()
+	{
 	}
 }

@@ -23,7 +23,7 @@ namespace bugat
 
 		char* GetBuf(int pos)
 		{
-			if (pos < 0 || pos >= GetRemainSize())
+			if (pos < 0 || pos >= _maxSize)
 				return nullptr;
 
 			return &_buf[pos];

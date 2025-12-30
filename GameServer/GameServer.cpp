@@ -3,13 +3,12 @@
 #include "stdafx.h"
 #include <iostream>
 
-#include "Context.h"
-#include <thread>
 #include "../Core/ObjectPool.h"
 
-#include "SerializeObject.h"
+#include "../Base/Context.h"
+#include "../Base/NetworkContext.h"
+#include "../Base/SerializeObject.h"
 
-#include <boost/lockfree/queue.hpp>
 #include "WorldServer.h"
 #include "GameHandler.h"
 
@@ -31,91 +30,38 @@ struct Test : public SerializeObject
     int _seq;
 };
 
+#include "../Core/ThreadGroup.h"
 
+#include "../Base/Configure.h"
+
+#include "ContextHolder.h"
+#include "GameConnection.h"
 
 int main()
 {
+    ThreadGroup threads;
+    threads.Add(10, [](ThreadInfo& info) {
+        LogicContext.RunOne();
+        });
+
+    threads.Add(10, [](ThreadInfo& info) {
+        NetClientContext.RunOne();
+        });
+
+    threads.Add(10, [](ThreadInfo& info) {
+        NetServerContext.RunOne();
+        });
+
+    WorldInstance.SetContext(&LogicContext);
+
     GameHandler::Instance().Init();
-    GetWorld.Initialize();
-    GetWorld.Join();
- /*   LockFreeQueue<int> que;
-
-    std::atomic<int> test;
-
-    boost::lockfree::queue<bugat::core::AnyTask*> queue(10);
-    boost::lockfree::queue<bugat::core::AnyTask*> queue1(100);
-    boost::lockfree::queue<bugat::core::AnyTask*> queue2(1000);
-
-    Context context;
-
-    context.Initialize(10);
-
-    std::vector<std::thread*> threads;
-
-    auto asize = sizeof(bugat::core::AnyTask);
-    auto pool = ObjectPoolFactory::Create<Test, 100000>();
-    std::vector<std::shared_ptr<Test>> objects(100000);
-    for (int j = 0; j < 100000; j++)
-    {
-        objects[j] = std::move(pool->Get());
-        objects[j]->SetContext(&context);
-    }
-
-    for(int i = 0; i < 10; i++)
-    {
-        threads.push_back(new std::thread([&context]() {
-            context.run();
-            }));
-	}
-
+    WorldInstance.Initialize();
+    Configure config;
+    config.port = 9000;
+    CoSpawn(WorldInstance, WorldInstance.Accept(NetClientContext.GetExecutor(), ConnectionFactory<GameConnection>(LogicContext), config));
     
-    std::vector<std::thread*> testThreads;
-    for (int i = 0; i < 10; i++)
-    {
-        testThreads.push_back(new std::thread([&context, &objects, i]() {
-            auto id = std::this_thread::get_id();
-            for (int j = 0; j < 100000; j++)
-            {
-                for (int k = 0; k < 100; k++)
-                {
-                    auto obj = objects[k].get();
-                    obj->Post([id, k, j, obj]() {
-                        obj->Check(j);
-                        });
-                }
-            }
-            }));
-    }
 
-    auto start = DateTime::NowSec();
-    for(auto thread : testThreads)
-    {
-        thread->join();
-        delete thread;
-	}
-    auto end = DateTime::NowSec();
-    std::cout << "All PushTime : " << end - start << std::endl;
-
-    for (auto thread : threads)
-    {
-        thread->join();
-        delete thread;
-    }
-
-    auto end2 = DateTime::NowSec();
-    std::cout << "All Consume Time : " << end2 - start << std::endl;
-
-    for (int j = 0; j < 100000; j++)
-    {
-        objects[j]->Check(1000);
-
-        if (objects[j]->GetCount() > 0)
-            std::cout << j << std::endl;
-    }
-
-
-
-    std::cout << "Hello World!\n";*/
+    threads.Join();
 }
 
 // 프로그램 실행: <Ctrl+F5> 또는 [디버그] > [디버깅하지 않고 시작] 메뉴

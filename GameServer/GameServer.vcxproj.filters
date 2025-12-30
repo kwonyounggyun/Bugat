@@ -36,17 +36,8 @@
     <ClCompile Include="GameServer.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="BaseConnection.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="Session.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
     <ClCompile Include="GameHandler.cpp">
       <Filter>Handle</Filter>
-    </ClCompile>
-    <ClCompile Include="Context.cpp">
-      <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="GameConnection.cpp">
       <Filter>Connection</Filter>
@@ -69,28 +60,16 @@
     <ClCompile Include="Actor.cpp">
       <Filter>Object</Filter>
     </ClCompile>
+    <ClCompile Include="BaseConnection.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="BaseConnection.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="Session.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="PlayerId.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="GameHandler.h">
       <Filter>Handle</Filter>
-    </ClInclude>
-    <ClInclude Include="Context.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="SerializeObject.h">
-      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="WorldHandler.h">
       <Filter>WorldServer</Filter>
@@ -101,17 +80,8 @@
     <ClInclude Include="GameSession.h">
       <Filter>Connection</Filter>
     </ClInclude>
-    <ClInclude Include="Template.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="WorldServer.h">
       <Filter>WorldServer</Filter>
-    </ClInclude>
-    <ClInclude Include="SessionManger.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="BaseHandle.h">
-      <Filter>Handle</Filter>
     </ClInclude>
     <ClInclude Include="ActorManager.h">
       <Filter>Manager</Filter>
@@ -122,11 +92,14 @@
     <ClInclude Include="Actor.h">
       <Filter>Object</Filter>
     </ClInclude>
-    <ClInclude Include="Define.h">
+    <ClInclude Include="BaseConnection.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="Param.h">
-      <Filter>Common</Filter>
+    <ClInclude Include="SessionManger.h">
+      <Filter>Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="ContextHolder.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

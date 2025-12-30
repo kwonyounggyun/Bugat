@@ -19,14 +19,19 @@ namespace bugat
 
 	BufInfo NetworkMessage::GetBufInfo()
 	{
-		if (_curBlock->GetRemainSize() < MAX_PACKET_SIZE)
+		if (!_curBlock)
+		{
+			auto newBlock = _dataBlockPool.Get();
+			_curBlock = newBlock;
+		}
+		else if (_curBlock->GetRemainSize() < MAX_PACKET_SIZE)
 		{
 			auto newBlock = _dataBlockPool.Get();
 			memcpy_s(newBlock->GetRemainBuf(), newBlock->GetRemainSize(), _curBlock->GetData(), _curBlock->GetDataSize());
 			_curBlock = newBlock;
 		}
 
-		return BufInfo(_curBlock->GetRemainBuf(), _curBlock->GetRemainSize());
+		return BufInfo(_curBlock->GetRemainBuf(), MAX_PACKET_SIZE);
 	}
 
 	bool NetworkMessage::GetNetMessage(std::shared_ptr<RecvPacket>& packet)
@@ -39,6 +44,7 @@ namespace bugat
 			return false;
 
 		packet = std::make_shared<RecvPacket>(_curBlock, _curBlock->GetHead() + HEADER_SIZE, *header);
+		_curBlock->Consume(header->size + HEADER_SIZE);
 		return true;
 	}
 }

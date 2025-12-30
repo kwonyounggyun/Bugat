@@ -1,17 +1,19 @@
 #pragma once
 #include <atomic>
+#include "../Core/NonCopyable.h"
 
 namespace bugat
 {
 	struct Executor;
 	struct ContextImpl;
-	class NetworkContext
+	class NetworkContext : public NonCopyable
 	{
 	public:
 		NetworkContext();
 
 		void Initialize();
-		void Run();
+		int64_t Run();
+		void RunOne();
 		void Stop();
 
 		Executor GetExecutor() const noexcept;

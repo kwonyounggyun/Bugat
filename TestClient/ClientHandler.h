@@ -19,6 +19,6 @@ namespace bugat
 		std::unordered_map<int, std::shared_ptr<BaseHandle>> _handles;
 	};
 
-	DEFINE_FB_HANDLE(Req_CS_Login)
-	DEFINE_FB_HANDLE(Req_CS_Move)
+	DEFINE_FB_HANDLE(Res_SC_Login)
+	DEFINE_FB_HANDLE(Res_SC_Move)
 }

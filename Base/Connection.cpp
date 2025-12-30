@@ -4,24 +4,6 @@
 
 namespace bugat
 {
-	struct AwaitAlways
-	{
-		AwaitAlways(TaskSerializer* serializer) : _serializer(serializer) {}
-		bool await_ready() const noexcept { return false; }
-		void await_suspend(std::coroutine_handle<> h) noexcept
-		{
-			_serializer->Post([h]() {
-				h.resume();
-				});
-		}
-
-		void await_resume()
-		{
-		}
-
-		TaskSerializer* _serializer;
-	};
-
 	struct AwaitConnect
 	{
 		AwaitConnect(Connection* con, Resolver::results_type& endpoints) : _con(con), _endpoints(endpoints) {}
@@ -107,6 +89,7 @@ namespace bugat
 			co_return;
 		}
 
+		OnConnect();
 		Start();
 		co_return;
 	}
@@ -200,15 +183,12 @@ namespace bugat
 
 	bool Connection::Start()
     {
-		auto con = shared_from_this();
-		CoSpawn(con, Send());
-		CoSpawn(con, Recv());
-
 		auto expect = ConnectionState::Connecting;
 		if (false == _state.compare_exchange_strong(expect, ConnectionState::Connected, std::memory_order_acq_rel))
 			return false;
 
-		OnAccept();
+		CoSpawn(*this, Send());
+		CoSpawn(*this, Recv());
 
 		return true;
     }

@@ -126,6 +126,30 @@ namespace bugat
 		ValueType _value;
 	};
 
+	template<typename T>
+	T operator+(T a, Param& param)
+	{
+		return  a + param.GetValue();
+	}
+
+	template<typename T>
+	T operator-(T a, Param& param)
+	{
+		return  a - param.GetValue();
+	}
+
+	template<typename T>
+	T operator*(T a, Param& param)
+	{
+		return  a * param.GetValue();
+	}
+
+	template<typename T>
+	T operator/(T a, Param& param)
+	{
+		return  a / param.GetValue();
+	}
+
 	class EventParam : public NonCopyable
 	{
 	public:
@@ -169,10 +193,36 @@ namespace bugat
 			return *this;
 		}
 
+		auto GetValue() const { return _param.GetValue(); }
+
 		Event<const Param&, const Param&> OnChange;
 		Event<const Param&> LimitCheck;
 
 	private:
 		Param _param;
 	};
+
+	template<typename T>
+	T operator+(T a, EventParam& param)
+	{
+		return  a + param.GetValue();
+	}
+
+	template<typename T>
+	T operator-(T a, EventParam& param)
+	{
+		return  a - param.GetValue();
+	}
+
+	template<typename T>
+	T operator*(T a, EventParam& param)
+	{
+		return  a * param.GetValue();
+	}
+
+	template<typename T>
+	T operator/(T a, EventParam& param)
+	{
+		return  a / param.GetValue();
+	}
 }

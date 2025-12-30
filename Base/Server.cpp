@@ -13,7 +13,7 @@ namespace bugat
 			: _server(server), _acceptor(acceptor), _socket(socket)
 		{
 		}
-		bool await_ready() const noexcept { return true; }
+		bool await_ready() const noexcept { return false; }
 		void await_suspend(std::coroutine_handle<> h) noexcept
 		{
 			_acceptor.async_accept(*_socket, [this, h](const BoostError& ec) {
@@ -57,6 +57,7 @@ namespace bugat
 
 			auto connection = factory.Create(socket);
 			OnAccept(connection);
+			connection->OnAccept();
 			connection->Start();
 		}
 	}

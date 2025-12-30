@@ -1,5 +1,5 @@
 #pragma once
-#include "Session.h"
+#include "../Base/Session.h"
 
 namespace bugat
 {
@@ -9,7 +9,7 @@ namespace bugat
 		GameSession();
 		virtual ~GameSession();
 
-		virtual void HandleMsg(const net::Header& header, const std::vector<char>& msg) override;
+		virtual void HandleMsg(const std::shared_ptr<RecvPacket>& packet) override;
 		virtual void OnClose() {}
 	};
 }

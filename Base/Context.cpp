@@ -9,12 +9,11 @@ namespace bugat
 	{
 	}
 
-	void Context::Run()
+	int64_t Context::Run()
 	{
-		while (false == _stop.load())
-		{
-			RunOne();
-		}
+		int64_t count = 0;
+		while (true == RunOne()) count++;
+		return count;
 	}
 
 	bool Context::RunOne()

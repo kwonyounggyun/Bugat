@@ -12,6 +12,11 @@ namespace bugat
 			return _ioContext.run();
 		}
 
+		int64_t RunOne()
+		{
+			return _ioContext.run_one();
+		}
+
 		Executor GetExcutor()
 		{
 			return Executor{ _ioContext };
@@ -29,10 +34,14 @@ namespace bugat
 	{
 	}
 
-	void NetworkContext::Run()
+	int64_t NetworkContext::Run()
 	{
-		while (false == _stop.load(std::memory_order_acquire))
-			_context->Run();
+		return _context->Run();
+	}
+
+	void NetworkContext::RunOne()
+	{
+		_context->RunOne();
 	}
 
 	void NetworkContext::Stop()

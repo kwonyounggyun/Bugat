@@ -3,7 +3,6 @@
 #include "../Core/ObjectId.h"
 #include "../Core/ObjectPool.h"
 #include <memory>
-#include "../Core/Log.h"
 
 namespace bugat
 {
@@ -38,10 +37,10 @@ namespace bugat
 	}
 
 	template<typename Executor, typename AwaitTask>
-		requires std::is_convertible_v<Executor, std::shared_ptr<SerializeObject>>
+		requires std::is_base_of_v<SerializeObject, Executor>
 	void CoSpawn(Executor& executor, AwaitTask&& awaitask)
 	{
-		executor->Post([awaitask]() {
+		executor.Post([awaitask]() {
 			awaitask.resume();
 			});
 	}

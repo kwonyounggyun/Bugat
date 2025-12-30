@@ -31,6 +31,7 @@ namespace bugat
 
 	public:
 		Event<> OnAccept;
+		Event<> OnConnect;
 		Event<> OnClose;
 		Event<const std::shared_ptr<RecvPacket>&> OnRead;
 
@@ -55,6 +56,7 @@ namespace bugat
 		auto GetId() const { return _id; }
 
 		bool Disconnected() const { return _state == ConnectionState::Disconnected; }
+		bool Connected() const { return _state == ConnectionState::Connected; }
 
 	private:
 		AwaitTask<void> Send();
@@ -107,7 +109,7 @@ namespace bugat
 			for (auto iter = _bufs.begin(); iter != _bufs.end();)
 			{
 				auto bufSize = iter->size();
-				if (size > bufSize)
+				if (size >= bufSize)
 				{
 					iter = _bufs.erase(iter);
 					size -= bufSize;
@@ -144,11 +146,17 @@ namespace bugat
 	class ConnectionFactory : public ConnectionFactoryConcept
 	{
 	public:
+		ConnectionFactory(Context& context) : _context(context) {}
 		virtual ~ConnectionFactory() {}
 		virtual std::shared_ptr<Connection> Create() override
 		{
-			return std::dynamic_pointer_cast<Connection>(std::make_shared<T>());
+			auto connection = std::static_pointer_cast<Connection>(std::make_shared<T>());
+			connection->SetContext(&_context);
+			return connection;
 		}
+
+	private:
+		Context& _context;
 	};
 
 	class AnyConnectionFactory

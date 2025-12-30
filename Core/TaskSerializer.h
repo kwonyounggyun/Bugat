@@ -60,4 +60,22 @@ namespace bugat
 		std::atomic<int64_t> _taskCount{ 0 };
 		std::atomic_flag _runningGuard;
 	};
+
+	struct AwaitAlways
+	{
+		AwaitAlways(TaskSerializer* serializer) : _serializer(serializer) {}
+		bool await_ready() const noexcept { return false; }
+		void await_suspend(std::coroutine_handle<> h) noexcept
+		{
+			_serializer->Post([h]() {
+				h.resume();
+				});
+		}
+
+		void await_resume()
+		{
+		}
+
+		TaskSerializer* _serializer;
+	};
 }

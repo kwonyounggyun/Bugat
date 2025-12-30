@@ -9,6 +9,7 @@
 #include "Server.h"
 #include "Configure.h"
 #include "Context.h"
+#include "Param.h"
 
 
 using namespace bugat;
@@ -16,18 +17,20 @@ class TestServer : public bugat::Server
 {
 public:
 	// Server을(를) 통해 상속됨
-	void OnAccept(std::shared_ptr<Connection>& conn) override
+	virtual void OnAccept(std::shared_ptr<Connection>& conn) override
 	{
 	}
 
-	void Start()
+	// Server을(를) 통해 상속됨
+	virtual void Update() override
 	{
-		
 	}
 };
 
 Context _logic;
 NetworkContext _network;
+
+
 
 // TODO: This is an example of a library function
 void fnNetwork()
@@ -37,5 +40,7 @@ void fnNetwork()
 	Configure config;
 	config.port = 9000;
 
-	bugat::CoSpawn(server, server->Accept(_network.GetExecutor(), ConnectionFactory<Connection>(), config));
+	bugat::CoSpawn(*server, server->Accept(_network.GetExecutor(), ConnectionFactory<Connection>(_logic), config));
+	EventParam param;
+	Param param1;
 }

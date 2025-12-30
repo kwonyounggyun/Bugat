@@ -158,17 +158,21 @@
     <ClInclude Include="Connection.h" />
     <ClInclude Include="Context.h" />
     <ClInclude Include="DataBlock.h" />
+    <ClInclude Include="Define.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Handle.h" />
     <ClInclude Include="Header.h" />
     <ClInclude Include="NetworkContext.h" />
     <ClInclude Include="NetworkMessage.h" />
     <ClInclude Include="Packet.h" />
+    <ClInclude Include="Param.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="PlayerId.h" />
     <ClInclude Include="Protocol.h" />
     <ClInclude Include="SerializeObject.h" />
     <ClInclude Include="Server.h" />
     <ClInclude Include="Session.h" />
+    <ClInclude Include="Template.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Connection.cpp" />

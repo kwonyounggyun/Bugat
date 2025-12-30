@@ -1,4 +1,5 @@
 #pragma once
+#include "../Base/Define.h"
 
 namespace bugat
 {

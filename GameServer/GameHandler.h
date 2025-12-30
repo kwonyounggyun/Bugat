@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 #include <unordered_map>
-#include "BaseHandle.h"
+#include "../Base/Handle.h"
 #include "../Core/Singleton.h"
 
 namespace bugat
@@ -10,7 +10,7 @@ namespace bugat
 	class GameHandler : public Singleton<GameHandler>
 	{
 	public:
-		void Handle(std::shared_ptr<Session>& session, const net::Header& header, const std::vector<char>& msg);
+		void Handle(std::shared_ptr<Session>& session, const std::shared_ptr<RecvPacket>& packet);
 		void Init();
 
 	private:

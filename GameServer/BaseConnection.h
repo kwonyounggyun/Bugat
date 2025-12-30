@@ -1,15 +1,14 @@
 #pragma once
-#include "../Network/Connection.h"
-#include "Session.h"
+#include "../Base/Connection.h"
 
 namespace bugat
 {
 	class Session;
-	class BaseConnection : public net::Connection
+	class BaseConnection : public Connection
 	{
 	public:
 		BaseConnection() {}
-		virtual ~BaseConnection() = 0 {}
+		virtual ~BaseConnection() {}
 	};
 }
 

@@ -15,5 +15,3 @@
 #include <unordered_set>
 
 #include <cstdint>
-#include "Define.h"
-#include "Param.h"

@@ -1,13 +1,15 @@
 #include "stdafx.h"
 #include "ClientHandler.h"
 #include "../Base/Protocol.h"
+#include "../Core/Log.h"
 
 using namespace bugat::protocol::game;
 namespace bugat
 {
 	void ClientHandler::Init()
 	{
-		_handles[static_cast<int>(bugat::protocol::game::Type::REQ_CS_MOVE)] = MAKE_FB_HANDLE(Req_CS_Move);
+		_handles[static_cast<int>(bugat::protocol::game::Type::RES_SC_LOGIN)] = MAKE_FB_HANDLE(Res_SC_Login);
+		_handles[static_cast<int>(bugat::protocol::game::Type::RES_SC_MOVE)] = MAKE_FB_HANDLE(Res_SC_Move);
 	}
 
 	void ClientHandler::Handle(std::shared_ptr<Session>& session, const std::shared_ptr<RecvPacket>& packet)
@@ -22,16 +24,20 @@ namespace bugat
 	}
 
 	
-	DECLARE_FB_HANDLE(Req_CS_Login)
+	DECLARE_FB_HANDLE(Res_SC_Login)
 	{
 	}
 
-	DECLARE_FB_HANDLE(Req_CS_Move)
-	{
-		auto pos = data->pos();
-		auto fb = FBCreate();
-		fb->Finish(CreateRes_SC_Move(*fb, pos));
-
-		session->Send(static_cast<int>(bugat::protocol::game::Type::RES_SC_MOVE), fb);
-	}
+    DECLARE_FB_HANDLE(Res_SC_Move)
+    {
+        auto pos = data->pos();
+        if (pos)
+        {
+            InfoLog("{} {} {}", pos->x(), pos->y(), pos->z());
+        }
+        else
+        {
+            ErrorLog("Position data is null");
+        }
+    }
 }

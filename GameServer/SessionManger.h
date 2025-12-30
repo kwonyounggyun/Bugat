@@ -3,8 +3,8 @@
 #include <map>
 
 #include "../Core/RWLockObject.h"
-#include "PlayerId.h"
-#include "Session.h"
+#include "../Base/PlayerId.h"
+#include "../Base/Session.h"
 
 namespace bugat
 {

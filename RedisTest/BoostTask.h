@@ -85,3 +85,43 @@ public:
     boost::asio::awaitable<T, Executor> _awaitable;
     std::coroutine_handle<promise_type> _handle;
 };
+
+template<typename T>
+class AwaitTask
+{
+public:
+    struct promise_type
+    {
+        AwaitTask get_return_object() 
+        { 
+            return AwaitTask{ std::coroutine_handle<promise_type>::from_promise(*this) }; 
+        }
+
+        std::suspend_always initial_suspend() { return {}; }
+        std::suspend_always final_suspend() noexcept { return {}; }
+        auto return_value()
+        {
+            return _value;
+        }
+        void unhandled_exception() { std::exit(1); }
+
+        std::optional<T> _value;
+    };
+
+    std::coroutine_handle<promise_type> _handle;
+};
+
+template<typename CompletionToken>
+struct Awaiter
+{
+    bool await_ready() const noexcept { return false; }
+    void await_suspend(std::coroutine_handle<> h) noexcept
+    {
+        _task([h]() {
+            
+            })
+    }
+    void await_resume() {}
+
+    std::function<void(CompletionToken)> _task;
+};

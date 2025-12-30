@@ -102,14 +102,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>D:\Libraries\boost188\include\boost-1_88;D:\Libraries\openssl\include;$(SolutionDir)thirdparty\flatbuffers\flatbuffers-25.9.23\include;$(ProjectDir)Core;$(ProjectDir)Network;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Libraries\boost188\include\boost-1_88;D:\Libraries\openssl\include;$(SolutionDir)thirdparty\flatbuffers\flatbuffers-25.9.23\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp23</LanguageStandard>
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Core.lib;Network.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Core.lib;Base.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(TargetDir)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -134,37 +134,28 @@
   <ItemGroup>
     <ClCompile Include="Actor.cpp" />
     <ClCompile Include="ActorManager.cpp" />
+    <ClCompile Include="BaseConnection.cpp" />
     <ClCompile Include="CObject.cpp" />
-    <ClCompile Include="Context.cpp" />
     <ClCompile Include="PlayerHandle.cpp" />
     <ClCompile Include="WorldServer.cpp" />
-    <ClCompile Include="BaseConnection.cpp" />
     <ClCompile Include="GameHandler.cpp" />
     <ClCompile Include="GameConnection.cpp" />
     <ClCompile Include="GameSession.cpp" />
     <ClCompile Include="GameServer.cpp" />
-    <ClCompile Include="Session.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Actor.h" />
     <ClInclude Include="ActorManager.h" />
-    <ClInclude Include="BaseHandle.h" />
+    <ClInclude Include="BaseConnection.h" />
     <ClInclude Include="CObject.h" />
-    <ClInclude Include="Context.h" />
-    <ClInclude Include="Define.h" />
-    <ClInclude Include="Param.h" />
+    <ClInclude Include="ContextHolder.h" />
     <ClInclude Include="SessionManger.h" />
     <ClInclude Include="WorldServer.h" />
-    <ClInclude Include="BaseConnection.h" />
     <ClInclude Include="GameHandler.h" />
     <ClInclude Include="GameConnection.h" />
     <ClInclude Include="WorldHandler.h" />
     <ClInclude Include="GameSession.h" />
-    <ClInclude Include="PlayerId.h" />
-    <ClInclude Include="SerializeObject.h" />
-    <ClInclude Include="Session.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="Template.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

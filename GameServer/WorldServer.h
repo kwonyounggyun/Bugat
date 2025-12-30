@@ -1,49 +1,31 @@
 #pragma once
-#include "../Network/Server.h"
-#include "../Network/NetworkContext.h"
-#include "Context.h"
 #include "../Core/Singleton.h"
 #include "../Core/ThreadGroup.h"
+
+#include "../Base/Server.h"
+#include "../Base/NetworkContext.h"
+#include "../Base/Context.h"
+
 #include "SessionManger.h"
 #include "GameSession.h"
 
 namespace bugat
 {
-	namespace net
-	{
-		class Connection;
-	}
-
-	class WorldServer : public net::Server, public Singleton<WorldServer>
+	class WorldServer : public Server, public SharedSingleton<WorldServer>
 	{
 	public:
 		void Initialize();
-		auto& GetLogicContext() { return _logicContext; }
-		auto& GetClientContext() { return _netClientContext; }
-		auto& GetServerContext() { return _netServerContext; }
 
-		void Stop() { _threadGroup.Stop(); }
-		void Join() { _threadGroup.Join(); }
-
+	protected:
 		// Server을(를) 통해 상속됨
-		void OnAccept(std::shared_ptr<net::Connection>& conn) override;
+		virtual void OnAccept(std::shared_ptr<Connection>& conn) override;
+		// Server을(를) 통해 상속됨
+		virtual void Update() override;
 
 	private:
 		SessionManager<GameSession> _sessionManager;
-
-		// 클라이언트 메세지 처리용
-		net::NetworkContext _netClientContext;
-		// 서버간 메세지, API 처리용
-		net::NetworkContext _netServerContext;
-		// 게임 로직 처리용
-		Context _logicContext;
-
-		ThreadGroup _threadGroup;
 	};
 
-#define GetWorld WorldServer::Instance()
-#define WorldLogicContext GetWorld.GetLogicContext()
-#define WorldClientContext GetWorld.GetClientContext()
-#define WorldServerContext GetWorld.GetServerContext()
+#define WorldInstance (*WorldServer::Instance())
 }
 
