@@ -5,15 +5,12 @@
 
 namespace bugat
 {
+	template<typename Header>
 	class SendPacket
 	{
 	public:
-		SendPacket(int type, const std::shared_ptr<flatbuffers::FlatBufferBuilder>& fb)
-		{
-			_header.type = type;
-			_header.size = fb->GetSize();
-			_fb = fb;
-		}
+		SendPacket(Header& header, const std::shared_ptr<flatbuffers::FlatBufferBuilder>& fb) : _header(header), _fb(fb) {}
+
 		std::vector<std::tuple<uint8_t*, size_t>> data()
 		{
 			std::vector<std::tuple<uint8_t*, size_t>> bufs;
@@ -27,16 +24,22 @@ namespace bugat
 		std::shared_ptr<flatbuffers::FlatBufferBuilder> _fb;
 	};
 
+	template<typename Header, int MaxPacketSize>
 	class RecvPacket
 	{
 	public:
-		RecvPacket(std::shared_ptr<DataBlock>& block, int pos, Header header) : _block(block), _pos(pos), _header(header) {}
+		using HeaderType = Header;
+		using DataBlockType = DataBlock<MaxPacketSize>;
+		static constexpr int HeaderSize = sizeof(HeaderType);
+		static constexpr int PacketSize = MaxPacketSize;
+
+		RecvPacket(std::shared_ptr<DataBlockType>& block, int pos) : _block(block), _pos(pos) {}
 		~RecvPacket() {}
 
 		template<typename T>
 		bool Get(const T*& message) const
 		{
-			if (auto buf = _block->GetBuf(_pos); buf != nullptr)
+			if (auto buf = _block->GetBuf(_pos + HeaderSize); buf != nullptr)
 			{
 				message = flatbuffers::GetRoot<T>(buf);
 				return true;
@@ -44,11 +47,16 @@ namespace bugat
 			return false;
 		}
 
-		Header GetHeader() const { return _header; }
+		HeaderType GetHeader() const { return *(reinterpret_cast<HeaderType*>(_block->GetBuf(_pos))); }
 
 	private:
-		std::shared_ptr<DataBlock> _block;
+		std::shared_ptr<DataBlockType> _block;
 		int _pos;
-		Header _header;
 	};
+
+	using TCPSendPacket = SendPacket<TCPHeader>;
+	using UDPSendPacket = SendPacket<UDPHeader>;
+
+	using TCPRecvPacket = RecvPacket<TCPHeader, MAX_TCP_PACKET_SIZE>;
+	using UDPRecvPacket = RecvPacket<UDPHeader, MAX_UDP_PACKET_SIZE>;
 }

@@ -34,7 +34,7 @@ namespace bugat
 				AddClient(client);
 				};
 
-			connection->OnRead += [client](const std::shared_ptr<RecvPacket>& pack) {
+			connection->OnRead += [client](const std::shared_ptr<TCPRecvPacket>& pack) {
 				client->HandleMsg(pack);
 				};
 

@@ -13,7 +13,7 @@ namespace bugat
 	{ 
 	}
 
-	void GameSession::HandleMsg(const std::shared_ptr<RecvPacket>& packet)
+	void GameSession::HandleMsg(const std::shared_ptr<TCPRecvPacket>& packet)
 	{
 		Post([weak = weak_from_this(), packet]() {
 			if (auto sPtr = weak.lock(); sPtr != nullptr)

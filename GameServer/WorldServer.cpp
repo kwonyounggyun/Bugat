@@ -33,7 +33,7 @@ namespace bugat
 			if (auto session = weak.lock(); session)
 				session->Close();
 			};
-		conn->OnRead += [weak](const std::shared_ptr<RecvPacket>& packet) {
+		conn->OnRead += [weak](const std::shared_ptr<TCPRecvPacket>& packet) {
 			if(auto session = weak.lock(); session)
 				session->HandleMsg(packet);
 			};

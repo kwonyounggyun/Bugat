@@ -33,7 +33,7 @@ namespace bugat
 		Event<> OnAccept;
 		Event<> OnConnect;
 		Event<> OnClose;
-		Event<const std::shared_ptr<RecvPacket>&> OnRead;
+		Event<const std::shared_ptr<TCPRecvPacket>&> OnRead;
 
 
 		Connection() : _socket(nullptr), _state(ConnectionState::Connecting) {}

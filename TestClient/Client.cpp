@@ -13,7 +13,7 @@ namespace bugat
 	{
 	}
 
-	void Client::HandleMsg(const std::shared_ptr<RecvPacket>& packet)
+	void Client::HandleMsg(const std::shared_ptr<TCPRecvPacket>& packet)
 	{
 		Post([weak = weak_from_this(), packet]() mutable {
 			if (auto sPtr = weak.lock(); sPtr != nullptr)

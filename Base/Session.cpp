@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Session.h"
 #include "Protocol.h"
+#include "Header.h"
 
 namespace bugat
 {
@@ -8,7 +9,12 @@ namespace bugat
 	{
 		Post([this, type, fb]() {
 			if (_connection)
-				_connection->Send(SendPacket(type, fb));
+			{
+				TCPHeader header;
+				header.size = fb->GetSize();
+				header.type = type;
+				_connection->Send(TCPSendPacket(header, fb));
+			}
 			});
 	}
 

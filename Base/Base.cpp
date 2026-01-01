@@ -43,4 +43,6 @@ void fnNetwork()
 	server->Accept(_network.GetExecutor(), ConnectionFactory<Connection>(_logic), config);
 	EventParam param;
 	Param param1;
+
+	NetworkMessage<RecvPacket<Header, 4096>> msg;
 }

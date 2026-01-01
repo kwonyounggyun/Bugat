@@ -21,7 +21,7 @@ namespace bugat
 
 		void SetServer(Server* server) { _server = server; }
 		Server* GetServer() const { return _server; }
-		virtual void HandleMsg(const std::shared_ptr<RecvPacket>& packet) = 0;
+		virtual void HandleMsg(const std::shared_ptr<TCPRecvPacket>& packet) = 0;
 
 		bool IsAuth() { return _isAuth; }
 

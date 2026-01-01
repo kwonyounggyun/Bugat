@@ -13,6 +13,6 @@ namespace bugat
 
 		virtual ~Client();
 		virtual void OnClose();
-		virtual void HandleMsg(const std::shared_ptr<RecvPacket>& packet);
+		virtual void HandleMsg(const std::shared_ptr<TCPRecvPacket>& packet);
 	};
 }

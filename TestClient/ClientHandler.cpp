@@ -12,7 +12,7 @@ namespace bugat
 		_handles[static_cast<int>(bugat::protocol::game::Type::RES_SC_MOVE)] = MAKE_FB_HANDLE(Res_SC_Move);
 	}
 
-	void ClientHandler::Handle(std::shared_ptr<Session>& session, const std::shared_ptr<RecvPacket>& packet)
+	void ClientHandler::Handle(std::shared_ptr<Session>& session, const std::shared_ptr<TCPRecvPacket>& packet)
 	{
 		auto header = packet->GetHeader();
 		auto iter = _handles.find(header.type);
@@ -33,7 +33,7 @@ namespace bugat
         auto pos = packet->pos();
         if (pos)
         {
-            //InfoLog("{} {} {}", pos->x(), pos->y(), pos->z());
+            InfoLog("{} {} {}", pos->x(), pos->y(), pos->z());
         }
         else
         {

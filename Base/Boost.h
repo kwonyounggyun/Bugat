@@ -41,4 +41,10 @@ namespace bugat
 	using Socket = boost::asio::basic_stream_socket<boost::asio::ip::tcp, Executor>;
 	using Resolver = boost::asio::ip::basic_resolver<boost::asio::ip::tcp, Executor>;
 	using EndPoint = boost::asio::ip::basic_endpoint<boost::asio::ip::tcp>;
+
+	using UDPResolver = boost::asio::ip::basic_resolver<boost::asio::ip::udp, Executor>;
+	using UDPSocket = boost::asio::basic_datagram_socket<boost::asio::ip::udp, Executor>;
+	using UDPEndPoint = boost::asio::ip::basic_endpoint<boost::asio::ip::udp>;
+
+	using Strand = boost::asio::strand<Executor>;
 }

@@ -1,15 +1,14 @@
 #pragma once
-#include "Header.h"
 
 namespace bugat
 {
-	constexpr int DefaultBlockSize = MAX_PACKET_SIZE * 5;
-	constexpr int MarginSize = 100;
-
+	template<int Size>
 	class DataBlock
 	{
 	public:
-		DataBlock() : _buf({ 0, }), _head(0), _tail(0), _maxSize(DefaultBlockSize) {}
+		static constexpr int Size = Size;
+		static constexpr int MaxSize = Size * 5;
+		DataBlock() : _buf({ 0, }), _head(0), _tail(0) {}
 
 		char* GetRemainBuf()
 		{
@@ -18,12 +17,12 @@ namespace bugat
 
 		int GetRemainSize()
 		{
-			return _maxSize - _tail;
+			return MaxSize - _tail;
 		}
 
 		char* GetBuf(int pos)
 		{
-			if (pos < 0 || pos >= _maxSize)
+			if (pos < 0 || pos >= MaxSize)
 				return nullptr;
 
 			return &_buf[pos];
@@ -50,12 +49,10 @@ namespace bugat
 
 		bool Update(int size)
 		{
-			if ((_tail + size) >= DefaultBlockSize)
+			if ((_tail + size) > MaxSize)
 				return false;
 
 			_tail += size;
-			if ((DefaultBlockSize - _tail) < MarginSize)
-				_maxSize = _tail;
 
 			return true;
 		}
@@ -63,8 +60,7 @@ namespace bugat
 		int GetHead() const { return _head; }
 
 	private:
-		char _buf[DefaultBlockSize];
+		char _buf[MaxSize];
 		int _head, _tail;
-		int _maxSize;
 	};
 }

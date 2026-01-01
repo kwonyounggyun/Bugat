@@ -132,7 +132,7 @@ namespace bugat
 
 		AwaitTask<void> Recv(std::shared_ptr<Connection> connection)
 		{
-			NetworkMessage msg;
+			NetworkMessage<TCPRecvPacket> msg;
 			while (false == connection->Disconnected())
 			{
 				auto bufInfo = msg.GetBufInfo();
@@ -150,7 +150,7 @@ namespace bugat
 
 				msg.Update(transper);
 
-				std::shared_ptr<RecvPacket> packet = nullptr;
+				std::shared_ptr<TCPRecvPacket> packet = nullptr;
 				if (msg.GetNetMessage(packet))
 					connection->OnRead(packet);
 			}

@@ -9,7 +9,7 @@ namespace bugat
 		_handles[static_cast<int>(bugat::protocol::game::Type::REQ_CS_MOVE)] = MAKE_FB_HANDLE(Req_CS_Move);
 	}
 
-	void GameHandler::Handle(std::shared_ptr<Session>& session, const std::shared_ptr<RecvPacket>& packet)
+	void GameHandler::Handle(std::shared_ptr<Session>& session, const std::shared_ptr<TCPRecvPacket>& packet)
 	{
 		auto header = packet->GetHeader();
 		auto iter = _handles.find(header.type);
