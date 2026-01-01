@@ -8,7 +8,7 @@ namespace bugat
 	class SendPacket
 	{
 	public:
-		SendPacket(int type, std::shared_ptr<flatbuffers::FlatBufferBuilder>& fb)
+		SendPacket(int type, const std::shared_ptr<flatbuffers::FlatBufferBuilder>& fb)
 		{
 			_header.type = type;
 			_header.size = fb->GetSize();

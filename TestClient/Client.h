@@ -3,11 +3,7 @@
 
 namespace bugat
 {
-	struct Connection;
-}
-
-namespace bugat
-{
+	class Connection;
 	class Client : public Session
 	{
 	public:

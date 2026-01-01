@@ -16,9 +16,9 @@ namespace bugat
 		void Init();
 
 	private:
-		std::unordered_map<int, std::shared_ptr<BaseHandle>> _handles;
+		std::unordered_map<int, std::shared_ptr<PacketHandle<Client>>> _handles;
 	};
 
-	DEFINE_FB_HANDLE(Res_SC_Login)
-	DEFINE_FB_HANDLE(Res_SC_Move)
+	DEFINE_FB_HANDLE(Client, Res_SC_Login)
+	DEFINE_FB_HANDLE(Client, Res_SC_Move)
 }

@@ -6,32 +6,31 @@
 
 namespace bugat
 {
-	class BaseHandle
+	template<typename T>
+	class PacketHandle
 	{
 	public:
-		BaseHandle() {}
-		~BaseHandle() {}
+		PacketHandle() {}
+		virtual ~PacketHandle() {}
 
 		void operator()(std::shared_ptr<Session>& session, const std::shared_ptr<RecvPacket>& packet)
 		{
-			//if(session->IsAuth())
-				_Handle(session, packet);
-			//else if(header.type == static_cast<int>(bugat::protocol::game::Type::REQ_CA_LOGIN))
-				//_Handle(session, header, msg);
+			auto castSession = std::static_pointer_cast<T>(session);
+			_Handle(castSession, packet);
 		}
 
 	protected:
-		virtual void _Handle(std::shared_ptr<Session>& session, const std::shared_ptr<RecvPacket>& packet) = 0;
+		virtual void _Handle(std::shared_ptr<T>& session, const std::shared_ptr<RecvPacket>& packet) = 0;
 	};
 
-#define DEFINE_FB_HANDLE(className) \
-	class className##Handle : public BaseHandle \
+#define DEFINE_FB_HANDLE(sessionType, className) \
+	class className##Handle : public PacketHandle<sessionType> \
 	{ \
 	public: \
 		className##Handle() {} \
-		~className##Handle() {} \
+		virtual ~className##Handle() {} \
 	protected: \
-		virtual void _Handle(std::shared_ptr<Session>& session, const std::shared_ptr<RecvPacket>& packet) override \
+		virtual void _Handle(std::shared_ptr<sessionType>& session, const std::shared_ptr<RecvPacket>& packet) override \
 		{ \
 			const bugat::protocol::game::className* p = nullptr; \
 			if(true == packet->Get<bugat::protocol::game::className>(p)) \
@@ -43,11 +42,11 @@ namespace bugat
 				ErrorLog("Packet Error"); \
 			} \
 		} \
-		void __Handle(std::shared_ptr<Session>& session, const bugat::protocol::game::className* data); \
+		void __Handle(std::shared_ptr<sessionType>& session, const bugat::protocol::game::className* packet); \
 	};
 
-#define DECLARE_FB_HANDLE(className) \
-	void className##Handle::__Handle(std::shared_ptr<Session>& session, const bugat::protocol::game::className* data)
+#define DECLARE_FB_HANDLE(sessionType, className) \
+	void className##Handle::__Handle(std::shared_ptr<sessionType>& session, const bugat::protocol::game::className* packet)
 
 #define MAKE_FB_HANDLE(className) std::make_shared<className##Handle>()
 }

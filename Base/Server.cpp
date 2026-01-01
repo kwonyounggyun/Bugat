@@ -34,21 +34,37 @@ namespace bugat
 		BoostError _result;
 	};
 
+	struct AcceptInfo
+	{
+	public:
+		AcceptInfo(const Executor& executor, unsigned short port, AnyConnectionFactory& factory) : _executor(executor), _acceptor(executor, { TCP::v4(), port }), _factory(std::move(factory))
+		{
+			_acceptor.listen(boost::asio::socket_base::max_listen_connections);
+		}
+		Acceptor& GetAcceptor() { return _acceptor; }
+		AnyConnectionFactory& GetFactory() { return _factory; }
+		const Executor& GetExecutor() { return _executor; }
+
+	private:
+		Acceptor _acceptor;
+		AnyConnectionFactory _factory;
+		Executor _executor;
+	};
+
 	namespace Net
 	{
-		AwaitTask<void> Accept(std::shared_ptr<Server> server, const Executor& executor, AnyConnectionFactory factory, Configure config)
+		AwaitTask<void> Accept(std::shared_ptr<Server> server, std::shared_ptr<AcceptInfo> info)
 		{
-			Acceptor acceptor(executor, { TCP::v4(), config.port });
 			for (;;)
 			{
-				auto socket = std::make_unique<Socket>(executor);
-				auto error = co_await AwaitAccept{ server.get(), acceptor, socket.get()};
+				auto socket = std::make_unique<Socket>(info->GetExecutor());
+				auto error = co_await AwaitAccept{ server.get(), info->GetAcceptor(), socket.get()};
 				if (error)
 				{
 					break;
 				}
 
-				auto connection = factory.Create(socket);
+				auto connection = info->GetFactory().Create(socket);
 				server->OnAccept(connection);
 				connection->OnAccept();
 				connection->Start();
@@ -68,7 +84,10 @@ namespace bugat
 
 	void Server::Accept(const Executor& executor, AnyConnectionFactory factory, Configure config)
 	{
+		auto info = std::make_shared<AcceptInfo>(executor, config.port, factory);
+		_acceptInfos.push_back(info);
 		auto sptr = std::static_pointer_cast<Server>(shared_from_this());
-		CoSpawn(*this, Net::Accept(sptr, executor, std::move(factory), config));
+		for (auto i = 0; i < config.acceptTaskCount; i++)
+			CoSpawn(*this, Net::Accept(sptr, info));
 	}
 }

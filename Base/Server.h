@@ -9,11 +9,12 @@ namespace bugat
 	class AnyConnectionFactory;
 
 	struct Executor;
+	struct AcceptInfo;
 	class Server : public SerializeObject
 	{
 	public:
 		Server();
-		~Server();
+		virtual ~Server();
 
 	public:
 		void Accept(const Executor& executor, AnyConnectionFactory factory, Configure config);
@@ -23,5 +24,8 @@ namespace bugat
 
 	protected:
 		virtual void Update() = 0;
+
+	private:
+		std::vector<std::shared_ptr<AcceptInfo>> _acceptInfos;
 	};
 }

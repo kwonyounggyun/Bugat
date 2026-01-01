@@ -12,8 +12,7 @@ namespace bugat
 		NetworkContext();
 
 		void Initialize();
-		int64_t Run();
-		void RunOne();
+		void Run();
 		void Stop();
 
 		Executor GetExecutor() const noexcept;

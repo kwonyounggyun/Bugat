@@ -5,6 +5,7 @@
 #include "../Base/Configure.h"
 #include "../Core/RWLockObject.h"
 #include "../Core/Math.h"
+#include "../Core/Counter.h"
 
 namespace bugat
 {
@@ -33,12 +34,12 @@ namespace bugat
 		void DeleteClient(Client::ID_Type id);
 		void DeleteClient(std::shared_ptr<Client>& client);
 
-		void AddAction(std::function<AwaitTask<void>(Client*)> action)
+		void AddAction(std::function<void(Client*)> action)
 		{
 			_actions.push_back(action);
 		}
 
-		const std::function<AwaitTask<void>(Client*)>& GetRandomAction() const
+		const std::function<void(Client*)>& GetRandomAction() const
 		{
 			auto rand = Math::Random<int>(0, _actions.size() - 1);
 			return _actions[rand];
@@ -46,6 +47,6 @@ namespace bugat
 
 	private:
 		RWLockObject<std::map<Client::ID_Type, std::shared_ptr<Client>>> _clients;
-		std::vector<std::function<AwaitTask<void>(Client*)>> _actions;
+		std::vector<std::function<void(Client*)>> _actions;
 	};
 }

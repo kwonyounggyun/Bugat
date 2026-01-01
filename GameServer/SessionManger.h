@@ -13,7 +13,7 @@ namespace bugat
 	class SessionManager
 	{
 	public:
-		void AddSession(PlayerId& pid, std::shared_ptr<T>& session)
+		void AddSession(PlayerId& pid, const std::shared_ptr<T>& session)
 		{
 			auto write = _mapSession.LockWrite();
 			write->emplace(pid, session);

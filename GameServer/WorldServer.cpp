@@ -13,20 +13,22 @@ namespace bugat
 	}
 
 	std::atomic<int> tempcount = 0;
-	std::atomic<int> worldcount = 0;
 	void WorldServer::OnAccept(std::shared_ptr<Connection>& conn)
 	{
 		auto gameSession = CreateSerializeObject<GameSession>(GetContext());
 		gameSession->SetConnection(conn);
 		std::weak_ptr<GameSession> weak = gameSession;
 
-		conn->OnAccept += []() {
-			auto value = worldcount.fetch_add(1);
-			InfoLog("{}", value + 1);
+		auto id = conn->GetObjectId();
+		conn->OnAccept += [id, gameSession, this]() {
+			InfoLog("Connect : {}", id.String());
+
+			PlayerId temp;
+			temp.pid = tempcount.fetch_add(1);
+			_sessionManager.AddSession(temp, gameSession);
 			};
-		conn->OnClose += [weak]() {
-			auto value = worldcount.fetch_sub(1);
-			InfoLog("{}", value - 1);
+		conn->OnClose += [weak, id]() {
+			InfoLog("Disconnect : {}", id.String());
 
 			if (auto session = weak.lock(); session)
 				session->Close();
@@ -35,10 +37,6 @@ namespace bugat
 			if(auto session = weak.lock(); session)
 				session->HandleMsg(packet);
 			};
-
-		PlayerId temp;
-		temp.pid = tempcount.fetch_add(1);
-		_sessionManager.AddSession(temp, gameSession);
 	}
 	void WorldServer::Update()
 	{

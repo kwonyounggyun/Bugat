@@ -22,7 +22,7 @@ namespace bugat
 			count = GetCount();
 		}
 
-		std::string String()
+		std::string String() const
 		{
 			return std::format("{} {}", timestamp, count);
 		}

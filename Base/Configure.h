@@ -6,5 +6,6 @@ namespace bugat
 	{
 		std::string ip;
 		unsigned short port;
+		int acceptTaskCount;
 	};
 }

@@ -1,4 +1,6 @@
 #pragma once
+#include <atomic>
+
 #include "LockFreeQueue.h"
 #include "Task.h"
 #include "AwaitTask.h"
@@ -33,22 +35,7 @@ namespace bugat
 		/*
 		* 반드시 하나의 스레드에서만 호출되어야 한다.
 		*/
-		int64_t Run()
-		{
-			while (true == _runningGuard.test_and_set(std::memory_order_acquire));
-
-			auto size = _taskCount.load(std::memory_order_acquire);
-			auto executeCount = _que.Consume(size, [](AnyTask& task)
-				{
-					task.Run();
-				});
-
-			auto preCount = _taskCount.fetch_sub(executeCount, std::memory_order_release);
-			_runningGuard.clear(std::memory_order_release);
-
-			OnRun(preCount - executeCount);
-			return executeCount;
-		}
+		int64_t Run();
 
 		virtual void OnRun(int64_t remainCount) {}
 		virtual void OnPost(int64_t remainCount) {}

@@ -3,10 +3,10 @@
 #include <unordered_map>
 #include "../Base/Handle.h"
 #include "../Core/Singleton.h"
+#include "GameSession.h"
 
 namespace bugat
 {
-	class GameSession;
 	class GameHandler : public Singleton<GameHandler>
 	{
 	public:
@@ -14,9 +14,9 @@ namespace bugat
 		void Init();
 
 	private:
-		std::unordered_map<int, std::shared_ptr<BaseHandle>> _handles;
+		std::unordered_map<int, std::shared_ptr<PacketHandle<GameSession>>> _handles;
 	};
 
-	DEFINE_FB_HANDLE(Req_CS_Login)
-	DEFINE_FB_HANDLE(Req_CS_Move)
+	DEFINE_FB_HANDLE(GameSession, Req_CS_Login)
+	DEFINE_FB_HANDLE(GameSession, Req_CS_Move)
 }

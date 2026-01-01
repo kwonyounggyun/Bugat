@@ -10,7 +10,7 @@ namespace bugat
 		while (true)
 		{
 			auto now = DateTime::NowMs();
-			if ((now - lastUpdate) < 1000)
+			if ((now - lastUpdate) < 10)
 			{
 				co_await AwaitAlways(client);
 				continue;
@@ -18,7 +18,8 @@ namespace bugat
 
 			lastUpdate = now;
 			auto& action = dummys->GetRandomAction();
-			CoSpawn(*client, action(client));
+			(*client, action(client));
+			co_await AwaitAlways(client);
 		}
 	}
 

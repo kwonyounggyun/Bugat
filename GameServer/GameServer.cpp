@@ -41,12 +41,12 @@ int main()
 {
     ThreadGroup threads;
     LogicContext.Initialize(10);
-    threads.Add(10, [](ThreadInfo& info) {
+    threads.Add(5, [](ThreadInfo& info) {
         LogicContext.Run();
         });
 
-    threads.Add(10, [](ThreadInfo& info) {
-        NetClientContext.RunOne();
+    threads.Add(5, [](ThreadInfo& info) {
+        NetClientContext.Run();
         });
 
  /*   threads.Add(1, [](ThreadInfo& info) {
@@ -59,6 +59,7 @@ int main()
     WorldInstance.Initialize();
     Configure config;
     config.port = 9000;
+    config.acceptTaskCount = 10;
     WorldInstance.Accept(NetClientContext.GetExecutor(), ConnectionFactory<GameConnection>(LogicContext), config);
     
 

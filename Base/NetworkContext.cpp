@@ -7,11 +7,6 @@ namespace bugat
 {
 	struct ContextImpl
 	{
-		int64_t Run()
-		{
-			return _ioContext.run();
-		}
-
 		int64_t RunOne()
 		{
 			return _ioContext.run_one();
@@ -34,14 +29,10 @@ namespace bugat
 	{
 	}
 
-	int64_t NetworkContext::Run()
+	void NetworkContext::Run()
 	{
-		return _context->Run();
-	}
-
-	void NetworkContext::RunOne()
-	{
-		_context->RunOne();
+		while(false == _stop.load())
+			_context->RunOne();
 	}
 
 	void NetworkContext::Stop()
