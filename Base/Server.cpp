@@ -66,7 +66,6 @@ namespace bugat
 
 				auto connection = info->GetFactory().Create(socket);
 				server->OnAccept(connection);
-				connection->OnAccept();
 				connection->Start();
 			}
 

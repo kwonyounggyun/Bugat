@@ -1,11 +1,12 @@
 #pragma once
-#include "Client.h"
+#include "DummyClient.h"
 #include "ClientConnection.h"
 #include "../Base/NetworkContext.h"
 #include "../Base/Configure.h"
-#include "../Core/RWLockObject.h"
 #include "../Core/Math.h"
 #include "../Core/Counter.h"
+
+#include "DummyClientManager.h"
 
 namespace bugat
 {
@@ -30,23 +31,20 @@ namespace bugat
 	public:
 		Dummys() {}
 		void Start(int count, ClientConnectionFactory factory, NetworkContext& netContext, Configure config);
-		void AddClient(std::shared_ptr<Client>& client);
-		void DeleteClient(Client::ID_Type id);
-		void DeleteClient(std::shared_ptr<Client>& client);
 
-		void AddAction(std::function<void(Client*)> action)
+		void AddAction(std::function<void(DummyClient*)> action)
 		{
 			_actions.push_back(action);
 		}
 
-		const std::function<void(Client*)>& GetRandomAction() const
+		const std::function<void(DummyClient*)>& GetRandomAction() const
 		{
 			auto rand = Math::Random<int>(0, _actions.size() - 1);
 			return _actions[rand];
 		}
 
 	private:
-		RWLockObject<std::map<Client::ID_Type, std::shared_ptr<Client>>> _clients;
-		std::vector<std::function<void(Client*)>> _actions;
+		DummyClientManager _clients;
+		std::vector<std::function<void(DummyClient*)>> _actions;
 	};
 }

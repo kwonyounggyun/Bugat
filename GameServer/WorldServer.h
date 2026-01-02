@@ -23,7 +23,7 @@ namespace bugat
 		virtual void Update() override;
 
 	private:
-		SessionManager<GameSession> _sessionManager;
+		SessionManager _sessionManager;
 	};
 
 #define WorldInstance (*WorldServer::Instance())

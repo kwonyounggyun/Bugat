@@ -1,41 +1,25 @@
 #pragma once
-#include <type_traits>
-#include <map>
-
-#include "../Core/RWLockObject.h"
 #include "../Base/PlayerId.h"
-#include "../Base/Session.h"
+#include "../Base/ObjectManager.h"
+#include "GameSession.h"
 
 namespace bugat
 {
-	template<typename T>
-	requires std::is_base_of_v<Session, T>
-	class SessionManager
+	struct PlayerIdHash
 	{
-	public:
-		void AddSession(PlayerId& pid, const std::shared_ptr<T>& session)
+		int operator()(PlayerId& key, int size)
 		{
-			auto write = _mapSession.LockWrite();
-			write->emplace(pid, session);
+			return key.pid % size;
 		}
-
-		void DelSession(PlayerId& pid)
-		{
-			auto write = _mapSession.LockWrite();
-			write->erase(pid);
-		}
-
-		std::shared_ptr<T> FindSession(PlayerId& pid)
-		{
-			auto read = _mapSession.LockRead();
-			auto iter = read->find(pid);
-			if (iter == read->end())
-				return nullptr;
-
-			return iter->second;
-		}
-
-	private:
-		RWLockObject<std::map<PlayerId, std::shared_ptr<T>>> _mapSession;
 	};
+	
+	struct GameSessionIDHash
+	{
+		int operator()(GameSession::ID_Type& key, int size)
+		{
+			return key.count % size;
+		}
+	};
+
+	using SessionManager = ObjectManager<GameSessionIDHash, GameSession::ID_Type, GameSession, 2000>;
 }

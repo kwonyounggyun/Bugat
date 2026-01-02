@@ -86,7 +86,6 @@ namespace bugat
 				co_return;
 			}
 
-			connection->OnConnect();
 			connection->Start();
 			co_return;
 		}
@@ -210,6 +209,8 @@ namespace bugat
 		auto sptr = std::static_pointer_cast<Connection>(shared_from_this());
 		CoSpawn(*this, Net::Send(sptr));
 		CoSpawn(*this, Net::Recv(sptr));
+
+		OnConnect();
 
 		return true;
     }

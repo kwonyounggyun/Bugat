@@ -164,6 +164,7 @@
     <ClInclude Include="Header.h" />
     <ClInclude Include="NetworkContext.h" />
     <ClInclude Include="NetworkMessage.h" />
+    <ClInclude Include="ObjectManager.h" />
     <ClInclude Include="Packet.h" />
     <ClInclude Include="Param.h" />
     <ClInclude Include="pch.h" />

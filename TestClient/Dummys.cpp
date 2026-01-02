@@ -4,7 +4,7 @@
 
 namespace bugat
 {
-	AwaitTask<void> RandomAction(Dummys* dummys, Client* client)
+	AwaitTask<void> RandomAction(Dummys* dummys, DummyClient* client)
 	{
 		int64_t lastUpdate = 0;
 		while (true)
@@ -28,38 +28,25 @@ namespace bugat
 		for (int i = 0; i < count; i++)
 		{
 			auto connection = factory.Create();
-			auto client = CreateSerializeObject<Client>(connection->GetContext());
-			client->SetConnection(connection);
-			connection->OnConnect += [client, this]() mutable {
-				AddClient(client);
+			auto dummyClient = CreateSerializeObject<DummyClient>(connection->GetContext());
+			dummyClient->SetConnection(connection);
+
+			dummyClient->OnClose += [this, dummyClient]() {
+				_clients.Del(dummyClient->GetObjectId());
 				};
 
-			connection->OnRead += [client](const std::shared_ptr<TCPRecvPacket>& pack) {
-				client->HandleMsg(pack);
+			connection->OnConnect += [dummyClient, this]() mutable {
+				_clients.Add(dummyClient->GetObjectId(), dummyClient);
+				CoSpawn(*dummyClient, RandomAction(this, dummyClient.get()));
 				};
 
-			connection->OnClose += [client]() { client->Close(); };
+			connection->OnRead += [dummyClient](const std::shared_ptr<TCPRecvPacket>& pack) {
+				dummyClient->HandleMsg(pack);
+				};
+
+			connection->OnClose += [dummyClient]() { dummyClient->Close(); };
 
 			connection->Connect(netContext.GetExecutor(), config.ip, config.port);
 		}
-	}
-
-	void Dummys::AddClient(std::shared_ptr<Client>& client)
-	{
-		auto lock = _clients.LockWrite();
-		lock->emplace(client->GetObjectId(), client);
-
-		CoSpawn(*client, RandomAction(this, client.get()));
-	}
-
-	void Dummys::DeleteClient(Client::ID_Type id)
-	{
-		auto lock = _clients.LockWrite();
-		lock->erase(id);
-	}
-
-	void Dummys::DeleteClient(std::shared_ptr<Client>& client)
-	{
-		DeleteClient(client->GetObjectId());
 	}
 }

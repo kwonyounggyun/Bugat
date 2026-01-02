@@ -12,24 +12,6 @@
 #include "WorldServer.h"
 #include "GameHandler.h"
 
-using namespace bugat;
-
-struct Test : public SerializeObject
-{
-    Test() : _seq(0) {}
-
-    bool Check(int seq)
-    {
-        if (_seq != seq)
-            return false; //throw std::exception("Seq break");
-        
-        _seq++;
-        return true;
-    }
-
-    int _seq;
-};
-
 #include "../Core/ThreadGroup.h"
 
 #include "../Base/Configure.h"
@@ -39,6 +21,8 @@ struct Test : public SerializeObject
 
 int main()
 {
+    using namespace bugat;
+
     ThreadGroup threads;
     LogicContext.Initialize(10);
     threads.Add(5, [](ThreadInfo& info) {

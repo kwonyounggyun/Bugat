@@ -17,13 +17,16 @@ namespace bugat
 		void SetConnection(std::shared_ptr<Connection> conn) { _connection = conn; }
 
 		void Close();
-		virtual void OnClose() = 0;
+		
 
 		void SetServer(Server* server) { _server = server; }
 		Server* GetServer() const { return _server; }
 		virtual void HandleMsg(const std::shared_ptr<TCPRecvPacket>& packet) = 0;
 
 		bool IsAuth() { return _isAuth; }
+
+	public:
+		Event<> OnClose;
 
 	private:
 		std::shared_ptr<Connection> _connection;

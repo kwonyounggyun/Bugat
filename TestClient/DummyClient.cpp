@@ -1,19 +1,19 @@
 #include "stdafx.h"
-#include "Client.h"
+#include "DummyClient.h"
 #include "ClientConnection.h"
 #include "ClientHandler.h"
 
 namespace bugat
 {
-	Client::~Client()
+	DummyClient::DummyClient()
 	{
 	}
 
-	void Client::OnClose()
+	DummyClient::~DummyClient()
 	{
 	}
 
-	void Client::HandleMsg(const std::shared_ptr<TCPRecvPacket>& packet)
+	void DummyClient::HandleMsg(const std::shared_ptr<TCPRecvPacket>& packet)
 	{
 		Post([weak = weak_from_this(), packet]() mutable {
 			if (auto sPtr = weak.lock(); sPtr != nullptr)

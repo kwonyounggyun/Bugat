@@ -19,25 +19,26 @@ namespace bugat
 		gameSession->SetConnection(conn);
 		std::weak_ptr<GameSession> weak = gameSession;
 
-		auto id = conn->GetObjectId();
-		conn->OnAccept += [id, gameSession, this]() {
-			InfoLog("Connect : {}", id.String());
-
-			PlayerId temp;
-			temp.pid = tempcount.fetch_add(1);
-			_sessionManager.AddSession(temp, gameSession);
+		auto sessionId = gameSession->GetObjectId();
+		gameSession->OnClose += [this, sessionId]() {
+			_sessionManager.Del(sessionId);
 			};
-		conn->OnClose += [weak, id]() {
-			InfoLog("Disconnect : {}", id.String());
 
+		conn->OnConnect += [sessionId, gameSession, this]() mutable {
+			_sessionManager.Add(gameSession->GetObjectId(), gameSession);
+			};
+
+		conn->OnClose += [weak]() {
 			if (auto session = weak.lock(); session)
 				session->Close();
 			};
+
 		conn->OnRead += [weak](const std::shared_ptr<TCPRecvPacket>& packet) {
 			if(auto session = weak.lock(); session)
 				session->HandleMsg(packet);
 			};
 	}
+
 	void WorldServer::Update()
 	{
 	}

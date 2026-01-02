@@ -8,7 +8,7 @@
 #include "../Base/NetworkContext.h"
 #include "../Base/Protocol.h"
 
-#include "Client.h"
+#include "DummyClient.h"
 #include "ClientConnection.h"
 #include "ClientHandler.h"
 #include "Dummys.h"
@@ -16,7 +16,7 @@
 using namespace bugat;
 
 
-void SendingPacket(Client* client)
+void SendingPacket(DummyClient* client)
 {
     auto id = client->GetObjectId();
     auto fb = FBCreate();

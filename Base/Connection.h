@@ -30,7 +30,6 @@ namespace bugat
 		friend struct AwaitSend;
 
 	public:
-		Event<> OnAccept;
 		Event<> OnConnect;
 		Event<> OnClose;
 		Event<const std::shared_ptr<TCPRecvPacket>&> OnRead;

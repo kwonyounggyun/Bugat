@@ -3,8 +3,7 @@
 #include "../Base/Handle.h"
 #include "../Base/Packet.h"
 
-
-#include "Client.h"
+#include "DummyClient.h"
 #include <unordered_map>
 
 namespace bugat
@@ -16,9 +15,9 @@ namespace bugat
 		void Init();
 
 	private:
-		std::unordered_map<int, std::shared_ptr<TCPPacketHandle<Client>>> _handles;
+		std::unordered_map<int, std::shared_ptr<TCPPacketHandle<DummyClient>>> _handles;
 	};
 
-	DEFINE_FB_HANDLE(Client, Res_SC_Login)
-	DEFINE_FB_HANDLE(Client, Res_SC_Move)
+	DEFINE_FB_HANDLE(DummyClient, Res_SC_Login)
+	DEFINE_FB_HANDLE(DummyClient, Res_SC_Move)
 }
