@@ -2,7 +2,7 @@
 #include "WorldServer.h"
 #include "GameConnection.h"
 #include "GameSession.h"
-#include "../Core/Log.h"
+#include "../Base/Log.h"
 #include "../Base/PlayerId.h"
 
 namespace bugat

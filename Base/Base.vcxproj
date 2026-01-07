@@ -74,6 +74,8 @@
   <PropertyGroup Label="Vcpkg">
     <VcpkgEnabled>false</VcpkgEnabled>
     <VcpkgManifestInstall>false</VcpkgManifestInstall>
+    <VcpkgAutoLink>false</VcpkgAutoLink>
+    <VcpkgApplocalDeps>false</VcpkgApplocalDeps>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -111,23 +113,21 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_LIB;BOOST_LIB_DIAGNOSTIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>D:\Libraries\boost188\include\boost-1_88;$(SolutionDir)thirdparty\flatbuffers\flatbuffers-25.9.23\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Libraries\boost188\include\boost-1_88;D:\Libraries\openssl\include;$(SolutionDir)thirdparty\flatbuffers\flatbuffers-25.9.23\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp23</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>
       </SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <Lib>
-      <AdditionalDependencies>Core.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>D:\Libraries\boost188\lib;$(TargetDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Lib>
+    <Lib />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -153,23 +153,30 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Boost.h" />
+    <ClInclude Include="BoostAsio.h" />
+    <ClInclude Include="BoostRedis.h" />
     <ClInclude Include="Configure.h" />
     <ClInclude Include="Connection.h" />
     <ClInclude Include="Context.h" />
+    <ClInclude Include="Counter.h" />
     <ClInclude Include="DataBlock.h" />
+    <ClInclude Include="DateTime.h" />
     <ClInclude Include="Define.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Handle.h" />
     <ClInclude Include="Header.h" />
+    <ClInclude Include="Log.h" />
     <ClInclude Include="NetworkContext.h" />
     <ClInclude Include="NetworkMessage.h" />
+    <ClInclude Include="ObjectId.h" />
     <ClInclude Include="ObjectManager.h" />
     <ClInclude Include="Packet.h" />
     <ClInclude Include="Param.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PlayerId.h" />
     <ClInclude Include="Protocol.h" />
+    <ClInclude Include="RedisClient.h" />
+    <ClInclude Include="RedisCommand.h" />
     <ClInclude Include="SerializeObject.h" />
     <ClInclude Include="Server.h" />
     <ClInclude Include="Session.h" />
@@ -180,6 +187,7 @@
     <ClCompile Include="Connection.cpp" />
     <ClCompile Include="Context.cpp" />
     <ClCompile Include="Base.cpp" />
+    <ClCompile Include="DateTime.cpp" />
     <ClCompile Include="NetworkContext.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

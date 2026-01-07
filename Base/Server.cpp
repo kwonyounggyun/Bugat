@@ -2,8 +2,6 @@
 #include "Server.h"
 #include "Connection.h"
 #include "Configure.h"
-#include "Boost.h"
-
 
 namespace bugat
 {

@@ -7,6 +7,10 @@
 #ifndef PCH_H
 #define PCH_H
 
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0A00 // Windows 10 이상을 타겟으로 설정
+#endif
+
 // add headers that you want to pre-compile here
 #include "framework.h"
 

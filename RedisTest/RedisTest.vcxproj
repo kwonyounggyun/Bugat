@@ -72,6 +72,9 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Label="Vcpkg">
     <VcpkgEnabled>false</VcpkgEnabled>
+    <VcpkgManifestInstall>false</VcpkgManifestInstall>
+    <VcpkgAutoLink>false</VcpkgAutoLink>
+    <VcpkgApplocalDeps>false</VcpkgApplocalDeps>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -112,8 +115,9 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>D:\Libraries\boost188\lib;D:\Libraries\openssl\debug\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libcrypto.lib;libssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(TargetDir);D:\Libraries\boost188\lib;D:\Libraries\openssl\debug\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Crypt32.lib;ws2_32.lib;Core.lib;Base.lib;libcrypto.lib;libssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ShowProgress>LinkVerboseLib</ShowProgress>
     </Link>
     <PostBuildEvent>
       <Command>copy D:\Libraries\openssl\bin\*.dll $(OutDir)</Command>
@@ -134,19 +138,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Redis.cpp" />
-    <ClCompile Include="RedisCommand.cpp" />
     <ClCompile Include="RedisTest.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="AnyContext.h" />
-    <ClInclude Include="AnyExecutor.h" />
-    <ClInclude Include="BoostTask.h" />
-    <ClInclude Include="JsonObject.h" />
-    <ClInclude Include="Redis.h" />
-    <ClInclude Include="RedisCommand.h" />
-    <ClInclude Include="Task.h" />
-    <ClInclude Include="ThreadGroup.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

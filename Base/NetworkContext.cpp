@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "NetworkContext.h"
 #include "Connection.h"
-#include "Boost.h"
 
 namespace bugat
 {

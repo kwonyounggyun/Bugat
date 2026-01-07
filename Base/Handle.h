@@ -2,7 +2,7 @@
 #include "Session.h"
 #include "Protocol.h"
 #include "Packet.h"
-#include "../Core/Log.h"
+#include "../Base/Log.h"
 
 namespace bugat
 {

@@ -2,7 +2,7 @@
 #include "GameConnection.h"
 
 #include "GameSession.h"
-#include "../Core/Log.h"
+#include "../Base/Log.h"
 
 namespace bugat
 {

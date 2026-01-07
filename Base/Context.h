@@ -2,8 +2,6 @@
 #include <atomic>
 #include <array>
 #include "../Core/LockFreeQueue.h"
-#include "../Core/Counter.h"
-#include "../Core/NonCopyable.h"
 
 namespace bugat
 {

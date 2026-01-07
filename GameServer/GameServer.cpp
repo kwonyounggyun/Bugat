@@ -19,6 +19,9 @@
 #include "ContextHolder.h"
 #include "GameConnection.h"
 
+#include "../Base/RedisClient.h"
+#include "../Base/RedisCommand.h"
+
 int main()
 {
     using namespace bugat;
@@ -46,6 +49,26 @@ int main()
     config.acceptTaskCount = 10;
     WorldInstance.Accept(NetClientContext.GetExecutor(), ConnectionFactory<GameConnection>(LogicContext), config);
     
+    RedisClient redis(NetClientContext.GetExecutor());
+    redis.Connect("127.0.0.1", 6379);
+
+    {
+        auto pipe = CreateRedisPipeline(Set("test", 1), Get<int>("test"));
+        redis.Execute(pipe, [](RedisError error, auto& result) {
+            if (error)
+                ErrorLog("Redis Error : {}", error.message());
+
+            auto& [setResult, getResult] = result;
+            });
+    }
+    {
+       /* auto pipe = CreateRedisPipeline(Set("test", "teststs"), Get<int>("test"));
+        redis.Execute(pipe, [](RedisError error, auto& result) {
+            if (error)
+                ErrorLog("Redis Error : {}", error.message());
+            auto& [setResult, getResult] = result;
+            });*/
+    }
 
     threads.Join();
 }
