@@ -23,13 +23,13 @@ namespace bugat
 
 
     template <typename... Args, std::size_t... Is>
-    void copy_response_impl(const RedisResponse<Args...>& resp, std::tuple<Args...>& result, std::index_sequence<Is...>) {
-        result = { std::get<Is>(resp).value()... };
+    std::tuple<Args...> convert_response_impl(const RedisResponse<Args...>& resp, std::index_sequence<Is...>) {
+        return { std::get<Is>(resp).value()... };
     }
 
     template <typename... Args>
-    void copy_response(const RedisResponse<Args...>& resp, std::tuple<Args...>& result) {
-        copy_response_impl(resp, result, std::index_sequence_for<Args...>{});
+    std::tuple<Args...> convert_response(const RedisResponse<Args...>& resp) {
+        return convert_response_impl(resp, std::index_sequence_for<Args...>{});
     }
 
     class RedisClient;
@@ -107,8 +107,7 @@ namespace bugat
         {
             boost::asio::post(_strand, [conn = _conn, pipe, handle]() {
                 conn->async_exec(pipe->_req, pipe->_resp, [pipe, handle](RedisError ec, size_t byteTrans) {
-                    typename Pipeline::ResultType result;
-                    copy_response(pipe->_resp, result);
+                    typename Pipeline::ResultType result = convert_response(pipe->_resp);
                     handle(ec, result);
                     });
                 });
