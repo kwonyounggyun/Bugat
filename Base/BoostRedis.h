@@ -6,7 +6,13 @@ namespace bugat
 	using RedisRequest = boost::redis::request;
 	template<typename ...Res>
 	using RedisResponse = boost::redis::response<Res...>;
-	using RedisConnection = boost::redis::connection;
+	using BoostRedisConnection = boost::redis::connection;
 
 	using RedisError = boost::system::error_code;
+
+	enum class RedisErrorCode
+	{
+		Fail = 0,
+		Success = 1,
+	};
 }
