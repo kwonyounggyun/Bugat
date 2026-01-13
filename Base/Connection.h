@@ -6,7 +6,6 @@
 #include "ObjectId.h"
 #include "SerializeObject.h"
 #include "Packet.h"
-#include "BoostAsio.h"
 
 namespace bugat
 {
@@ -17,6 +16,8 @@ namespace bugat
 		Connected,
 	};
 
+	struct TCPSocket;
+	struct Executor;
 	class AnySendPacket;
 	class Server;
 
@@ -34,8 +35,8 @@ namespace bugat
 		Event<const std::shared_ptr<TCPRecvPacket>&> OnRead;
 
 
-		Connection() : _socket(nullptr), _state(ConnectionState::Connecting) {}
-		virtual ~Connection() {}
+		Connection();
+		virtual ~Connection();
 
 		void Connect(const Executor& executor, std::string ip, short port);
 
@@ -57,10 +58,10 @@ namespace bugat
 
 		bool Disconnected() const { return _state == ConnectionState::Disconnected; }
 		bool Connected() const { return _state == ConnectionState::Connected; }
-		void SetSocket(std::unique_ptr<Socket>& socket) { _socket = std::move(socket); }
+		void SetSocket(std::unique_ptr<TCPSocket>& socket);
 
 	private:
-		std::unique_ptr<Socket> _socket;
+		std::unique_ptr<TCPSocket> _socket;
 		ObjectId<Connection> _id;
 		std::atomic<ConnectionState> _state;
 
@@ -85,7 +86,6 @@ namespace bugat
 		T _packet;
 	};
 
-
 	class AnySendPacket
 	{
 	public:
@@ -93,39 +93,11 @@ namespace bugat
 		~AnySendPacket() {}
 
 		template<typename T>
-		AnySendPacket(T& packet) : _ptr(std::make_unique<SendPacketModel<T>>(packet))
-		{
-			auto bufs = _ptr->GetBufs();
-			for (auto iter = bufs.begin(); iter != bufs.end(); iter++)
-				_bufs.push_back(boost::asio::buffer(std::get<0>(*iter), std::get<1>(*iter)));
-		};
+		AnySendPacket(T& packet) : _ptr(std::make_unique<SendPacketModel<T>>(packet)) { };
 
-		auto GetBufs() const { return _bufs; }
-		void Update(size_t size)
-		{
-			for (auto iter = _bufs.begin(); iter != _bufs.end();)
-			{
-				auto bufSize = iter->size();
-				if (size >= bufSize)
-				{
-					iter = _bufs.erase(iter);
-					size -= bufSize;
-					continue;
-				}
-
-				const char* ptr = static_cast<const char*>(iter->data());
-				*iter = boost::asio::buffer(ptr + size, bufSize - size);
-				break;
-			}
-		}
-
-		bool IsEmpty()
-		{
-			return _bufs.empty();
-		}
+		auto GetBufs() const { return _ptr->GetBufs(); }
 
 	private:
-		std::list<boost::asio::const_buffer> _bufs;
 		std::unique_ptr<SendPacketConcept> _ptr;
 	};
 
@@ -166,12 +138,7 @@ namespace bugat
 			_ptr = std::move(other._ptr);
 		}
 
-		std::shared_ptr<Connection> Create(std::unique_ptr<Socket>& socket) const
-		{
-			auto connection = _ptr->Create();
-			connection->SetSocket(socket);
-			return connection;
-		}
+		std::shared_ptr<Connection> Create(std::unique_ptr<TCPSocket>& socket) const;
 
 	private:
 		std::unique_ptr<ConnectionFactoryConcept> _ptr;

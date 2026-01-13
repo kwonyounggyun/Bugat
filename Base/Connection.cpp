@@ -1,16 +1,18 @@
 #include "pch.h"
 #include "Connection.h"
 #include "NetworkMessage.h"
+#include "BoostAsio.h"
 
 namespace bugat
 {
+
 	struct AwaitConnect
 	{
 		AwaitConnect(Connection* con, Resolver::results_type& endpoints) : _con(con), _endpoints(endpoints) {}
 		bool await_ready() const noexcept { return false; }
 		void await_suspend(std::coroutine_handle<> h) noexcept
 		{
-			boost::asio::async_connect(*_con->_socket, _endpoints, [this, h](const BoostError& error, const EndPoint& endpoint) {
+			_con->_socket->AsyncConnect(_endpoints, [this, h](const BoostError& error, const EndPoint& endpoint) {
 				_result = error;
 				_con->Post([h]() {
 					h.resume(); });
@@ -33,7 +35,7 @@ namespace bugat
 		bool await_ready() const noexcept { return false; }
 		void await_suspend(std::coroutine_handle<> h) noexcept
 		{
-			_con->_socket->async_read_some(boost::asio::buffer(_buf, _size), [this, h](const BoostError& error, size_t transper) {
+			_con->_socket->AsyncReadSome(_buf, _size, [this, h](const BoostError& error, size_t transper) {
 				_result = { error, transper };
 				_con->Post([h]() {
 					h.resume(); });
@@ -53,11 +55,11 @@ namespace bugat
 
 	struct AwaitSend
 	{
-		AwaitSend(Connection* con, AnySendPacket* packet) : _con(con), _packet(packet) {}
+		AwaitSend(Connection* con, const std::list<boost::asio::const_buffer>& sendBuffer) : _con(con), _sendBuffer(sendBuffer) {}
 		bool await_ready() const noexcept { return false; }
 		void await_suspend(std::coroutine_handle<> h) noexcept
 		{
-			_con->_socket->async_write_some(_packet->GetBufs(), [this, h](const BoostError& error, size_t transper) {
+			_con->_socket->AsyncWriteSome(_sendBuffer, [this, h](const BoostError& error, size_t transper) {
 				_result = { error, transper };
 				_con->Post([h]() {
 					h.resume(); });
@@ -69,7 +71,7 @@ namespace bugat
 			return _result;
 		}
 
-		AnySendPacket* _packet;
+		const std::list<boost::asio::const_buffer>& _sendBuffer;
 		Connection* _con;
 		std::tuple<BoostError, size_t> _result;
 	};
@@ -90,9 +92,56 @@ namespace bugat
 			co_return;
 		}
 
+		class PacketHelper
+		{
+		public:
+			PacketHelper() {}
+			~PacketHelper() {}
+
+			void Init(AnySendPacket* packet)
+			{
+				auto bufs = packet->GetBufs();
+				for (auto iter = bufs.begin(); iter != bufs.end(); iter++)
+					_bufs.push_back(boost::asio::buffer(std::get<0>(*iter), std::get<1>(*iter)));
+			};
+
+			auto& GetBufs() const { return _bufs; }
+			void Update(size_t size)
+			{
+				for (auto iter = _bufs.begin(); iter != _bufs.end();)
+				{
+					auto bufSize = iter->size();
+					if (size >= bufSize)
+					{
+						iter = _bufs.erase(iter);
+						size -= bufSize;
+						continue;
+					}
+
+					const char* ptr = static_cast<const char*>(iter->data());
+					*iter = boost::asio::buffer(ptr + size, bufSize - size);
+					break;
+				}
+			}
+
+			bool IsEmpty()
+			{
+				return _bufs.empty();
+			}
+
+			void Clear()
+			{
+				_bufs.clear();
+			}
+
+		private:
+			std::list<boost::asio::const_buffer> _bufs;
+		};
+
 		AwaitTask<void> Send(std::shared_ptr<Connection> connection)
 		{
 			AnySendPacket* sendingPacket = nullptr;
+			PacketHelper helper;
 			while (false == connection->Disconnected())
 			{
 				if (sendingPacket == nullptr)
@@ -102,9 +151,11 @@ namespace bugat
 						co_await AwaitAlways(connection.get());
 						continue;
 					}
+					else
+						helper.Init(sendingPacket);
 				}
-
-				auto [error, transfer] = co_await AwaitSend(connection.get(), sendingPacket);
+				
+				auto [error, transfer] = co_await AwaitSend(connection.get(), helper.GetBufs());
 				if (error)
 				{
 					auto id = connection->GetObjectId();
@@ -116,10 +167,11 @@ namespace bugat
 					break;
 				}
 
-				sendingPacket->Update(transfer);
+				helper.Update(transfer);
 
-				if (sendingPacket->IsEmpty())
+				if (helper.IsEmpty())
 				{
+					helper.Clear();
 					delete sendingPacket;
 					sendingPacket = nullptr;
 				}
@@ -173,20 +225,36 @@ namespace bugat
 
 		if (_socket != nullptr)
 		{
-			boost::system::error_code ec;
-			_socket->close(ec);
-			if (ec)
-				std::cout << "Socket close failed. Reason: " << ec.message() << std::endl;
-
+			try
+			{
+				_socket->Close();
+			}
+			catch(std::exception& ex)
+			{
+				ErrorLog("Socket Close Error {}", ex.what());
+			}
 			_socket.reset();
 		}
 
 		OnClose();
 	}
 
+	void Connection::SetSocket(std::unique_ptr<TCPSocket>& socket)
+	{
+		_socket = std::move(socket);
+	}
+
+	Connection::Connection() : _socket(nullptr), _state(ConnectionState::Connecting)
+	{
+	}
+
+	Connection::~Connection()
+	{
+	}
+
 	void Connection::Connect(const Executor& executor, std::string ip, short port)
 	{
-		_socket = std::make_unique<Socket>(executor);
+		_socket = std::make_unique<TCPSocket>(executor);
 		Resolver resolver(executor);
 		EndPoint ep(boost::asio::ip::make_address(ip), port);
 		Resolver::results_type endpoints = resolver.resolve(ep);
@@ -214,4 +282,10 @@ namespace bugat
 
 		return true;
     }
+	std::shared_ptr<Connection> AnyConnectionFactory::Create(std::unique_ptr<TCPSocket>& socket) const
+	{
+		auto connection = _ptr->Create();
+		connection->SetSocket(socket);
+		return connection;
+	}
 }

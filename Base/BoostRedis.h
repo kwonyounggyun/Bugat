@@ -9,10 +9,4 @@ namespace bugat
 	using BoostRedisConnection = boost::redis::connection;
 
 	using RedisError = boost::system::error_code;
-
-	enum class RedisErrorCode
-	{
-		Fail = 0,
-		Success = 1,
-	};
 }

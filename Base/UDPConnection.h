@@ -1,9 +1,9 @@
 #pragma once
 #include "SerializeObject.h"
-#include "BoostAsio.h"
 
 namespace bugat
 {
+	struct Executor;
 	struct UDPInfo;
 	class UDPConnection : public SerializeObject
 	{

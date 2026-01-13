@@ -2,6 +2,7 @@
 #include "UDPConnection.h"
 #include "NetworkMessage.h"
 #include "Packet.h"
+#include "BoostAsio.h"
 
 namespace bugat
 {

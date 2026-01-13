@@ -2,23 +2,24 @@
 #include "Server.h"
 #include "Connection.h"
 #include "Configure.h"
+#include "BoostAsio.h"
 
 namespace bugat
 {
 	struct AwaitAccept
 	{
-		AwaitAccept(SerializeObject* server, Acceptor& acceptor, Socket* socket)
+		AwaitAccept(SerializeObject* server, Acceptor& acceptor, TCPSocket* socket)
 			: _server(server), _acceptor(acceptor), _socket(socket)
 		{
 		}
 		bool await_ready() const noexcept { return false; }
 		void await_suspend(std::coroutine_handle<> h) noexcept
 		{
-			_acceptor.async_accept(*_socket, [this, h](const BoostError& ec) {
-					_result = ec;
-					_server->Post([h]() {
-						h.resume(); 
-						});
+			_socket->AsyncAccept(_acceptor, [this, h](const BoostError& ec) {
+				_result = ec;
+				_server->Post([h]() {
+					h.resume();
+					});
 				});
 		}
 		BoostError await_resume()
@@ -28,7 +29,7 @@ namespace bugat
 
 		SerializeObject* _server;
 		Acceptor& _acceptor;
-		Socket* _socket;
+		TCPSocket* _socket;
 		BoostError _result;
 	};
 
@@ -55,7 +56,7 @@ namespace bugat
 		{
 			for (;;)
 			{
-				auto socket = std::make_unique<Socket>(info->GetExecutor());
+				auto socket = std::make_unique<TCPSocket>(info->GetExecutor());
 				auto error = co_await AwaitAccept{ server.get(), info->GetAcceptor(), socket.get()};
 				if (error)
 				{
