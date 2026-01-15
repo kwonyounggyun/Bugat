@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include "SerializeObject.h"
+#include "NetworkContext.h"
 
 namespace bugat
 {
@@ -8,7 +9,6 @@ namespace bugat
 	class Connection;
 	class AnyConnectionFactory;
 
-	struct Executor;
 	struct AcceptInfo;
 	class Server : public SerializeObject
 	{
@@ -17,7 +17,7 @@ namespace bugat
 		virtual ~Server();
 
 	public:
-		void Accept(const Executor& executor, AnyConnectionFactory factory, Configure config);
+		void Accept(const NetworkContext& executor, AnyConnectionFactory factory, Configure config);
 
 		//楷搬等 Connection 包府 肺流 累己
 		virtual void OnAccept(std::shared_ptr<Connection>& conn) = 0;

@@ -80,9 +80,9 @@ namespace bugat
 	{
 	}
 
-	void Server::Accept(const Executor& executor, AnyConnectionFactory factory, Configure config)
+	void Server::Accept(const NetworkContext& executor, AnyConnectionFactory factory, Configure config)
 	{
-		auto info = std::make_shared<AcceptInfo>(executor, config.port, factory);
+		auto info = std::make_shared<AcceptInfo>(executor.GetExecutor(), config.port, factory);
 		_acceptInfos.push_back(info);
 		auto sptr = std::static_pointer_cast<Server>(shared_from_this());
 		for (auto i = 0; i < config.acceptTaskCount; i++)

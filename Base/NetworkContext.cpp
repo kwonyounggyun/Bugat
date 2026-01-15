@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "NetworkContext.h"
-#include "Connection.h"
 #include "BoostAsio.h"
 
 namespace bugat
