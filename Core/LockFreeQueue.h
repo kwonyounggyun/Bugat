@@ -19,7 +19,9 @@ namespace bugat
     public:
         LockFreeQueue() : _size(0)
         {
+            _dummy = std::make_shared<Node>();
             auto temp = std::make_shared<Node>();
+			temp->_next.store(_dummy, std::memory_order_release);
             _head = temp;
             _tail = temp;
         }
@@ -27,30 +29,44 @@ namespace bugat
         int64_t Push(T& value)
         {
             auto node = std::make_shared<Node>(value);
+			node->_next.store(_dummy, std::memory_order_release);
             return InternalPush(node);
         }
 
         int64_t Push(T&& value)
         {
             auto node = std::make_shared<Node>(std::move(value));
+            node->_next.store(_dummy, std::memory_order_release);
             return InternalPush(node);
         }
 
-        int64_t Pop(T& output)
+        bool Pop(T& output)
         {
+			int64_t outRemainCount;
+			return Pop(output, outRemainCount);
+        }
+
+        /// <summary>
+        /// 데이터를 하나 꺼낸다. outRemainCount는 현재 큐 사이즈를 반환하는데 atomic연산 순서에 따라 -
+        /// </summary>
+        /// <param name="output">꺼낸 요소</param>
+        /// <param name="outRemainCount">현재 큐 사이즈</param>
+        /// <returns></returns>
+        bool Pop(T& output, int64_t& outRemainCount)
+        {
+            outRemainCount = 0;
             auto head = _head.load(std::memory_order_acquire);
-            int64_t returnSize = 0;
             while (true)
             {
                 auto tail = _tail.load(std::memory_order_acquire);
                 auto popNode = head->_next.load(std::memory_order_acquire);
 
-                if (popNode == nullptr)
-                    return -1;
+                if (popNode == _dummy)
+                    return false;
 
                 if (head == tail)
                 {
-                    _tail.compare_exchange_strong(tail, popNode, std::memory_order_acq_rel);
+                    _tail.compare_exchange_strong(tail, popNode, std::memory_order_acq_rel, std::memory_order_acquire);
                     head = _head.load(std::memory_order_acquire);
                     continue;
                 }
@@ -58,14 +74,14 @@ namespace bugat
                 if (false == _head.compare_exchange_strong(head, popNode, std::memory_order_acq_rel, std::memory_order_acquire))
                     continue;
 
-                returnSize = _size.fetch_sub(1, std::memory_order_relaxed) - 1;
+                outRemainCount = _size.fetch_sub(1, std::memory_order_relaxed) - 1;
                 output = std::move(popNode->_value);
 
                 head->_next.store(nullptr, std::memory_order_release);
                 break;
             }
 
-            return returnSize;
+            return true;
         }
 
         /// <summary>
@@ -74,19 +90,17 @@ namespace bugat
         /// <typeparam name="Func"></typeparam>
         /// <param name="func">value타입을 파라미터로 받는 함수객체</param>
         /// <returns>
-        /// 반환값 >= 0 : 남은 작업 수.
-        /// 반환값 == -1 큐가 비어있음.
+        /// 성공 true, 실패 false
         /// </returns>
         template<typename Func>
-        int64_t ConsumeOne(Func&& func)
+        bool ConsumeOne(Func&& func)
         {
             T value;
-            auto remainCount = Pop(value);
-            if (remainCount < 0)
-                return remainCount;
+            if (false == Pop(value))
+                return false;
 
             func(value);
-            return remainCount;
+            return true;
         }
 
         /// <summary>
@@ -99,7 +113,7 @@ namespace bugat
         int64_t ConsumeAll(Func&& func)
         {
             int64_t count = 0;
-            while (0 < ConsumeOne(func)) count++;
+            while (ConsumeOne(func)) count++;
 
             return count;
         }
@@ -119,13 +133,12 @@ namespace bugat
             int64_t remainCount = 0;
             while (count > 0)
             {
-                remainCount = ConsumeOne(func);
+                T value;
+                if (false == Pop(value, remainCount))
+                    return remainCount;
+
+                func(value);
                 count--;
-                if (remainCount < 0)
-                {
-                    remainCount = 0;
-                    break;
-                }
             }
 
             return remainCount;
@@ -146,7 +159,8 @@ namespace bugat
             while (true)
             {
                 auto tail = _tail.load(std::memory_order_acquire);
-                std::shared_ptr<Node> next = nullptr;
+                auto next = _dummy;
+
                 if (tail->_next.compare_exchange_strong(next, node, std::memory_order_acq_rel, std::memory_order_acquire))
                 {
                     _tail.compare_exchange_strong(tail, node, std::memory_order_acq_rel, std::memory_order_acquire);
@@ -164,5 +178,7 @@ namespace bugat
         std::atomic<std::shared_ptr<Node>> _head;
         std::atomic<std::shared_ptr<Node>> _tail;
         std::atomic<int64_t> _size;
+        // 빈노드용 공유포인터
+        std::shared_ptr<Node> _dummy;
     };
 }
