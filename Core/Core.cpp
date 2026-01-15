@@ -38,8 +38,7 @@ void fnCore()
 	bugat::RWLockObject<std::map<int, int>> obj;
 	auto lock = obj.LockRead();
 
-	bugat::ObjectPool<int, 10> k2;
-
+	bugat::ObjectPool<TestSerializer, 10> k2;
 	{
 		auto testObj1 = k2.Get();
 		auto testObj2 = k2.Get();

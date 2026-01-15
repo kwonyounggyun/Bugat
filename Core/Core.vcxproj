@@ -167,6 +167,7 @@
     <ClInclude Include="NonCopyable.h" />
     <ClInclude Include="ObjectPool.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="Memory.h" />
     <ClInclude Include="RWLockObject.h" />
     <ClInclude Include="Singleton.h" />
     <ClInclude Include="Task.h" />

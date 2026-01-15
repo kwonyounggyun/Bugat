@@ -4,47 +4,49 @@
 #include <memory>
 #include <atomic>
 #include "LockFreeQueue.h"
+#include "Memory.h"
 
 namespace bugat
 {
 	template<typename T, int AllocSize = 10>
+	requires std::is_base_of_v<RefCountable, T>
 	class ObjectPool
 	{
-		class Pool : public std::enable_shared_from_this<Pool>
+		class Pool : public RefCountable
 		{
-			struct MemoryBlock
+			struct MemoryBlock : public RefCountable
 			{
-				MemoryBlock(std::weak_ptr<Pool> pool, void* p) : _pool(pool), _ptr(p) {}
+				MemoryBlock(TSharedPtr<Pool> pool, void* p) : _pool(pool), _ptr(p) {}
 				~MemoryBlock()
 				{
 					::operator delete(_ptr);
 				}
 
-				std::shared_ptr<Pool> GetPool()
+				TSharedPtr<Pool>& GetPool()
 				{
-					return _pool.load(std::memory_order_acquire).lock();
+					return _pool;
 				}
 
 				void Release()
 				{
-					_pool.store(std::weak_ptr<Pool>(), std::memory_order_release);
+					_pool = nullptr;
 				}
 
-				std::atomic<std::weak_ptr<Pool>> _pool;
+				TSharedPtr<Pool> _pool;
 				void* _ptr;
 			};
 
 			struct Member
 			{
-				Member(std::shared_ptr<MemoryBlock>& block, T* ptr) : _block(block), _ptr(ptr) {}
+				Member(TSharedPtr<MemoryBlock>& block, T* ptr) : _block(block), _ptr(ptr) {}
 				~Member() 
 				{
-					_block.reset();
+					_block.Reset();
 				}
 
 				bool Return()
 				{
-					if (auto sptr = _block->GetPool(); sptr)
+					if (auto& sptr = _block->GetPool(); sptr)
 					{
 						sptr->Push(this);
 						return true;
@@ -54,11 +56,11 @@ namespace bugat
 				}
 
 				template<typename ...Args>
-				std::shared_ptr<T> Get(Args&&... args)
+				TSharedPtr<T> Get(Args&&... args)
 				{
 					// ptr은 MemoryBlock이 관리하기 때문에 delete 하지 않음.
 					new(_ptr)T(std::forward<Args>(args)...);
-					return std::shared_ptr<T>(_ptr, [memPtr = this](T* ptr) {
+					return TSharedPtr<T>(_ptr, [memPtr = this](T* ptr) {
 						ptr->~T();
 						if (false == memPtr->Return())
 						{
@@ -69,7 +71,7 @@ namespace bugat
 						});
 				}
 
-				std::shared_ptr<MemoryBlock> _block; //집나간동안 해제되면안됨..
+				TSharedPtr<MemoryBlock> _block; //집나간동안 해제되면안됨..
 				T* _ptr;
 			};
 
@@ -93,7 +95,7 @@ namespace bugat
 			}
 
 			template<typename ...Args>
-			std::shared_ptr<T> Get(Args&&... args)
+			TSharedPtr<T> Get(Args&&... args)
 			{
 				Member* mem;
 				while (false == _mems.Pop(mem))
@@ -116,6 +118,9 @@ namespace bugat
 
 			void Alloc(int size)
 			{
+				if (size == 0)
+					return;
+
 				if (true == _isAllocating.test_and_set(std::memory_order_acquire))
 					return;
 
@@ -123,7 +128,8 @@ namespace bugat
 				auto totalSize = memberSize + sizeof(T);
 
 				void* memoryBlock = ::operator new(totalSize * size);
-				auto blockPtr = std::make_shared<MemoryBlock>(this->weak_from_this(), memoryBlock);
+				new(memoryBlock)MemoryBlock(TSharedPtr(this), memoryBlock);
+				auto blockPtr = TSharedPtr<MemoryBlock>(reinterpret_cast<MemoryBlock*>(memoryBlock));
 				_blocks.push(blockPtr);
 
 				auto castPtr = static_cast<char*>(memoryBlock);
@@ -139,12 +145,12 @@ namespace bugat
 
 		private:
 			LockFreeQueue<Member*> _mems;
-			std::stack<std::shared_ptr<MemoryBlock>> _blocks;
+			std::stack<TSharedPtr<MemoryBlock>> _blocks;
 			std::atomic_flag _isAllocating;
 		};
 
 	public:
-		ObjectPool() : _pool(std::make_shared<Pool>()) 
+		ObjectPool() : _pool(new Pool())
 		{
 		}
 
@@ -154,12 +160,12 @@ namespace bugat
 		}
 
 		template<typename ...Args>
-		std::shared_ptr<T> Get(Args&&... args)
+		TSharedPtr<T> Get(Args&&... args)
 		{
 			return _pool->Get(std::forward(args)...);
 		}
 
 	private:
-		std::shared_ptr<Pool> _pool;
+		TSharedPtr<Pool> _pool;
 	};
 }
