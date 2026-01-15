@@ -36,16 +36,17 @@ namespace bugat
             return InternalPush(node);
         }
 
-        bool Pop(T& output)
+        int64_t Pop(T& output)
         {
             auto head = _head.load(std::memory_order_acquire);
+            int64_t returnSize = 0;
             while (true)
             {
                 auto tail = _tail.load(std::memory_order_acquire);
                 auto popNode = head->_next.load(std::memory_order_acquire);
 
                 if (popNode == nullptr)
-                    return false;
+                    return -1;
 
                 if (head == tail)
                 {
@@ -57,52 +58,77 @@ namespace bugat
                 if (false == _head.compare_exchange_strong(head, popNode, std::memory_order_acq_rel, std::memory_order_acquire))
                     continue;
 
-                _size.fetch_sub(1, std::memory_order_relaxed);
+                returnSize = _size.fetch_sub(1, std::memory_order_relaxed) - 1;
                 output = std::move(popNode->_value);
 
                 head->_next.store(nullptr, std::memory_order_release);
                 break;
             }
 
-            return true;
+            return returnSize;
         }
 
-		//작업 하나를 소비한다.
+        /// <summary>
+        /// 작업하나를 소비한다.
+        /// </summary>
+        /// <typeparam name="Func"></typeparam>
+        /// <param name="func">value타입을 파라미터로 받는 함수객체</param>
+        /// <returns>
+        /// 반환값 >= 0 : 남은 작업 수.
+        /// 반환값 == -1 큐가 비어있음.
+        /// </returns>
         template<typename Func>
-        bool ConsumeOne(Func&& func)
+        int64_t ConsumeOne(Func&& func)
         {
             T value;
-            if (false == Pop(value))
-                return false;
+            auto remainCount = Pop(value);
+            if (remainCount < 0)
+                return remainCount;
 
             func(value);
-            return true;
+            return remainCount;
         }
 
-		//큐가 빌때까지 모든 작업을 소비한다.
+        /// <summary>
+        /// 큐가 빌때까지 모든 작업을 소비한다.
+        /// </summary>
+        /// <typeparam name="Func"></typeparam>
+        /// <param name="func">value타입을 파라미터로 받는 함수객체</param>
+        /// <returns>진행한 작업 수</returns>
         template<typename Func>
         int64_t ConsumeAll(Func&& func)
         {
             int64_t count = 0;
-            while (ConsumeOne(func)) count++;
+            while (0 < ConsumeOne(func)) count++;
 
             return count;
         }
 
-		//지정한 수만 큼 소비하는데 큐가 비었으면 멈춘다.
+        /// <summary>
+        /// 지정한 수만 큼 소비하는데 큐가 비었으면 멈춘다.
+        /// </summary>
+        /// <typeparam name="Func"></typeparam>
+        /// <param name="count">지정 카운트</param>
+        /// <param name="func"></param>
+        /// <returns>
+        /// 남은 작업 수.
+        /// </returns>
         template<typename Func>
         int64_t Consume(int64_t count, Func&& func)
         {
-            int64_t progressCount = 0;
-            while (progressCount < count)
+            int64_t remainCount = 0;
+            while (count > 0)
             {
-                if (ConsumeOne(func))
-                    progressCount++;
-                else
+                remainCount = ConsumeOne(func);
+                count--;
+                if (remainCount < 0)
+                {
+                    remainCount = 0;
                     break;
+                }
             }
 
-            return progressCount;
+            return remainCount;
         }
 
         void Clear()
@@ -112,7 +138,7 @@ namespace bugat
                 Pop(node);
         }
 
-        int64_t GetSize() { return _size; }
+        int64_t GetSize() { return _size.load(std::memory_order_acquire); }
 
     private:
         int64_t InternalPush(std::shared_ptr<Node>& node)

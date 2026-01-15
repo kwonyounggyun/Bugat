@@ -4,10 +4,11 @@
 #include "LockFreeQueue.h"
 #include "Task.h"
 #include "AwaitTask.h"
+#include "Memory.h"
 
 namespace bugat
 {
-	class TaskSerializer
+	class TaskSerializer : public RefCountable
 	{
 	public:
 		TaskSerializer() {}
@@ -20,16 +21,14 @@ namespace bugat
 		requires std::invocable<Func, ARGS&...>
 		void Post(Func&& func, ARGS&&... args)
 		{
-			_que.Push(AnyTask(std::forward<Func>(func), std::forward<ARGS>(args)...));
-			OnPost(_taskCount.fetch_add(1, std::memory_order_release) + 1);
+			OnPost(_que.Push(AnyTask(std::forward<Func>(func), std::forward<ARGS>(args)...)));
 		}
 
 		template<typename Await>
 		requires std::is_same_v<Await, AwaitTask<typename Await::ValueType>>
 		void Post(Await&& awaitable)
 		{
-			_que.Push(AnyTask(std::forward<Await>(awaitable)));
-			OnPost(_taskCount.fetch_add(1, std::memory_order_release) + 1);
+			OnPost(_que.Push(AnyTask(std::forward<Await>(awaitable))));
 		}
 
 		/*
@@ -40,11 +39,8 @@ namespace bugat
 		virtual void OnRun(int64_t remainCount) {}
 		virtual void OnPost(int64_t remainCount) {}
 
-		int64_t GetCount() const { return _taskCount; }
-
 	private:
 		LockFreeQueue<AnyTask> _que;
-		std::atomic<int64_t> _taskCount{ 0 };
 		std::atomic_flag _runningGuard;
 	};
 

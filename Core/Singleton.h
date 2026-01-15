@@ -15,18 +15,4 @@ namespace bugat
 			return instance;
 		}
 	};
-
-	template <typename T>
-	class SharedSingleton : NonCopyable
-	{
-	public:
-		SharedSingleton() = default;
-		virtual ~SharedSingleton() {};
-
-		static std::shared_ptr<T>& Instance()
-		{
-			static std::shared_ptr<T> instance = std::make_shared<T>();
-			return instance;
-		}
-	};
 }
