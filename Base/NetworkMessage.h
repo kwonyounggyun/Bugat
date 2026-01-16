@@ -1,5 +1,4 @@
 #pragma once
-
 #include "../Core/ObjectPool.h"
 #include <list>
 #include <vector>
@@ -49,7 +48,7 @@ namespace bugat
 			return BufInfo(_curBlock->GetRemainBuf(), PacketType::PacketSize);
 		}
 
-		bool GetNetMessage(std::shared_ptr<PacketType>& packet)
+		bool GetNetMessage(TSharedPtr<PacketType>& packet)
 		{
 			if (_curBlock->GetDataSize() < PacketType::HeaderSize)
 				return false;
@@ -58,13 +57,14 @@ namespace bugat
 			if (_curBlock->GetDataSize() < header->size + PacketType::HeaderSize)
 				return false;
 
-			packet = std::make_shared<PacketType>(_curBlock, _curBlock->GetHead());
+			auto ptr = new PacketType(_curBlock, _curBlock->GetHead());
+			packet = TSharedPtr<PacketType>(ptr);
 			_curBlock->Consume(header->size + PacketType::HeaderSize);
 			return true;
 		}
 
 	private:
-		std::shared_ptr<DataBlockType> _curBlock;
-		bugat::ObjectPool<DataBlockType, 2> _dataBlockPool;
+		TSharedPtr<DataBlockType> _curBlock;
+		ObjectPool<DataBlockType, 2> _dataBlockPool;
 	};
 }

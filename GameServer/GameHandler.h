@@ -10,11 +10,11 @@ namespace bugat
 	class GameHandler : public Singleton<GameHandler>
 	{
 	public:
-		void Handle(std::shared_ptr<Session>& session, const std::shared_ptr<TCPRecvPacket>& packet);
+		void Handle(TSharedPtr<Session>& session, const TSharedPtr<TCPRecvPacket>& packet);
 		void Init();
 
 	private:
-		std::unordered_map<int, std::shared_ptr<TCPPacketHandle<GameSession>>> _handles;
+		std::unordered_map<int, TSharedPtr<TCPPacketHandle<GameSession>>> _handles;
 	};
 
 	DEFINE_FB_HANDLE(GameSession, Req_CS_Login)

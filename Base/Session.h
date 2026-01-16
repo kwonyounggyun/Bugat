@@ -14,14 +14,14 @@ namespace bugat
 		virtual ~Session() {}
 
 		void Send(int type, std::shared_ptr<flatbuffers::FlatBufferBuilder>& fb);
-		void SetConnection(std::shared_ptr<Connection> conn) { _connection = conn; }
+		void SetConnection(TSharedPtr<Connection>& conn) { _connection = conn; }
 
 		void Close();
 		
 
 		void SetServer(Server* server) { _server = server; }
 		Server* GetServer() const { return _server; }
-		virtual void HandleMsg(const std::shared_ptr<TCPRecvPacket>& packet) = 0;
+		virtual void HandleMsg(const TSharedPtr<TCPRecvPacket>& packet) = 0;
 
 		bool IsAuth() { return _isAuth; }
 
@@ -29,7 +29,7 @@ namespace bugat
 		Event<> OnClose;
 
 	private:
-		std::shared_ptr<Connection> _connection;
+		TSharedPtr<Connection> _connection;
 		bool _isAuth;
 		Server* _server{ nullptr };
 	};

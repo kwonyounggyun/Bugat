@@ -78,9 +78,9 @@ namespace bugat
 
 	namespace Net
 	{
-		AwaitTask<void> Connect(std::shared_ptr<Connection> connection, Resolver::results_type endpoints)
+		AwaitTask<void> Connect(TSharedPtr<Connection> connection, Resolver::results_type endpoints)
 		{
-			auto error = co_await AwaitConnect(connection.get(), endpoints);
+			auto error = co_await AwaitConnect(connection.Get(), endpoints);
 			if (error)
 			{
 				ErrorLog("Socket Connect Error[{}]! message {}", error.value(), error.message());
@@ -138,7 +138,7 @@ namespace bugat
 			std::list<boost::asio::const_buffer> _bufs;
 		};
 
-		AwaitTask<void> Send(std::shared_ptr<Connection> connection)
+		AwaitTask<void> Send(TSharedPtr<Connection> connection)
 		{
 			AnySendPacket* sendingPacket = nullptr;
 			PacketHelper helper;
@@ -148,14 +148,14 @@ namespace bugat
 				{
 					if (false == connection->PopSendPacket(sendingPacket))
 					{
-						co_await AwaitAlways(connection.get());
+						co_await AwaitAlways(connection.Get());
 						continue;
 					}
 					else
 						helper.Init(sendingPacket);
 				}
 				
-				auto [error, transfer] = co_await AwaitSend(connection.get(), helper.GetBufs());
+				auto [error, transfer] = co_await AwaitSend(connection.Get(), helper.GetBufs());
 				if (error)
 				{
 					auto id = connection->GetObjectId();
@@ -174,6 +174,10 @@ namespace bugat
 					helper.Clear();
 					delete sendingPacket;
 					sendingPacket = nullptr;
+
+#if defined(_DEBUG)
+					connection->_sendCount.fetch_add(1);
+#endif
 				}
 			}
 
@@ -181,13 +185,13 @@ namespace bugat
 			co_return;
 		}
 
-		AwaitTask<void> Recv(std::shared_ptr<Connection> connection)
+		AwaitTask<void> Recv(TSharedPtr<Connection> connection)
 		{
 			NetworkMessage<TCPRecvPacket> msg;
 			while (false == connection->Disconnected())
 			{
 				auto bufInfo = msg.GetBufInfo();
-				auto [error, transper] = co_await AwaitRecv(connection.get(), bufInfo.buf, bufInfo.size);
+				auto [error, transper] = co_await AwaitRecv(connection.Get(), bufInfo.buf, bufInfo.size);
 				if (error)
 				{
 					auto id = connection->GetObjectId();
@@ -201,9 +205,14 @@ namespace bugat
 
 				msg.Update(transper);
 
-				std::shared_ptr<TCPRecvPacket> packet = nullptr;
-				if (msg.GetNetMessage(packet))
+				TSharedPtr<TCPRecvPacket> packet = nullptr;
+				while (msg.GetNetMessage(packet))
+				{
 					connection->OnRead(packet);
+#if defined(_DEBUG)
+					connection->_recvCount.fetch_add(1);
+#endif
+				}
 			}
 
 			connection->Close();
@@ -252,15 +261,14 @@ namespace bugat
 	{
 	}
 
-	void Connection::Connect(const Executor& executor, std::string ip, short port)
+	void Connection::Connect(const NetworkContext& executor, std::string ip, short port)
 	{
-		_socket = std::make_unique<TCPSocket>(executor);
-		Resolver resolver(executor);
+		_socket = std::make_unique<TCPSocket>(executor.GetExecutor());
+		Resolver resolver(executor.GetExecutor());
 		EndPoint ep(boost::asio::ip::make_address(ip), port);
 		Resolver::results_type endpoints = resolver.resolve(ep);
 
-		auto sptr = std::static_pointer_cast<Connection>(shared_from_this());
-		CoSpawn(*this, Net::Connect(sptr, endpoints));
+		CoSpawn(*this, Net::Connect(this, endpoints));
 	}
 
 	bool Connection::PopSendPacket(AnySendPacket*& packet)
@@ -274,15 +282,15 @@ namespace bugat
 		if (false == _state.compare_exchange_strong(expect, ConnectionState::Connected, std::memory_order_acq_rel))
 			return false;
 
-		auto sptr = std::static_pointer_cast<Connection>(shared_from_this());
-		CoSpawn(*this, Net::Send(sptr));
-		CoSpawn(*this, Net::Recv(sptr));
+		CoSpawn(*this, Net::Send(this));
+		CoSpawn(*this, Net::Recv(this));
 
 		OnConnect();
 
 		return true;
     }
-	std::shared_ptr<Connection> AnyConnectionFactory::Create(std::unique_ptr<TCPSocket>& socket) const
+
+	TSharedPtr<Connection> AnyConnectionFactory::Create(std::unique_ptr<TCPSocket>& socket) const
 	{
 		auto connection = _ptr->Create();
 		connection->SetSocket(socket);

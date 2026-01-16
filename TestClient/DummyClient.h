@@ -1,4 +1,5 @@
 #pragma once
+#include <atomic>
 #include "../Base/Session.h"
 #include "../Base/UDPConnection.h"
 
@@ -10,7 +11,7 @@ namespace bugat
 	public:
 		DummyClient();
 		virtual ~DummyClient();
-		virtual void HandleMsg(const std::shared_ptr<TCPRecvPacket>& packet);
+		virtual void HandleMsg(const TSharedPtr<TCPRecvPacket>& packet);
 
 		UDPConnection& GetUDPConnection() { return *_udpConnection; }
 

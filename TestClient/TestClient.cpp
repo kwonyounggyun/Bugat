@@ -27,8 +27,8 @@ void SendingPacket(DummyClient* client)
 
 int main()
 {
-    Context logicContext;
-    logicContext.Initialize(10);
+    Context logicContext(3);
+    logicContext.Initialize();
     NetworkContext networkContext;
 
     ClientHandler::Instance().Init();
@@ -48,7 +48,7 @@ int main()
     Configure config;
     config.ip = "127.0.0.1";
     config.port = 9000;
-    dummy.Start(100, ClientConnectionFactory(logicContext), networkContext, config);
+    dummy.Start(5000, ClientConnectionFactory(logicContext), networkContext, config);
 
     group.Join();
 

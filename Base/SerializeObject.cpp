@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "SerializeObject.h"
 #include "Context.h"
+#include "../Core/Memory.h"
 
 namespace bugat
 {
@@ -9,7 +10,7 @@ namespace bugat
 		if (remainCount > 0)
 		{
 			if (_context)
-				_context->Post(shared_from_this());
+				_context->Post(TSharedPtr(this));
 		}
 	}
 
@@ -18,7 +19,7 @@ namespace bugat
 		if (remainCount == 1)
 		{
 			if (_context)
-				_context->Post(shared_from_this());
+				_context->Post(TSharedPtr(this));
 		}
 	}
 }

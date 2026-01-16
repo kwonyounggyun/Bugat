@@ -13,11 +13,10 @@ namespace bugat
 	}
 
 	std::atomic<int> tempcount = 0;
-	void WorldServer::OnAccept(std::shared_ptr<Connection>& conn)
+	void WorldServer::OnAccept(TSharedPtr<Connection>& conn)
 	{
 		auto gameSession = CreateSerializeObject<GameSession>(GetContext());
 		gameSession->SetConnection(conn);
-		std::weak_ptr<GameSession> weak = gameSession;
 
 		auto sessionId = gameSession->GetObjectId();
 		gameSession->OnClose += [this, sessionId]() {
@@ -28,14 +27,12 @@ namespace bugat
 			_sessionManager.Add(gameSession->GetObjectId(), gameSession);
 			};
 
-		conn->OnClose += [weak]() {
-			if (auto session = weak.lock(); session)
-				session->Close();
+		conn->OnClose += [gameSession]() {
+			gameSession->Close();
 			};
 
-		conn->OnRead += [weak](const std::shared_ptr<TCPRecvPacket>& packet) {
-			if(auto session = weak.lock(); session)
-				session->HandleMsg(packet);
+		conn->OnRead += [gameSession](const TSharedPtr<TCPRecvPacket>& packet) {
+			gameSession->HandleMsg(packet);
 			};
 	}
 

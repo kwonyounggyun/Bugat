@@ -5,6 +5,7 @@
 #include "Task.h"
 #include "AwaitTask.h"
 #include "Memory.h"
+#include "LockObject.h"
 
 namespace bugat
 {
@@ -41,7 +42,7 @@ namespace bugat
 
 	private:
 		LockFreeQueue<AnyTask> _que;
-		std::atomic_flag _runningGuard;
+		LockObject _runningGuard;
 	};
 
 	struct AwaitAlways

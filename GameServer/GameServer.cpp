@@ -18,16 +18,17 @@
 
 #include "ContextHolder.h"
 #include "GameConnection.h"
-
-#include "../Base/RedisClient.h"
-#include "../Base/RedisCommand.h"
+//
+//#include "../Base/RedisClient.h"
+//#include "../Base/RedisCommand.h"
 
 int main()
 {
     using namespace bugat;
-
+    
+    CTXHolder;
+    WorldInstance;
     ThreadGroup threads;
-    LogicContext.Initialize(10);
     threads.Add(5, [](ThreadInfo& info) {
         LogicContext.Run();
         });
@@ -47,30 +48,33 @@ int main()
     Configure config;
     config.port = 9000;
     config.acceptTaskCount = 10;
-    WorldInstance.Accept(NetClientContext.GetExecutor(), ConnectionFactory<GameConnection>(LogicContext), config);
+    WorldInstance.Accept(NetClientContext, ConnectionFactory<GameConnection>(LogicContext), config);
     
-    RedisClient redis(NetClientContext.GetExecutor());
-    redis.Connect("127.0.0.1", 6379);
+	auto game = CreateSerializeObject<GameSession>(&LogicContext);
+    TSharedPtr<Session> session(game);
+    session = game;
+    //RedisClient redis(NetClientContext.GetExecutor());
+    //redis.Connect("127.0.0.1", 6379);
 
-    auto redisT = std::thread([&]() {
-        while (true)
-        {
-            auto pipe = CreateRedisPipeline(Set("test", 1), Set("test", 2), Get<int>("test"));
+    //auto redisT = std::thread([&]() {
+    //    while (true)
+    //    {
+    //        auto pipe = CreateRedisPipeline(Set("test", 1), Set("test", 2), Get<int>("test"));
 
-            redis.Execute(pipe, [](RedisErrorCode error, auto& result) {
-                if (error == RedisErrorCode::Fail)
-                {
-                    ErrorLog("Redis Fail");
-                    return;
-                }
+    //        redis.Execute(pipe, [](RedisErrorCode error, auto& result) {
+    //            if (error == RedisErrorCode::Fail)
+    //            {
+    //                ErrorLog("Redis Fail");
+    //                return;
+    //            }
 
-                auto& [setResult, setResult2, getResult] = result;
-                });
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-        });
+    //            auto& [setResult, setResult2, getResult] = result;
+    //            });
+    //        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    //    }
+    //    });
 
-    std::this_thread::sleep_for(std::chrono::seconds(10));
+    //std::this_thread::sleep_for(std::chrono::seconds(10));
     //redis.Stop();
     {
        /* auto pipe = CreateRedisPipeline(Set("test", "teststs"), Get<int>("test"));

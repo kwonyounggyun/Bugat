@@ -1,9 +1,10 @@
 #pragma once
+#include "../Core/Memory.h"
 
 namespace bugat
 {
 	template<int Size>
-	class DataBlock
+	class DataBlock : public RefCountable
 	{
 	public:
 		static constexpr int Size = Size;

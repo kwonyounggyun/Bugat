@@ -1,6 +1,7 @@
 #pragma once
 #include "Header.h"
 #include "DataBlock.h"
+#include "../Core/Memory.h"
 #include <flatbuffers/flatbuffers.h>
 
 namespace bugat
@@ -25,7 +26,7 @@ namespace bugat
 	};
 
 	template<typename Header, int MaxPacketSize>
-	class RecvPacket
+	class RecvPacket : public RefCountable
 	{
 	public:
 		using HeaderType = Header;
@@ -33,7 +34,7 @@ namespace bugat
 		static constexpr int HeaderSize = sizeof(HeaderType);
 		static constexpr int PacketSize = MaxPacketSize;
 
-		RecvPacket(std::shared_ptr<DataBlockType>& block, int pos) : _block(block), _pos(pos) {}
+		RecvPacket(TSharedPtr<DataBlockType>& block, int pos) : _block(block), _pos(pos) {}
 		~RecvPacket() {}
 
 		template<typename T>
@@ -50,7 +51,7 @@ namespace bugat
 		HeaderType GetHeader() const { return *(reinterpret_cast<HeaderType*>(_block->GetBuf(_pos))); }
 
 	private:
-		std::shared_ptr<DataBlockType> _block;
+		TSharedPtr<DataBlockType> _block;
 		int _pos;
 	};
 

@@ -1,25 +1,27 @@
 #include "stdafx.h"
 #include "Dummys.h"
-#include "../Core/DateTime.h"
+#include "../Base/DateTime.h"
 
 namespace bugat
 {
 	AwaitTask<void> RandomAction(Dummys* dummys, DummyClient* client)
 	{
 		int64_t lastUpdate = 0;
-		while (true)
+		int64_t count = 0;
+		while (count < 1000)
 		{
-			auto now = DateTime::NowMs();
+		/*	auto now = DateTime::NowMs();
 			if ((now - lastUpdate) < 10)
 			{
 				co_await AwaitAlways(client);
 				continue;
 			}
 
-			lastUpdate = now;
+			lastUpdate = now;*/
 			auto& action = dummys->GetRandomAction();
 			(*client, action(client));
 			co_await AwaitAlways(client);
+			count++;
 		}
 	}
 
@@ -37,16 +39,16 @@ namespace bugat
 
 			connection->OnConnect += [dummyClient, this]() mutable {
 				_clients.Add(dummyClient->GetObjectId(), dummyClient);
-				CoSpawn(*dummyClient, RandomAction(this, dummyClient.get()));
+				CoSpawn(*dummyClient, RandomAction(this, dummyClient.Get()));
 				};
 
-			connection->OnRead += [dummyClient](const std::shared_ptr<TCPRecvPacket>& pack) {
+			connection->OnRead += [dummyClient](const TSharedPtr<TCPRecvPacket>& pack) {
 				dummyClient->HandleMsg(pack);
 				};
 
 			connection->OnClose += [dummyClient]() { dummyClient->Close(); };
 
-			connection->Connect(netContext.GetExecutor(), config.ip, config.port);
+			connection->Connect(netContext, config.ip, config.port);
 		}
 	}
 }

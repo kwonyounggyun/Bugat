@@ -20,7 +20,7 @@ namespace bugat
 		void Accept(const NetworkContext& executor, AnyConnectionFactory factory, Configure config);
 
 		//楷搬等 Connection 包府 肺流 累己
-		virtual void OnAccept(std::shared_ptr<Connection>& conn) = 0;
+		virtual void OnAccept(TSharedPtr<Connection>& conn) = 0;
 
 	protected:
 		virtual void Update() = 0;

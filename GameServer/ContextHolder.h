@@ -9,6 +9,13 @@ namespace bugat
 	class ContextHolder : public Singleton<ContextHolder>
 	{
 	public:
+		ContextHolder() : _logicContext(10), _netClientContext(), _netServerContext() 
+		{
+			_logicContext.Initialize();
+			_netServerContext.Initialize();
+			_netClientContext.Initialize();
+		}
+
 		Context& GetLogicContext() { return _logicContext; }
 		NetworkContext& GetNetClientContext() { return _netClientContext; }
 		NetworkContext& GetNetServerContext() { return _netServerContext; }

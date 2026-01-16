@@ -26,6 +26,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Base", "Base\Base.vcxproj",
 		{1842B402-BCB3-4337-8556-25582ABFD8F3} = {1842B402-BCB3-4337-8556-25582ABFD8F3}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MysqlTest", "MysqlTest\MysqlTest.vcxproj", "{DDD69C4E-2049-49D6-9942-7EF2E82B1F4F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -82,6 +84,14 @@ Global
 		{7B8EB30D-0529-4606-AE41-DA1CBFA3313B}.Release|x64.Build.0 = Release|x64
 		{7B8EB30D-0529-4606-AE41-DA1CBFA3313B}.Release|x86.ActiveCfg = Release|Win32
 		{7B8EB30D-0529-4606-AE41-DA1CBFA3313B}.Release|x86.Build.0 = Release|Win32
+		{DDD69C4E-2049-49D6-9942-7EF2E82B1F4F}.Debug|x64.ActiveCfg = Debug|x64
+		{DDD69C4E-2049-49D6-9942-7EF2E82B1F4F}.Debug|x64.Build.0 = Debug|x64
+		{DDD69C4E-2049-49D6-9942-7EF2E82B1F4F}.Debug|x86.ActiveCfg = Debug|Win32
+		{DDD69C4E-2049-49D6-9942-7EF2E82B1F4F}.Debug|x86.Build.0 = Debug|Win32
+		{DDD69C4E-2049-49D6-9942-7EF2E82B1F4F}.Release|x64.ActiveCfg = Release|x64
+		{DDD69C4E-2049-49D6-9942-7EF2E82B1F4F}.Release|x64.Build.0 = Release|x64
+		{DDD69C4E-2049-49D6-9942-7EF2E82B1F4F}.Release|x86.ActiveCfg = Release|Win32
+		{DDD69C4E-2049-49D6-9942-7EF2E82B1F4F}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

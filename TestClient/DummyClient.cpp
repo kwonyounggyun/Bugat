@@ -13,13 +13,13 @@ namespace bugat
 	{
 	}
 
-	void DummyClient::HandleMsg(const std::shared_ptr<TCPRecvPacket>& packet)
+	void DummyClient::HandleMsg(const TSharedPtr<TCPRecvPacket>& packet)
 	{
-		Post([weak = weak_from_this(), packet]() mutable {
-			if (auto sPtr = weak.lock(); sPtr != nullptr)
+		auto sptr = TSharedPtr(this);
+		Post([sptr, packet]() mutable {
+			if (sptr)
 			{
-				auto session = std::static_pointer_cast<Session>(sPtr);
-				ClientHandler::Instance().Handle(session, packet);
+				ClientHandler::Instance().Handle(sptr, packet);
 			}
 			});
 	}

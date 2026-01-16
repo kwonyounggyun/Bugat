@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "ClientHandler.h"
 #include "../Base/Protocol.h"
-#include "../Core/Log.h"
+#include "../Base/Log.h"
 
 using namespace bugat::protocol::game;
 namespace bugat
@@ -12,15 +12,15 @@ namespace bugat
 		_handles[static_cast<int>(bugat::protocol::game::Type::RES_SC_MOVE)] = MAKE_FB_HANDLE(Res_SC_Move);
 	}
 
-	void ClientHandler::Handle(std::shared_ptr<Session>& session, const std::shared_ptr<TCPRecvPacket>& packet)
+	void ClientHandler::Handle(TSharedPtr<Session> session, const TSharedPtr<TCPRecvPacket>& packet)
 	{
 		auto header = packet->GetHeader();
 		auto iter = _handles.find(header.type);
 		if (iter == _handles.end())
 			return;
 
-		auto& handle = *(iter->second);
-		handle(session, packet);
+		auto& handle = iter->second;
+		(*handle)(session, packet);
 	}
 
 	

@@ -2,12 +2,12 @@
 #include "../Core/TaskSerializer.h"
 #include "../Core/ObjectPool.h"
 #include "ObjectId.h"
-#include <memory>
+#include "Memory.h"
 
 namespace bugat
 {
 	class Context;
-	class SerializeObject : public TaskSerializer, public std::enable_shared_from_this<SerializeObject>
+	class SerializeObject : public TaskSerializer
 	{
 	public:
 		using ID_Type = ObjectId<SerializeObject>;
@@ -26,9 +26,9 @@ namespace bugat
 		Context* _context;
 	};
 
-	template<typename T, typename Context, typename ...ARGS>
+	template<typename T, typename ...ARGS>
 		requires std::is_base_of_v<SerializeObject, T>
-	std::shared_ptr<T> CreateSerializeObject(Context context, ARGS&&... args)
+	TSharedPtr<T> CreateSerializeObject(Context* context, ARGS&&... args)
 	{
 		static ObjectPool<T, 1000> objPool;
 		auto sptr = objPool.Get(std::forward(args)...);

@@ -13,14 +13,12 @@ namespace bugat
 	{ 
 	}
 
-	void GameSession::HandleMsg(const std::shared_ptr<TCPRecvPacket>& packet)
+	void GameSession::HandleMsg(const TSharedPtr<TCPRecvPacket>& packet)
 	{
-		Post([weak = weak_from_this(), packet]() {
-			if (auto sPtr = weak.lock(); sPtr != nullptr)
-			{
-				auto session = std::static_pointer_cast<Session>(sPtr);
-				GameHandler::Instance().Handle(session, packet);
-			}
+		auto sptr = TSharedPtr(this);
+		Post([sptr, packet]() {
+			auto session = StaticPointerCast<Session>(sptr);
+			GameHandler::Instance().Handle(session, packet);
 			});
 	}
 }

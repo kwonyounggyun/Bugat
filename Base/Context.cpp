@@ -15,9 +15,9 @@ namespace bugat
 		int64_t Run()
 		{
 			int64_t count = 0;
-			_que.ConsumeAll([&count](std::weak_ptr<SerializeObject>& weak)
+			_que.ConsumeAll([&count](TSharedPtr<SerializeObject>& sptr)
 				{
-					if (auto sptr = weak.lock(); sptr)
+					if (sptr)
 					{
 						auto executeTaskCount = sptr->Run();
 						count += executeTaskCount;
@@ -27,30 +27,32 @@ namespace bugat
 			return count;
 		}
 
-		bool push(std::weak_ptr<SerializeObject>&& val)
+		bool push(TSharedPtr<SerializeObject>&& val)
 		{
 			_que.Push(std::move(val));
 
 			return true;
 		}
 
-		LockFreeQueue<std::weak_ptr<SerializeObject>> _que;
+		LockFreeQueue<TSharedPtr<SerializeObject>> _que;
 	};
 
-	void Context::Initialize(uint32_t queCount)
+	Context::Context(uint32_t queCount) : _stop(false), _globalQueSize(queCount), _globalQue(queCount)
 	{
-		_globalQueSize = queCount;
+		_globalCounter->store(0);
+		_swapCounter->store(0);
+		_executeTaskCounter->store(0);
+
+		_threadCounter.store(0);
+	}
+
+	void Context::Initialize()
+	{
 		for (uint32_t i = 0; i < _globalQueSize; i++)
 		{
-			_globalQue[i].store(new SerializerQueue(), std::memory_order_seq_cst);
+			_globalQue[i]->store(new SerializerQueue(), std::memory_order_seq_cst);
 			_waitQue.Push(new SerializerQueue());
 		}
-
-		_globalCounter.store(0);
-		_threadCounter.store(0);
-		_swapCounter.store(0);
-
-		_executeTaskCounter.store(0);
 	}
 
 	void Context::Run()
@@ -62,25 +64,25 @@ namespace bugat
 		{
 			if (_localQue == nullptr)
 				return;
-			auto swapIndx = _swapCounter.fetch_add(1) % _globalQueSize;
-			auto expect = _globalQue[swapIndx].load();
-			while (false == _globalQue[swapIndx].compare_exchange_strong(expect, _localQue));
+			auto swapIndx = _swapCounter->fetch_add(1) % _globalQueSize;
+			auto expect = _globalQue[swapIndx]->load();
+			while (false == _globalQue[swapIndx]->compare_exchange_strong(expect, _localQue));
 
 			_waitQue.Push(expect);
-			if (true == _waitQue.Pop(_localQue))
+			if (_waitQue.Pop(_localQue))
 			{
 				auto count = _localQue->Run();
 				if (count > 0)
-					_executeTaskCounter.fetch_add(count);
+					_executeTaskCounter->fetch_add(count);
 			}
 
-			std::this_thread::sleep_for(std::chrono::microseconds(1));
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		}
 	}
-	void Context::Post(std::weak_ptr<SerializeObject> serializeObject)
+	void Context::Post(TSharedPtr<SerializeObject> serializeObject)
 	{
-		auto idx = _globalCounter.fetch_add(1) % _globalQueSize;
-		auto que = _globalQue[idx].load();
+		auto idx = _globalCounter->fetch_add(1) % _globalQueSize;
+		auto que = _globalQue[idx]->load();
 		que->push(std::move(serializeObject));
 	}
 

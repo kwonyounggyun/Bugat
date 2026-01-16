@@ -52,12 +52,12 @@ namespace bugat
 
 	namespace Net
 	{
-		AwaitTask<void> Accept(std::shared_ptr<Server> server, std::shared_ptr<AcceptInfo> info)
+		AwaitTask<void> Accept(TSharedPtr<Server> server, std::shared_ptr<AcceptInfo> info)
 		{
 			for (;;)
 			{
 				auto socket = std::make_unique<TCPSocket>(info->GetExecutor());
-				auto error = co_await AwaitAccept{ server.get(), info->GetAcceptor(), socket.get()};
+				auto error = co_await AwaitAccept{ server.Get(), info->GetAcceptor(), socket.get()};
 				if (error)
 				{
 					break;
@@ -84,8 +84,7 @@ namespace bugat
 	{
 		auto info = std::make_shared<AcceptInfo>(executor.GetExecutor(), config.port, factory);
 		_acceptInfos.push_back(info);
-		auto sptr = std::static_pointer_cast<Server>(shared_from_this());
 		for (auto i = 0; i < config.acceptTaskCount; i++)
-			CoSpawn(*this, Net::Accept(sptr, info));
+			CoSpawn(*this, Net::Accept(this, info));
 	}
 }

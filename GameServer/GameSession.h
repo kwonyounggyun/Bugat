@@ -9,6 +9,6 @@ namespace bugat
 		GameSession();
 		virtual ~GameSession();
 
-		virtual void HandleMsg(const std::shared_ptr<TCPRecvPacket>& packet) override;
+		virtual void HandleMsg(const TSharedPtr<TCPRecvPacket>& packet) override;
 	};
 }

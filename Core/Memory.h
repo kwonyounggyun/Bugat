@@ -28,24 +28,53 @@ namespace bugat
             return _refCount.fetch_sub(1);
         }
 
+        void SetDeleter(std::function<void(void*)>&& deleter)
+        {
+            _deleter = std::move(deleter);
+		}
+
+        std::function<void(void*)>& GetDeleter() { return _deleter; }
+
     protected:
-        RefCountable() :_refCount(0) {}
+        RefCountable() :_refCount(0), _deleter(nullptr) {}
         virtual ~RefCountable() {}
 
     protected:
         std::atomic<int> _refCount;
+        std::function<void(void*)> _deleter;
     };
 
     template<typename T>
     class TSharedPtr
     {
     public:
-        TSharedPtr(T* ptr) : _ptr(ptr)
+        TSharedPtr(T* ptr = nullptr) : _ptr(ptr)
         {
             if (_ptr) _ptr->AddRef();
         }
 
-        TSharedPtr(T* ptr, std::function<void (T*)> deletor) : _ptr(ptr), _deletor(deletor)
+        TSharedPtr(T* ptr, const std::function<void(T*)>& deleter) : _ptr(ptr)
+        {
+            if (_ptr) _ptr->AddRef();
+            if(deleter)
+                _ptr->SetDeleter([deleter](void* ptr) {
+				    T* tptr = static_cast<T*>(ptr);
+				    deleter(tptr);
+                    });
+        }
+
+		TSharedPtr(const TSharedPtr& other) : _ptr(other._ptr)
+        {
+            if (_ptr) _ptr->AddRef();
+        }
+
+        TSharedPtr(TSharedPtr&& other) : _ptr(other._ptr)
+        {
+            other._ptr = nullptr;
+        }
+
+        template<typename U>
+        TSharedPtr(const TSharedPtr<U>& other) : _ptr(other.Get())
         {
             if (_ptr) _ptr->AddRef();
         }
@@ -55,28 +84,50 @@ namespace bugat
             Reset();
         }
 
-        TSharedPtr(const TSharedPtr& other) : _ptr(other._ptr), _deletor(other._deletor)
+        TSharedPtr& operator=(std::nullptr_t) 
         {
-            if (_ptr) _ptr->AddRef();
-        }
+            Reset();
 
-        TSharedPtr(TSharedPtr&& other) : _ptr(other._ptr), _deletor(other._deletor)
-        {
-            other._ptr = nullptr;
-            other._deletor = nullptr;
+            return *this;
         }
 
         TSharedPtr& operator=(const TSharedPtr& other)
         {
-            if (this != &other)
+            if (this == &other)
+                return *this;
+
+            if (*this != other)
             {
                 Reset();
                 _ptr = other._ptr;
-                _deletor = other._deletor;
                 if (_ptr) _ptr->AddRef();
             }
             return *this;
         }
+
+        bool operator!=(const TSharedPtr& other) const
+        {
+            return _ptr != other._ptr;
+        }
+
+        template<typename U>
+		requires std::is_base_of_v<T, U>
+        TSharedPtr& operator=(const TSharedPtr<U>& other)
+        {
+            if (*this != other)
+            {
+                Reset();
+                _ptr = other.Get();
+                if (_ptr) _ptr->AddRef();
+            }
+            return *this;
+        }
+
+        template<typename U>
+        bool operator!=(const TSharedPtr<U>& other) const
+        {
+            return _ptr != other.Get();
+		}
 
         explicit operator bool() const {
             return _ptr != nullptr;
@@ -95,19 +146,17 @@ namespace bugat
             {
                 if (_ptr->SubRef() == 1)
                 {
-                    if (_deletor)
-                        _deletor(_ptr);
+					if (auto deleter = _ptr->GetDeleter(); deleter)
+                        deleter(_ptr);
                     else
                         delete _ptr;
                 }
                 _ptr = nullptr;
-                _deletor = nullptr;
 			}
         }
 
     private:
         T* _ptr = nullptr;
-        std::function<void(T*)> _deletor;
     };
 
     template<typename T, typename S>

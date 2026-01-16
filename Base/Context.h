@@ -1,35 +1,35 @@
 #pragma once
 #include <atomic>
-#include <array>
+#include <vector>
 #include "../Core/LockFreeQueue.h"
+#include "../Core/Memory.h"
 
 namespace bugat
 {
 	struct SerializerQueue;
 	class SerializeObject;
+
 	class Context
 	{
 	public:
-		Context() : _stop(false) {};
+		explicit Context(uint32_t queCount = 10);
 		virtual ~Context() = default;
 
-		void Initialize(uint32_t queCount = 100);
+		void Initialize();
 		void Run();
-		void Post(std::weak_ptr<SerializeObject> serializeObject);
+		void Post(TSharedPtr<SerializeObject> serializeObject);
 		void Stop();
 
 	private:
-		std::array<std::atomic<SerializerQueue*>, 100> _globalQue;
+		std::vector<CacheLinePadding<std::atomic<SerializerQueue*>>> _globalQue;
 		LockFreeQueue<SerializerQueue*> _waitQue;
 
-		std::atomic<uint32_t> _swapCounter;
-		std::atomic<uint32_t> _globalCounter;
+		CacheLinePadding<std::atomic<uint32_t>> _swapCounter;
+		CacheLinePadding<std::atomic<uint32_t>> _globalCounter;
+		CacheLinePadding<std::atomic<uint64_t>> _executeTaskCounter;
+
 		std::atomic<uint32_t> _threadCounter;
-
-		std::atomic<uint64_t> _executeTaskCounter;
-
 		uint32_t _globalQueSize;
-
 		std::atomic<bool> _stop;
 
 	public:

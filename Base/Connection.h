@@ -6,6 +6,8 @@
 #include "ObjectId.h"
 #include "SerializeObject.h"
 #include "Packet.h"
+#include "Context.h"
+#include "NetworkContext.h"
 
 namespace bugat
 {
@@ -32,13 +34,13 @@ namespace bugat
 	public:
 		Event<> OnConnect;
 		Event<> OnClose;
-		Event<const std::shared_ptr<TCPRecvPacket>&> OnRead;
+		Event<const TSharedPtr<TCPRecvPacket>&> OnRead;
 
 
 		Connection();
 		virtual ~Connection();
 
-		void Connect(const Executor& executor, std::string ip, short port);
+		void Connect(const NetworkContext& executor, std::string ip, short port);
 
 		/*
 		* T는 반드시 std::vector<std::tuple<uint8_t*, size_t>> data() 함수를 구현해야한다.
@@ -66,6 +68,12 @@ namespace bugat
 		std::atomic<ConnectionState> _state;
 
 		LockFreeQueue<AnySendPacket*> _sendQue;
+
+#if defined(_DEBUG)
+	public:
+		std::atomic<int> _recvCount;
+		std::atomic<int> _sendCount;
+#endif
 	};
 
 	class SendPacketConcept
@@ -108,7 +116,7 @@ namespace bugat
 	{
 	public:
 		virtual ~ConnectionFactoryConcept() {}
-		virtual std::shared_ptr<Connection> Create() = 0;
+		virtual TSharedPtr<Connection> Create() = 0;
 	};
 
 	template<typename T>
@@ -117,10 +125,9 @@ namespace bugat
 	public:
 		ConnectionFactory(Context& context) : _context(context) {}
 		virtual ~ConnectionFactory() {}
-		virtual std::shared_ptr<Connection> Create() override
+		virtual TSharedPtr<Connection> Create() override
 		{
-			auto connection = std::static_pointer_cast<Connection>(std::make_shared<T>());
-			connection->SetContext(&_context);
+			auto connection = CreateSerializeObject<T>(&_context);
 			return connection;
 		}
 
@@ -138,7 +145,7 @@ namespace bugat
 			_ptr = std::move(other._ptr);
 		}
 
-		std::shared_ptr<Connection> Create(std::unique_ptr<TCPSocket>& socket) const;
+		TSharedPtr<Connection> Create(std::unique_ptr<TCPSocket>& socket) const;
 
 	private:
 		std::unique_ptr<ConnectionFactoryConcept> _ptr;

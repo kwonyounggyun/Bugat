@@ -8,7 +8,7 @@ namespace bugat
 	class ObjectAgent
 	{
 	public:
-		bool Add(Key& key, std::shared_ptr<ObjectType>& object)
+		bool Add(Key& key, TSharedPtr<ObjectType>& object)
 		{
 			auto write = _objects.LockWrite();
 			auto [iter, result] = write->emplace(key, object);
@@ -21,7 +21,7 @@ namespace bugat
 			write->erase(key);
 		}
 
-		std::shared_ptr<ObjectType> Find(Key& key)
+		TSharedPtr<ObjectType> Find(Key& key)
 		{
 			auto read = _objects.LockRead();
 			auto iter = read->find(key);
@@ -32,14 +32,14 @@ namespace bugat
 		}
 
 	private:
-		RWLockObject<std::map<Key, std::shared_ptr<ObjectType>>> _objects;
+		RWLockObject<std::map<Key, TSharedPtr<ObjectType>>> _objects;
 	};
 
 	template<typename Hash, typename Key, typename ObjectType, int AgentCount>
 	class ObjectManager
 	{
 	public:
-		bool Add(Key key, std::shared_ptr<ObjectType>& object)
+		bool Add(Key key, TSharedPtr<ObjectType>& object)
 		{
 			return GetAgent(key).Add(key, object);
 		}
@@ -49,7 +49,7 @@ namespace bugat
 			return GetAgent(key).Del(key);
 		}
 
-		std::shared_ptr<ObjectType> Find(Key key)
+		TSharedPtr<ObjectType> Find(Key key)
 		{
 			return GetAgent(key).Find(key);
 		}

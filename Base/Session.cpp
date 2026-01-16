@@ -7,15 +7,16 @@ namespace bugat
 {
 	void Session::Send(int type, std::shared_ptr<flatbuffers::FlatBufferBuilder>& fb)
 	{
-		Post([this, type, fb]() {
-			if (_connection)
-			{
-				TCPHeader header;
-				header.size = fb->GetSize();
-				header.type = type;
-				_connection->Send(TCPSendPacket(header, fb));
-			}
-			});
+		if (auto con = _connection; con)
+		{
+			if (con->Disconnected())
+				return;
+
+			TCPHeader header;
+			header.size = fb->GetSize();
+			header.type = type;
+			con->Send(TCPSendPacket(header, fb));
+		}
 	}
 
 	void Session::Close()

@@ -5,6 +5,7 @@
 #include <atomic>
 #include "LockFreeQueue.h"
 #include "Memory.h"
+#include "LockObject.h"
 
 namespace bugat
 {
@@ -103,7 +104,8 @@ namespace bugat
 					if (_mems.GetSize() > 0)
 						continue;
 					
-					Alloc(AllocSize);
+					if(auto lock = ScopedLock(_allocLock); lock)
+						Alloc(AllocSize);
 				}
 
 				auto sptr = mem->Get(std::forward<Args>(args)...);
@@ -121,32 +123,30 @@ namespace bugat
 				if (size == 0)
 					return;
 
-				if (true == _isAllocating.test_and_set(std::memory_order_acquire))
-					return;
-
 				auto memberSize = sizeof(Member);
-				auto totalSize = memberSize + sizeof(T);
+				auto memberTotalSize = memberSize + sizeof(T);
 
-				void* memoryBlock = ::operator new(totalSize * size);
-				new(memoryBlock)MemoryBlock(TSharedPtr(this), memoryBlock);
-				auto blockPtr = TSharedPtr<MemoryBlock>(reinterpret_cast<MemoryBlock*>(memoryBlock));
+				auto memoryBlockSize = sizeof(MemoryBlock);
+				void* memoryBlock = ::operator new(memoryBlockSize + memberTotalSize * size);
+
+				auto startBlockPtr = static_cast<char*>(memoryBlock) + memoryBlockSize;
+				new(memoryBlock)MemoryBlock(TSharedPtr(this), startBlockPtr);
+				auto blockPtr = TSharedPtr<MemoryBlock>(static_cast<MemoryBlock*>(memoryBlock));
 				_blocks.push(blockPtr);
 
-				auto castPtr = static_cast<char*>(memoryBlock);
 				for (int i = 0; i < size; i++)
 				{
-					auto memberPtr = castPtr + (totalSize * i);
+					auto memberPtr = startBlockPtr + (memberTotalSize * i);
 					new(memberPtr)Member(blockPtr, reinterpret_cast<T*>(memberPtr + memberSize));
-					Push(reinterpret_cast<Member*>(memberPtr));
+					auto cast = reinterpret_cast<Member*>(memberPtr);
+					Push(cast);
 				}
-
-				_isAllocating.clear(std::memory_order_release);
 			}
 
 		private:
 			LockFreeQueue<Member*> _mems;
 			std::stack<TSharedPtr<MemoryBlock>> _blocks;
-			std::atomic_flag _isAllocating;
+			LockObject _allocLock;
 		};
 
 	public:

@@ -5,15 +5,18 @@ namespace bugat
 {
 	int64_t TaskSerializer::Run()
 	{
-		while (true == _runningGuard.test_and_set(std::memory_order_acquire));
-
-		auto size = _que.GetSize();
-		auto remainCount = _que.Consume(size, [](AnyTask& task)
-			{
-				task.Run();
-			});
-
-		_runningGuard.clear(std::memory_order_release);
+		int64_t size = 0;
+		int64_t remainCount = 0;
+		if (auto lock = ScopedLock(_runningGuard); lock)
+		{
+			size = _que.GetSize();
+			remainCount = _que.Consume(size, [](AnyTask& task)
+				{
+					task.Run();
+				});
+		}
+		else
+			return 0;
 
 		OnRun(remainCount);
 		return size;

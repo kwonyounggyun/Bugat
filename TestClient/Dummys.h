@@ -4,7 +4,7 @@
 #include "../Base/NetworkContext.h"
 #include "../Base/Configure.h"
 #include "../Core/Math.h"
-#include "../Core/Counter.h"
+#include "../Base/Counter.h"
 
 #include "DummyClientManager.h"
 
@@ -15,9 +15,9 @@ namespace bugat
 	public:
 		ClientConnectionFactory(Context& context) : _context(context) {}
 		virtual ~ClientConnectionFactory() {}
-		virtual std::shared_ptr<Connection> Create() override
+		virtual TSharedPtr<Connection> Create() override
 		{
-			auto connection = std::static_pointer_cast<Connection>(std::make_shared<ClientConnection>());
+			auto connection = CreateSerializeObject<ClientConnection>(&_context);
 			connection->SetContext(&_context);
 			return connection;
 		}

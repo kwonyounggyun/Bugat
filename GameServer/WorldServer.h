@@ -11,14 +11,14 @@
 
 namespace bugat
 {
-	class WorldServer : public Server, public SharedSingleton<WorldServer>
+	class WorldServer : public Server, public Singleton<WorldServer>
 	{
 	public:
 		void Initialize();
 
 	protected:
 		// Server을(를) 통해 상속됨
-		virtual void OnAccept(std::shared_ptr<Connection>& conn) override;
+		virtual void OnAccept(TSharedPtr<Connection>& conn) override;
 		// Server을(를) 통해 상속됨
 		virtual void Update() override;
 
@@ -26,6 +26,6 @@ namespace bugat
 		SessionManager _sessionManager;
 	};
 
-#define WorldInstance (*WorldServer::Instance())
+#define WorldInstance WorldServer::Instance()
 }
 
