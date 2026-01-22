@@ -168,6 +168,7 @@
     <ClInclude Include="Handle.h" />
     <ClInclude Include="Header.h" />
     <ClInclude Include="Log.h" />
+    <ClInclude Include="Macro.h" />
     <ClInclude Include="NetworkContext.h" />
     <ClInclude Include="NetworkMessage.h" />
     <ClInclude Include="ObjectId.h" />

@@ -1,103 +1,7 @@
 ﻿// Test.cpp : 이 파일에는 'main' 함수가 포함됩니다. 거기서 프로그램 실행이 시작되고 종료됩니다.
 //
-
-#include <iostream>
-#include "../Base/Context.h"
-#include "../Base/NetworkContext.h"
-#include "../Base/SerializeObject.h"
-#include "../Base/DateTime.h"
-#include "../Base/Log.h"
-
-#include "../Core/ThreadGroup.h"
-
-namespace bugat
-{
-    class TestObject : public bugat::SerializeObject
-    {
-    public:
-        void AddCount()
-        {
-            Post([this]() {
-                count++;
-                });
-        }
-
-        void Complete(std::function<void(int c)> comp)
-        {
-            Post([this, comp]() {
-                comp(count);
-                });
-        }
-
-        int count = 0;
-    };
-
-    class TestObjects : public bugat::SerializeObject
-    {
-    public:
-        TestObjects() : _completeCount(0), _complete(false) {}
-        void CreateObjects(int count)
-        {
-            _objects.reserve(count);
-            for (int i = 0; i < count; i++)
-            {
-                auto obj = CreateSerializeObject<TestObject>(GetContext());
-                _objects.push_back(obj);
-            }
-        }
-
-        void Run(int executeCount)
-        {
-            auto startMs = bugat::DateTime::NowMs();
-            InfoLog("start [{}] {}", std::this_thread::get_id(), startMs);
-            for (int i = 0; i < executeCount; i++)
-                for (auto& obj : _objects)
-                    obj->AddCount();
-
-            for (auto& obj : _objects)
-                obj->Complete([this, obj, executeCount](int count) {
-                if (count == executeCount)
-                    Post([this]() {
-                    _completeCount++;
-                    if (_completeCount == _objects.size())
-                        _complete.store(true, std::memory_order_release);
-                        });
-                    });
-
-            auto endMs = bugat::DateTime::NowMs();
-            InfoLog("end [{}] {}   diff {}", std::this_thread::get_id(), endMs, endMs - startMs);
-        }
-
-        void Complete() const
-        {
-            while (false == _complete.load(std::memory_order_acquire));
-        }
-
-        std::vector<bugat::TSharedPtr<TestObject>> _objects;
-        int _completeCount;
-        std::atomic_bool _complete;
-    };
-
-    void RunObjectTest(Context& context)
-    {
-        auto startMs = DateTime::NowMs();
-        InfoLog("Thread start [{}] {}", std::this_thread::get_id(), startMs);
-        std::vector<std::thread> threads;
-        for (int i = 0; i < 5; i++)
-            threads.push_back(std::thread([&context]() {
-            auto objects = CreateSerializeObject<TestObjects>(&context);
-            objects->CreateObjects(5000);
-            objects->Run(10000);
-            objects->Complete();
-                }));
-
-        for (auto& t : threads)
-            t.join();
-
-        auto endMs = DateTime::NowMs();
-        InfoLog("Thread end [{}] {}   diff {}", std::this_thread::get_id(), endMs, endMs - startMs);
-    }
-}
+#include "stdafx.h"
+#include "TestFunc.h"
 
 int main()
 {
@@ -107,11 +11,12 @@ int main()
     context.Initialize();
 
     ThreadGroup threads;
-    threads.Add(5, [&context](ThreadInfo& info) {
+    threads.Add(10, [&context](ThreadInfo& info) {
         context.Run();
         });
 
     RunObjectTest(context);
+    AwaitTest(context);
 
     context.Stop();
     threads.Stop();

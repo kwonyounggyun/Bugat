@@ -6,8 +6,9 @@
 #define MAX_LOG_LENGTH 1024
 
 #define ErrorLog(data, ...) CLog::WriteLog(LogType::Error, data, __VA_ARGS__)
+#define WarningLog(data, ...) CLog::WriteLog(LogType::Warning, data, __VA_ARGS__)
 #define InfoLog(data, ...) CLog::WriteLog(LogType::Info, data, __VA_ARGS__)
-
+#define DebugLog(data, ...) CLog::WriteLog(LogType::Debug, data, __VA_ARGS__)
 
 namespace bugat
 {
@@ -16,8 +17,9 @@ class LogType
 	public:
 		enum en {
 			Error = 0,
-			Warnning = 1,
-			Info = 2
+			Warning = 1,
+			Info = 2,
+			Debug = 3,
 		};
 
 		static const char* GetString(LogType::en type)
@@ -26,10 +28,12 @@ class LogType
 			{
 			case Error:
 				return "Error";
-			case Warnning:
-				return "Warnning";
+			case Warning:
+				return "Warning";
 			case Info:
 				return "Info";
+			case Debug:
+				return "Debug";
 			}
 			return "";
 		}
@@ -64,6 +68,9 @@ class LogType
 			std::print(FilePtr, "[{}] [{}] {}\n", dateTimeStr, LogType::GetString(type), log);
 	#if defined(_DEBUG)
 			std::print("[{}] [{}] {}\n", dateTimeStr, LogType::GetString(type), log);
+	#else
+			if (type != LogType::Debug)
+				std::print("[{}] [{}] {}\n", dateTimeStr, LogType::GetString(type), log);
 	#endif
 
 			fflush(FilePtr);
