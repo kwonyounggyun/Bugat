@@ -39,7 +39,8 @@ namespace bugat
     public:
         AwaitTestObjects() : _completeCount(0) {}
 
-        //DECL_ASYNC_FUNC(CheckComplete, void, (int targetCount))
+        DECL_ASYNC_FUNC(CheckComplete, void, (int targetCount))
+        DECL_ASYNC_FUNC(Check, void, (bugat::TSharedPtr<AwaitTestObject> target, int targetCount))
         
     public:
         void CreateObjects(int count)
@@ -59,7 +60,7 @@ namespace bugat
                     obj->Async_Add(1);
         }
 
-        void CheckComplete(int targetCount)
+       /* void CheckComplete(int targetCount)
         {
             for (auto& obj : _objects)
             {
@@ -68,7 +69,7 @@ namespace bugat
                         _completeCount.fetch_add(1, std::memory_order_release);
                     });
             }
-        }
+        }*/
 
         void Complete() const
         {
@@ -80,16 +81,26 @@ namespace bugat
         std::atomic<int> _completeCount;
     };
 
-    /*DEF_ASYNC_FUNC(AwaitTestObjects, CheckComplete, void, (int targetCount))
+    DEF_ASYNC_FUNC(AwaitTestObjects, CheckComplete, void, (int targetCount))
     {
-        for (auto obj : _objects)
+        for (auto& obj : _objects)
         {
-            auto count = co_await obj->Await_GetCount(this);
-            auto id = GetObjectId();
-            if (targetCount == count)
-                _completeCount.fetch_add(1, std::memory_order_release);
+            Async_Check(obj, targetCount);
         }
-    }*/
+
+        co_return;
+    }
+
+    DEF_ASYNC_FUNC(AwaitTestObjects, Check, void, (bugat::TSharedPtr<AwaitTestObject> target, int targetCount))
+    {
+        auto count = co_await target->Await_GetCount(this);
+        auto id = target->GetObjectId();
+        if (targetCount == count)
+        {
+            _completeCount.fetch_add(1, std::memory_order_release);
+            //InfoLog("{} Complete!", id.String());
+        }
+    }
 
 	void AwaitTest(Context& context)
 	{
@@ -112,7 +123,8 @@ namespace bugat
 		for (auto& t : threads)
 			t.join();
 
-		objects->CheckComplete(threadCount * runningCount);
+		//objects->CheckComplete(threadCount * runningCount);
+        objects->Async_CheckComplete(threadCount * runningCount);
 		objects->Complete();
 		auto endMs = DateTime::NowMs();
         InfoLog("{} end [{}] {} diff {}", __FUNCTION__, std::this_thread::get_id(), endMs, endMs - startMs);
