@@ -5,8 +5,9 @@ namespace bugat
 {
 	class AwaitTestObject : public SerializeObject
 	{
-		DECL_ASYNC_FUNC(Add, (int num))
-        DECL_ASYNC_FUNC(Complete, (std::function<void(int)> callback))
+		DECL_ASYNC_FUNC(Add, void, (int num))
+        DECL_ASYNC_FUNC(Complete, void, (std::function<void(int)> callback))
+        DECL_ASYNC_FUNC(GetCount, int, ())
 
     public:
         AwaitTestObject() : _count(0) {}
@@ -15,13 +16,19 @@ namespace bugat
 		int _count;
 	};
 
-	DEF_ASYNC_FUNC(AwaitTestObject, Add, (int num))
+	DEF_ASYNC_FUNC(AwaitTestObject, Add, void, (int num))
 	{
-		_count += num;
+        _count += num;
 		co_return;
 	}
 
-    DEF_ASYNC_FUNC(AwaitTestObject, Complete, (std::function<void(int)> callback))
+    DEF_ASYNC_FUNC(AwaitTestObject, GetCount, int, ())
+    {
+        auto id = GetObjectId();
+        co_return _count;
+    }
+
+    DEF_ASYNC_FUNC(AwaitTestObject, Complete, void, (std::function<void(int)> callback))
     {
         callback(_count);
         co_return;
@@ -31,6 +38,10 @@ namespace bugat
     {
     public:
         AwaitTestObjects() : _completeCount(0) {}
+
+        //DECL_ASYNC_FUNC(CheckComplete, void, (int targetCount))
+        
+    public:
         void CreateObjects(int count)
         {
             _objects.reserve(count);
@@ -69,18 +80,29 @@ namespace bugat
         std::atomic<int> _completeCount;
     };
 
+    /*DEF_ASYNC_FUNC(AwaitTestObjects, CheckComplete, void, (int targetCount))
+    {
+        for (auto obj : _objects)
+        {
+            auto count = co_await obj->Await_GetCount(this);
+            auto id = GetObjectId();
+            if (targetCount == count)
+                _completeCount.fetch_add(1, std::memory_order_release);
+        }
+    }*/
+
 	void AwaitTest(Context& context)
 	{
-		auto startMs = DateTime::NowMs();
-        InfoLog("{} start [{}] {}", __FUNCTION__, std::this_thread::get_id(), startMs);
-		
 		int threadCount = 10;
-		int objectCount = 1000;
+		int objectCount = 10000;
 		int runningCount = 1000;
 
 		std::vector<std::thread> threads;
 		auto objects = CreateSerializeObject<AwaitTestObjects>(&context);
         objects->CreateObjects(objectCount);
+
+        auto startMs = DateTime::NowMs();
+        InfoLog("{} start [{}] {}", __FUNCTION__, std::this_thread::get_id(), startMs);
 
 		for (int i = 0; i < threadCount; i++)
 			threads.push_back(std::thread([&]() {
@@ -92,7 +114,6 @@ namespace bugat
 
 		objects->CheckComplete(threadCount * runningCount);
 		objects->Complete();
-
 		auto endMs = DateTime::NowMs();
         InfoLog("{} end [{}] {} diff {}", __FUNCTION__, std::this_thread::get_id(), endMs, endMs - startMs);
 	}

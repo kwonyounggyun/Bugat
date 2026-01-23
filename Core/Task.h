@@ -72,7 +72,7 @@ namespace bugat
 
 		template<typename Func, typename ...ARGS>
 		AnyTask(Func&& func, ARGS&&... args)
-			: _task(std::make_shared<TaskModel<Func, ARGS...>>(std::forward<Func>(func), std::forward<ARGS>(args)...))
+			: _task(std::make_unique<TaskModel<Func, ARGS...>>(std::forward<Func>(func), std::forward<ARGS>(args)...))
 		{
 
 		}
@@ -80,7 +80,7 @@ namespace bugat
 		template<typename Await>
 		requires std::is_same_v<Await, AwaitTask<typename Await::ValueType>>
 		AnyTask(Await&& awaitTask)
-			: _task(std::make_shared<AwaitTaskModel<Await>>(std::forward<Await>(awaitTask)))
+			: _task(std::make_unique<AwaitTaskModel<Await>>(std::forward<Await>(awaitTask)))
 		{
 		}
 
@@ -90,6 +90,6 @@ namespace bugat
 		}
 
 	private:
-		std::shared_ptr<TaskConcept> _task;
+		std::unique_ptr<TaskConcept> _task;
 	};
 }

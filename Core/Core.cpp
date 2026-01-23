@@ -24,7 +24,6 @@ bugat::AwaitTask<int> Test1()
 
 bugat::AwaitTask<void> Test2()
 {
-	auto result = co_await Test1();
 	co_return;
 }
 

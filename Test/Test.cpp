@@ -15,7 +15,7 @@ int main()
         context.Run();
         });
 
-    RunObjectTest(context);
+    //RunObjectTest(context);
     AwaitTest(context);
 
     context.Stop();

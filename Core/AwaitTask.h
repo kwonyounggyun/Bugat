@@ -4,6 +4,14 @@
 
 namespace bugat
 {
+	struct FinalDestroyer {
+		constexpr bool await_ready() const noexcept { return false; }
+		void await_suspend(std::coroutine_handle<> h) const noexcept {
+			h.destroy();
+		}
+		constexpr void await_resume() const noexcept {}
+	};
+
 	template<typename T>
 	class AwaitTask
 	{
@@ -12,39 +20,20 @@ namespace bugat
 
 		struct promise_type;
 		using HandleType = std::coroutine_handle<promise_type>;
-
-		struct FinalDestroyer : std::suspend_always {
-			void await_suspend(HandleType h) const noexcept {
-				auto s = std::move(h.promise()._self);
-			}
-		};
-
-		struct HandleHolder
-		{
-			HandleHolder(HandleType h) : _h(h) {}
-			~HandleHolder()
-			{
-				if (_h)
-					_h.destroy();
-			}
-
-			HandleType _h;
-		};
 		
 		struct promise_type
 		{
 			AwaitTask get_return_object()
 			{
 				auto h = HandleType::from_promise(*this);
-				_self = std::make_shared<HandleHolder>(h);
 				return AwaitTask{ h };
 			}
 
 			auto initial_suspend() { return std::suspend_always{}; }
 			auto final_suspend() noexcept 
 			{
-				if (_continuation)
-					_continuation.resume();
+				if (_callfunc)
+					_callfunc(_value);
 
 				return FinalDestroyer{};
 			}
@@ -57,25 +46,7 @@ namespace bugat
 			void unhandled_exception() {}
 
 			T _value;
-			std::coroutine_handle<> _continuation;
-			std::shared_ptr<HandleHolder> _self;
-		};
-
-		struct Awaiter
-		{
-			bool await_ready() const noexcept { return _h.done(); }
-			void await_suspend(std::coroutine_handle<> awaiting_handle) noexcept
-			{
-				_h.promise()._continuation = awaiting_handle;
-				_h.resume();
-			}
-
-			T await_resume()
-			{
-				return _h.promise()._value;
-			}
-
-			HandleType _h;
+			std::function<void(T)> _callfunc;
 		};
 
 		void resume() const
@@ -84,9 +55,9 @@ namespace bugat
 				_h.resume();
 		}
 
-		Awaiter operator co_await()
+		void SetCallback(std::function<void(T)>&& callfunc)
 		{
-			return Awaiter{ _h };
+			_h.promise()._callfunc = std::move(callfunc);
 		}
 
 		HandleType _h;
@@ -101,62 +72,28 @@ namespace bugat
 		struct promise_type;
 		using HandleType = std::coroutine_handle<promise_type>;
 
-		struct FinalDestroyer : std::suspend_always {
-			void await_suspend(HandleType h) const noexcept {
-				auto s = std::move(h.promise()._self);
-			}
-		};
-
-		struct HandleHolder
-		{
-			HandleHolder(HandleType h) : _h(h) {}
-			~HandleHolder()
-			{
-				if (_h)
-					_h.destroy();
-			}
-
-			HandleType _h;
-		};
-
 		struct promise_type
 		{
 			AwaitTask get_return_object()
 			{
 				auto h = HandleType::from_promise(*this);
-				_self = std::make_shared<HandleHolder>(h);
 				return AwaitTask{ h };
 			}
 
 			auto initial_suspend() { return std::suspend_always{}; }
 			auto final_suspend() noexcept
 			{
-				if (_continuation)
-					_continuation.resume();
+				if (_callfunc)
+					_callfunc();
 
-				return FinalDestroyer{};
+				return FinalDestroyer{ };
 			}
 
 			void return_void() {}
 
 			void unhandled_exception() {}
 
-			std::coroutine_handle<> _continuation;
-			std::shared_ptr<HandleHolder> _self;
-		};
-
-		struct Awaiter
-		{
-			bool await_ready() const noexcept { return _h.done(); }
-			void await_suspend(std::coroutine_handle<> awaiting_handle) noexcept
-			{
-				_h.promise()._continuation = awaiting_handle;
-				_h.resume();
-			}
-
-			void await_resume() {	}
-
-			HandleType _h;
+			std::function<void()> _callfunc;
 		};
 
 		void resume() const
@@ -165,9 +102,9 @@ namespace bugat
 				_h.resume();
 		}
 
-		Awaiter operator co_await()
+		void SetCallback(std::function<void()>&& callfunc)
 		{
-			return Awaiter{ _h };
+			_h.promise()._callfunc = std::move(callfunc);
 		}
 
 		HandleType _h;

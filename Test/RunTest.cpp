@@ -67,16 +67,16 @@ namespace bugat
 
     void RunObjectTest(Context& context)
     {
-        auto startMs = DateTime::NowMs();
-        InfoLog("{} start [{}] {}", __FUNCTION__, std::this_thread::get_id(), startMs);
-
         int threadCount = 10;
-        int objectCount = 1000;
+        int objectCount = 10000;
         int runningCount = 1000;
 
         std::vector<std::thread> threads;
         auto objects = CreateSerializeObject<TestObjects>(&context);
         objects->CreateObjects(objectCount);
+
+        auto startMs = DateTime::NowMs();
+        InfoLog("{} start [{}] {}", __FUNCTION__, std::this_thread::get_id(), startMs);
 
         for (int i = 0; i < threadCount; i++)
             threads.push_back(std::thread([&]() {
