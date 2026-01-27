@@ -6,11 +6,12 @@
 
 namespace bugat
 {
-	struct SerializerQueue;
+	class SerializerQueue;
 	class SerializeObject;
 
 	class Context
 	{
+		friend class SerializerQueue;
 	public:
 		explicit Context(uint32_t queCount = 10);
 		virtual ~Context() = default;
@@ -19,6 +20,8 @@ namespace bugat
 		void Run();
 		void Post(TSharedPtr<SerializeObject> serializeObject);
 		void Stop();
+		
+		static TSharedPtr<SerializeObject>& Executor();
 
 	private:
 		std::vector<CacheLinePadding<std::atomic<SerializerQueue*>>> _globalQue;
@@ -32,7 +35,7 @@ namespace bugat
 		uint32_t _globalQueSize;
 		std::atomic<bool> _stop;
 
-	public:
 		thread_local static SerializerQueue* _localQue;
+		thread_local static TSharedPtr<SerializeObject> _currentExecutor;
 	};
 }

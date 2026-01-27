@@ -3,6 +3,7 @@
 #include "../Core/ObjectPool.h"
 #include "ObjectId.h"
 #include "Memory.h"
+#include "Context.h"
 
 namespace bugat
 {
@@ -18,9 +19,9 @@ namespace bugat
 		virtual ~SerializeObject() {}
 
 		template<typename Await>
-		AwaitPost<typename Await::ValueType> AwitePost(TSharedPtr<SerializeObject> caller, Await&& awaitable)
+		AwaitPost<typename Await::ValueType> AwitePost(Await&& awaitable)
 		{
-			return AwaitPost<typename Await::ValueType>(caller, this, std::move(awaitable));
+			return AwaitPost<typename Await::ValueType>( this, std::move(awaitable));
 		}
 
 		virtual void OnRun(int64_t remainCount);
@@ -39,18 +40,22 @@ namespace bugat
 	class AwaitPost
 	{
 	public:
-		AwaitPost(TSharedPtr<SerializeObject> caller, TSharedPtr<SerializeObject> callee, AwaitTask<T>&& task) : _caller(caller), _callee(callee), _task(std::move(task)) {}
+		AwaitPost(TSharedPtr<SerializeObject> caller, AwaitTask<T>&& task) : _caller(caller), _task(std::move(task)) {}
 
-		auto await_ready() {}
+		auto await_ready() { return false; }
 		auto await_suspend(std::coroutine_handle<> h)
 		{
-			_task.SetCallback([h, this](T value) {
-				_result = value;
-				_caller->Post([h]() {
-					h.resume();
+			auto& curExecutor = Context::Executor();
+			if (curExecutor)
+			{
+				_task.SetCallback([h, curExecutor, this](T value) {
+					_result = value;
+					curExecutor->Post([h]() {
+						h.resume();
+						});
 					});
-				});
-			_callee->Post(std::move(_task));
+				_caller->Post(std::move(_task));
+			}
 		}
 
 		auto await_resume()
@@ -61,7 +66,6 @@ namespace bugat
 	private:
 		T _result;
 		TSharedPtr<SerializeObject> _caller;
-		TSharedPtr<SerializeObject> _callee;
 		AwaitTask<T> _task;
 	};
 
@@ -69,24 +73,27 @@ namespace bugat
 	class AwaitPost<void>
 	{
 	public:
-		AwaitPost(TSharedPtr<SerializeObject> caller, TSharedPtr<SerializeObject> callee, AwaitTask<void>&& task) : _caller(caller), _callee(callee), _task(std::move(task)) {}
+		AwaitPost(TSharedPtr<SerializeObject> caller, AwaitTask<void>&& task) : _caller(caller), _task(std::move(task)) {}
 
-		auto await_ready() {}
+		auto await_ready() { return false; }
 		auto await_suspend(std::coroutine_handle<> h)
 		{
-			_task.SetCallback([h, this]() {
-				_caller->Post([h]() {
-					h.resume();
+			auto& curExecutor = Context::Executor();
+			if (curExecutor)
+			{
+				_task.SetCallback([h, curExecutor, this]() {
+					curExecutor->Post([h]() {
+						h.resume();
+						});
 					});
-				});
-			_callee->Post(std::move(_task));
+				_caller->Post(std::move(_task));
+			}
 		}
 
-		void await_resume() { }
+		void await_resume() {}
 
 	private:
 		TSharedPtr<SerializeObject> _caller;
-		TSharedPtr<SerializeObject> _callee;
 		AwaitTask<void> _task;
 	};
 

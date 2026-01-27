@@ -188,8 +188,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Connection.cpp" />
-    <ClCompile Include="Context.cpp" />
     <ClCompile Include="Base.cpp" />
+    <ClCompile Include="Context.cpp" />
     <ClCompile Include="DateTime.cpp" />
     <ClCompile Include="NetworkContext.cpp" />
     <ClCompile Include="pch.cpp">

@@ -11,9 +11,9 @@ public: \
 		Post(##FuntionName(std::forward<Args>(args)...)); \
 	} \
 	template<typename ...Args> \
-	auto Await_##FuntionName(TSharedPtr<SerializeObject> obj, Args&&... args) \
+	auto Await_##FuntionName(Args&&... args) \
 	{ \
-		return AwaitPost(obj, this, ##FuntionName(std::forward<Args>(args)...)); \
+		return AwaitPost(this, ##FuntionName(std::forward<Args>(args)...)); \
 	} \
 private: \
 	AwaitTask<ReturnType> FuntionName##Params;

@@ -93,7 +93,7 @@ namespace bugat
 
     DEF_ASYNC_FUNC(AwaitTestObjects, Check, void, (bugat::TSharedPtr<AwaitTestObject> target, int targetCount))
     {
-        auto count = co_await target->Await_GetCount(this);
+        auto count = co_await target->Await_GetCount();
         auto id = target->GetObjectId();
         if (targetCount == count)
         {

@@ -6,23 +6,27 @@
 namespace bugat
 {
 	thread_local SerializerQueue* Context::_localQue = nullptr;
+	thread_local TSharedPtr<SerializeObject> Context::_currentExecutor = nullptr;
 
-	struct SerializerQueue
+	class SerializerQueue
 	{
+	public:
 		SerializerQueue() {}
 		~SerializerQueue() {}
 
 		int64_t Run()
 		{
 			int64_t count = 0;
-			_que.ConsumeAll([&count](TSharedPtr<SerializeObject>& sptr)
+			auto& currentExecutor = Context::_currentExecutor;
+			while (true == _que.Pop(currentExecutor))
+			{
+				if (currentExecutor)
 				{
-					if (sptr)
-					{
-						auto executeTaskCount = sptr->Run();
-						count += executeTaskCount;
-					}
-				});
+					auto executeTaskCount = currentExecutor->Run();
+					count += executeTaskCount;
+				}
+			}
+			currentExecutor = nullptr;
 
 			return count;
 		}
@@ -34,6 +38,7 @@ namespace bugat
 			return true;
 		}
 
+	private:
 		LockFreeQueue<TSharedPtr<SerializeObject>> _que;
 	};
 
@@ -89,5 +94,10 @@ namespace bugat
 	void Context::Stop()
 	{
 		_stop.store(true);
+	}
+
+	TSharedPtr<SerializeObject>& Context::Executor()
+	{
+		return _currentExecutor;
 	}
 }
