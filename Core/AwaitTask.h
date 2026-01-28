@@ -1,6 +1,7 @@
 #pragma once
 #include <coroutine>
 #include "Event.h"
+#include "Exception.h"
 
 namespace bugat
 {
@@ -43,7 +44,21 @@ namespace bugat
 				_value = value;
 			}
 
-			void unhandled_exception() {}
+			void unhandled_exception() 
+			{
+#if defined(_DEBUG)
+				try
+				{
+					std::rethrow_exception(std::current_exception());
+				}
+				catch(std::exception e)
+				{
+					throw CoroutineException(e);
+				}
+#else
+				std::terminate();
+#endif
+			}
 
 			T _value;
 			std::function<void(T)> _callfunc;
@@ -91,7 +106,21 @@ namespace bugat
 
 			void return_void() {}
 
-			void unhandled_exception() {}
+			void unhandled_exception()
+			{
+#if defined(_DEBUG)
+				try
+				{
+					std::rethrow_exception(std::current_exception());
+				}
+				catch (std::exception e)
+				{
+					throw CoroutineException(e);
+				}
+#else
+				std::terminate();
+#endif
+			}
 
 			std::function<void()> _callfunc;
 		};

@@ -183,7 +183,6 @@
     <ClInclude Include="SerializeObject.h" />
     <ClInclude Include="Server.h" />
     <ClInclude Include="Session.h" />
-    <ClInclude Include="Template.h" />
     <ClInclude Include="UDPConnection.h" />
   </ItemGroup>
   <ItemGroup>

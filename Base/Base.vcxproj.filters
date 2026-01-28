@@ -66,9 +66,6 @@
     <ClInclude Include="PlayerId.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Template.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="UDPConnection.h">
       <Filter>Header Files</Filter>
     </ClInclude>

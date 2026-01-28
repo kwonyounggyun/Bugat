@@ -1,7 +1,9 @@
 #include "pch.h"
 #include	"Context.h"
 #include <thread>
+#include <stacktrace>
 #include "SerializeObject.h"
+#include "../Core/Exception.h"
 
 namespace bugat
 {
@@ -76,9 +78,24 @@ namespace bugat
 			_waitQue.Push(expect);
 			if (_waitQue.Pop(_localQue))
 			{
-				auto count = _localQue->Run();
-				if (count > 0)
-					_executeTaskCounter->fetch_add(count);
+				try
+				{
+					auto count = _localQue->Run();
+					if (count > 0)
+						_executeTaskCounter->fetch_add(count);
+				}
+				catch (CoroutineException e)
+				{
+					InfoLog("{}\n{}", e._exception.what(), e._trace);
+				}
+				catch (std::exception e)
+				{
+#if defined(_DEBUG)
+					InfoLog("{}\n{}", e.what(), std::stacktrace::current());
+#else
+					std::terminate();
+#endif
+				}
 			}
 
 			std::this_thread::sleep_for(std::chrono::milliseconds(1));
