@@ -66,7 +66,7 @@ namespace bugat
 						if (false == memPtr->Return())
 						{
 							// block이 실제 메모리라 member의 소멸자 호출 보다 먼저 해제되면 안되기때문에 임시 저장
-							auto block = memPtr->_block;
+							auto block = std::move(memPtr->_block);
 							memPtr->~Member();
 						}
 						});
@@ -168,4 +168,17 @@ namespace bugat
 	private:
 		TSharedPtr<Pool> _pool;
 	};
+
+	/// <summary>
+	/// 같은 타입의 객체를 한곳에서 할당 받기위해 제공하는 전역함수
+	/// </summary>
+	/// <typeparam name="T">객체 타입으로 RefCountable을 상속받은 타입만 가능</typeparam>
+	/// <typeparam name="AllocSize">한번의 할당에 생성할 수 있는 객체 수</typeparam>
+	/// <returns>오브젝트 풀</returns>
+	template<typename T, int AllocSize = 10 >
+	ObjectPool<T, AllocSize>& GetObjectPool()
+	{
+		static ObjectPool<T, AllocSize> pool;
+		return pool;
+	}
 }
