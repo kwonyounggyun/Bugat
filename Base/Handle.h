@@ -25,7 +25,7 @@ namespace bugat
 		virtual void _Handle(TSharedPtr<T>& session, const TSharedPtr<TCPRecvPacket>& packet) = 0;
 	};
 
-#define DEFINE_FB_HANDLE(sessionType, className) \
+#define DECL_FB_HANDLE(sessionType, className) \
 	class className##Handle : public TCPPacketHandle<sessionType> \
 	{ \
 	public: \
@@ -47,7 +47,7 @@ namespace bugat
 		void __Handle(TSharedPtr<sessionType>& session, const bugat::protocol::game::className* packet); \
 	};
 
-#define DECLARE_FB_HANDLE(sessionType, className) \
+#define DEF_FB_HANDLE(sessionType, className) \
 	void className##Handle::__Handle(TSharedPtr<sessionType>& session, const bugat::protocol::game::className* packet)
 
 #define MAKE_FB_HANDLE(className) TSharedPtr<className##Handle>(new className##Handle())

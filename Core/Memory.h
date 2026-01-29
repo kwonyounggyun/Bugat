@@ -171,7 +171,7 @@ namespace bugat
             {
                 Reset();
                 _ptr = other.Get();
-                if (_ptr) _ptr->AddRef();
+                if (_ptr) __add_ref_count()(_ptr);
             }
             return *this;
         }
