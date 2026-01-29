@@ -3,9 +3,9 @@
 #include <vector>
 #include <memory>
 #include <atomic>
-#include "LockFreeQueue.h"
 #include "Memory.h"
 #include "LockObject.h"
+#include "LockFreeQueue.h"
 
 namespace bugat
 {
@@ -162,7 +162,7 @@ namespace bugat
 		template<typename ...Args>
 		TSharedPtr<T> Get(Args&&... args)
 		{
-			return _pool->Get(std::forward(args)...);
+			return _pool->Get(std::forward<Args>(args)...);
 		}
 
 	private:

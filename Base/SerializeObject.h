@@ -109,7 +109,7 @@ namespace bugat
 		requires std::is_base_of_v<SerializeObject, T>
 	TSharedPtr<T> CreateSerializeObject(Context* context, ARGS&&... args)
 	{
-		auto sptr = GetObjectPool<T, 1000>().Get(std::forward(args)...);
+		auto sptr = GetObjectPool<T, 1000>().Get(std::forward<ARGS>(args)...);
 		sptr->SetContext(context);
 		return sptr;
 	}

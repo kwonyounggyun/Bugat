@@ -27,7 +27,7 @@ namespace bugat
     class SpinLock
     {
     public:
-        SpinLock(LockObject obj) : _obj(obj)
+        SpinLock(LockObject& obj) : _obj(obj)
         {
             while (false == _obj.TryLock());
         }

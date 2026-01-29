@@ -21,7 +21,10 @@
     <ClCompile Include="RunTest.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-	<ClCompile Include="AwaitTest.cpp">
+    <ClCompile Include="AwaitTest.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectPoolTest.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

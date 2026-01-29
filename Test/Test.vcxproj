@@ -140,7 +140,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-	<ClCompile Include="AwaitTest.cpp" />
+    <ClCompile Include="AwaitTest.cpp" />
+    <ClCompile Include="ObjectPoolTest.cpp" />
     <ClCompile Include="RunTest.cpp" />
     <ClCompile Include="Test.cpp" />
   </ItemGroup>
