@@ -6,22 +6,22 @@ namespace bugat
     class TestObject : public bugat::SerializeObject
     {
     public:
-        void AddCount()
-        {
-            Post([this]() {
-                count++;
-                });
-        }
+        DECL_ASYNC_FUNC(AddCount, void, ())
+        DECL_ASYNC_FUNC(Complete, void, (std::invocable<int> auto& comp))
 
-        void Complete(std::function<void(int c)> comp)
-        {
-            Post([this, comp]() {
-                comp(count);
-                });
-        }
-
+    private:
         int count = 0;
     };
+
+    DEF_ASYNC_FUNC(TestObject, AddCount, void, ())
+    {
+        count++;
+    }
+
+    DEF_ASYNC_FUNC(TestObject, Complete, void, (std::invocable<int> auto& comp))
+    {
+        comp(count);
+    }
 
     class TestObjects : public bugat::SerializeObject
     {
@@ -41,14 +41,14 @@ namespace bugat
         {
             for (int i = 0; i < executeCount; i++)
                 for (auto& obj : _objects)
-                    obj->AddCount();
+                    obj->Async_AddCount();
         }
 
         void CheckComplete(int targetCount)
         {
             for (auto& obj : _objects)
             {
-                obj->Complete([this, targetCount](int count) {
+                obj->Async_Complete([this, targetCount](int count) {
                     if(targetCount == count)
                         _completeCount.fetch_add(1, std::memory_order_release);
                     });
