@@ -26,7 +26,6 @@ namespace bugat
 		struct promise_type
 		{
 			promise_type() : _executor(nullptr) {}
-			promise_type(Executor& executor) : _executor(&executor) {}
 			template<typename ...ARGS>
 			promise_type(Executor& executor, ARGS&&... args) : _executor(&executor) {}
 			AwaitTask get_return_object()
@@ -129,7 +128,6 @@ namespace bugat
 		struct promise_type
 		{
 			promise_type() : _executor(nullptr) {}
-			promise_type(Executor& executor) : _executor(&executor) {}
 			template<typename ...ARGS>
 			promise_type(Executor& executor, ARGS&&... args) : _executor(&executor) {}
 			AwaitTask get_return_object()
