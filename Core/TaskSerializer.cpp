@@ -16,7 +16,9 @@ namespace bugat
 				});
 		}
 		else
-			return 0;
+		{
+			return TASKSERIALIZER_ERROR;
+		}
 
 		OnRun(remainCount);
 		return size;

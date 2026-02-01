@@ -5,6 +5,7 @@
 #include <print>
 #define MAX_LOG_LENGTH 1024
 
+#define CriticalLog(data, ...) CLog::WriteLog(LogType::Critical, data, __VA_ARGS__)
 #define ErrorLog(data, ...) CLog::WriteLog(LogType::Error, data, __VA_ARGS__)
 #define WarningLog(data, ...) CLog::WriteLog(LogType::Warning, data, __VA_ARGS__)
 #define InfoLog(data, ...) CLog::WriteLog(LogType::Info, data, __VA_ARGS__)
@@ -20,6 +21,7 @@ class LogType
 			Warning = 1,
 			Info = 2,
 			Debug = 3,
+			Critical = 4,
 		};
 
 		static const char* GetString(LogType::en type)
@@ -34,6 +36,8 @@ class LogType
 				return "Info";
 			case Debug:
 				return "Debug";
+			case Critical:
+				return "Critical";
 			}
 			return "";
 		}

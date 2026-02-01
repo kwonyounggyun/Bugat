@@ -7,6 +7,8 @@
 #include "Memory.h"
 #include "LockObject.h"
 
+#define TASKSERIALIZER_ERROR UINT64_MAX
+
 namespace bugat
 {
 	class TaskSerializer : public RefCountable
