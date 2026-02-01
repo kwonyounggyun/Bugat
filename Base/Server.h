@@ -2,6 +2,7 @@
 #include <memory>
 #include "SerializeObject.h"
 #include "NetworkContext.h"
+#include "Macro.h"
 
 namespace bugat
 {
@@ -16,6 +17,8 @@ namespace bugat
 		Server();
 		virtual ~Server();
 
+		DECL_COROUTINE_FUNC(Server, Accept, void, (TSharedPtr<AcceptInfo> info));
+
 	public:
 		void Accept(const NetworkContext& executor, AnyConnectionFactory factory, Configure config);
 
@@ -26,6 +29,6 @@ namespace bugat
 		virtual void Update() = 0;
 
 	private:
-		std::vector<std::shared_ptr<AcceptInfo>> _acceptInfos;
+		std::vector<TSharedPtr<AcceptInfo>> _acceptInfos;
 	};
 }

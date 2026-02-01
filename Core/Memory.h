@@ -163,6 +163,11 @@ namespace bugat
             return _ptr != other._ptr;
         }
 
+        bool operator==(const TSharedPtr& other) const
+        {
+            return _ptr == other._ptr;
+        }
+
         template<typename U>
 		requires std::is_base_of_v<T, U>
         TSharedPtr& operator=(const TSharedPtr<U>& other)
@@ -181,6 +186,12 @@ namespace bugat
         {
             return _ptr != other.Get();
 		}
+
+        template<typename U>
+        bool operator==(const TSharedPtr<U>& other) const
+        {
+            return _ptr == other.Get();
+        }
 
         explicit operator bool() const {
             return _ptr != nullptr;

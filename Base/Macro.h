@@ -1,6 +1,6 @@
 #pragma once
 #include <type_traits>
-#include "../Core/AwaitTask.h"
+#include "AwaitTask.h"
 
 // 비동기 멤버함수 생성용(Params에 참조 허용)
 #define DECL_ASYNC_FUNC(FuntionName, ReturnType, Params) \
@@ -21,21 +21,24 @@ private: \
 
 
 // 코루틴 멤버함수 생성용
-#define DECL_COROUTINE_FUNC(FuntionName, ReturnType, Params) \
-public: \
+#define DECL_COROUTINE_FUNC(ClassName, FuntionName, ReturnType, Params) \
 	/*  Async_##FuntionName##Params */ \
+public: \
 	template<typename ...Args> \
 	void Spawn_##FuntionName(Args&&... args) \
 	{ \
-		Post(__##FuntionName(std::forward<Args>(args)...)); \
+		auto task = __##FuntionName(std::forward<Args>(args)...); \
+		Post([task](){	\
+			task.resume();	\
+		}); \
 	} \
 	template<typename ...Args> \
 	auto Await_##FuntionName(Args&&... args) \
 	{ \
-		return AwaitPost(this, __##FuntionName(std::forward<Args>(args)...)); \
+		return __##FuntionName(std::forward<Args>(args)...); \
 	} \
 private: \
-	AwaitTask<ReturnType> __##FuntionName##Params;
+	AwaitTask<ReturnType, ClassName> __##FuntionName##Params;
 
 #define DEF_COROUTINE_FUNC(ClassName, FunctionName, ReturnType, Params) \
-	AwaitTask<ReturnType> ClassName::__##FunctionName##Params
+	AwaitTask<ReturnType, ClassName> ClassName::__##FunctionName##Params

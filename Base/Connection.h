@@ -8,6 +8,7 @@
 #include "Packet.h"
 #include "Context.h"
 #include "NetworkContext.h"
+#include "Macro.h"
 
 namespace bugat
 {
@@ -30,6 +31,10 @@ namespace bugat
 		friend struct AwaitConnect;
 		friend struct AwaitRecv;
 		friend struct AwaitSend;
+
+		DECL_COROUTINE_FUNC(Connection, Send, void, ());
+		DECL_COROUTINE_FUNC(Connection, Recv, void, ());
+		DECL_COROUTINE_FUNC(Connection, Connect, void, (Executor executor, std::string ip, short port));
 
 	public:
 		Event<> OnConnect;

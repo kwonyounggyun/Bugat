@@ -8,6 +8,8 @@ namespace bugat
 	class UDPConnection : public SerializeObject
 	{
 		friend struct AwaitRecvFrom;
+		DECL_COROUTINE_FUNC(UDPConnection, RecvFrom, void, ())
+
 	public:
 		void Recv(Executor& executor, int recieverCount, unsigned short port);
 

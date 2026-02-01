@@ -23,12 +23,11 @@ namespace bugat
 		(*handle)(session, packet);
 	}
 
-	
-	DECLARE_FB_HANDLE(DummyClient, Res_SC_Login)
+	DEF_FB_HANDLE(DummyClient, Res_SC_Login)
 	{
 	}
 
-    DECLARE_FB_HANDLE(DummyClient, Res_SC_Move)
+	DEF_FB_HANDLE(DummyClient, Res_SC_Move)
     {
         auto pos = packet->pos();
         if (pos)

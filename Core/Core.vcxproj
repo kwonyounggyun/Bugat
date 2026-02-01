@@ -161,7 +161,6 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AwaitTask.h" />
     <ClInclude Include="Event.h" />
     <ClInclude Include="Exception.h" />
     <ClInclude Include="framework.h" />

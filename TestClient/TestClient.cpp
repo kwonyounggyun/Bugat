@@ -20,7 +20,7 @@ void SendingPacket(DummyClient* client)
 {
     auto id = client->GetObjectId();
     auto fb = FBCreate();
-    auto pos = bugat::protocol::game::FVec3(id.timestamp, id.count, 0);
+    auto pos = bugat::protocol::game::FVec3(id.timestamp, id.count, client->GetCount());
     fb->Finish(bugat::protocol::game::CreateReq_CS_Move(*fb, &pos));
     client->Send(static_cast<int>(bugat::protocol::game::Type::REQ_CS_MOVE), fb);
 }
@@ -48,7 +48,7 @@ int main()
     Configure config;
     config.ip = "127.0.0.1";
     config.port = 9000;
-    dummy.Start(5000, ClientConnectionFactory(logicContext), networkContext, config);
+    dummy.Start(1, ClientConnectionFactory(logicContext), networkContext, config);
 
     group.Join();
 

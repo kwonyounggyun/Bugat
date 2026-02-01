@@ -155,6 +155,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AwaitTask.h" />
     <ClInclude Include="BoostAsio.h" />
     <ClInclude Include="BoostRedis.h" />
     <ClInclude Include="Configure.h" />

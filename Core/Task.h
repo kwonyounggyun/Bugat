@@ -1,7 +1,6 @@
 #pragma once
 #include <functional>
 #include <type_traits>
-#include "AwaitTask.h"
 
 namespace bugat
 {
@@ -45,25 +44,6 @@ namespace bugat
 		std::function<ReturnType()> _task;
 	};*/
 
-	template<typename Await>
-	class AwaitTaskModel : public TaskConcept
-	{
-	public:
-		AwaitTaskModel(Await&& awaitTask) : _task(std::move(awaitTask)) {}
-		virtual ~AwaitTaskModel() {}
-		virtual void Run() override
-		{
-			_task.resume();
-		}
-
-		void AddCompletedHandler(const std::function<void()>& handler)
-		{
-			_task.AddCompletedHandler(handler);
-		}
-
-	private:
-		Await _task;
-	};
 
 	class AnyTask
 	{
@@ -75,13 +55,6 @@ namespace bugat
 			: _task(std::make_unique<TaskModel<Func, ARGS...>>(std::forward<Func>(func), std::forward<ARGS>(args)...))
 		{
 
-		}
-
-		template<typename Await>
-		requires std::is_same_v<Await, AwaitTask<typename Await::ValueType>>
-		AnyTask(Await&& awaitTask)
-			: _task(std::make_unique<AwaitTaskModel<Await>>(std::forward<Await>(awaitTask)))
-		{
 		}
 
 		void Run()

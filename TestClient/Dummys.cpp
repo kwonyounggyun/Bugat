@@ -37,9 +37,13 @@ namespace bugat
 				_clients.Del(dummyClient->GetObjectId());
 				};
 
+			dummyClient->Post([]() {});
 			connection->OnConnect += [dummyClient, this]() mutable {
 				_clients.Add(dummyClient->GetObjectId(), dummyClient);
-				CoSpawn(*dummyClient, RandomAction(this, dummyClient.Get()));
+				auto task = RandomAction(this, dummyClient.Get());
+				dummyClient->Post([task]() {
+					task.resume();
+					});
 				};
 
 			connection->OnRead += [dummyClient](const TSharedPtr<TCPRecvPacket>& pack) {

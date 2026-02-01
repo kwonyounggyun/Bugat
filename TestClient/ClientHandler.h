@@ -18,6 +18,6 @@ namespace bugat
 		std::unordered_map<int, TSharedPtr<TCPPacketHandle<DummyClient>>> _handles;
 	};
 
-	DEFINE_FB_HANDLE(DummyClient, Res_SC_Login)
-	DEFINE_FB_HANDLE(DummyClient, Res_SC_Move)
+	DECL_FB_HANDLE(DummyClient, Res_SC_Login)
+	DECL_FB_HANDLE(DummyClient, Res_SC_Move)
 }

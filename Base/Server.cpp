@@ -33,7 +33,7 @@ namespace bugat
 		BoostError _result;
 	};
 
-	struct AcceptInfo
+	struct AcceptInfo : RefCountable
 	{
 	public:
 		AcceptInfo(const Executor& executor, unsigned short port, AnyConnectionFactory& factory) : _executor(executor), _acceptor(executor, { TCP::v4(), port }), _factory(std::move(factory))
@@ -50,26 +50,23 @@ namespace bugat
 		Executor _executor;
 	};
 
-	namespace Net
+	DEF_COROUTINE_FUNC(Server, Accept, void, (TSharedPtr<AcceptInfo> info))
 	{
-		AwaitTask<void> Accept(TSharedPtr<Server> server, std::shared_ptr<AcceptInfo> info)
+		for (;;)
 		{
-			for (;;)
+			auto socket = std::make_unique<TCPSocket>(info->GetExecutor());
+			auto error = co_await AwaitAccept{ this, info->GetAcceptor(), socket.get() };
+			if (error)
 			{
-				auto socket = std::make_unique<TCPSocket>(info->GetExecutor());
-				auto error = co_await AwaitAccept{ server.Get(), info->GetAcceptor(), socket.get()};
-				if (error)
-				{
-					break;
-				}
-
-				auto connection = info->GetFactory().Create(socket);
-				server->OnAccept(connection);
-				connection->Start();
+				break;
 			}
 
-			co_return;
+			auto connection = info->GetFactory().Create(socket);
+			OnAccept(connection);
+			connection->Start();
 		}
+
+		co_return;
 	}
 
 	Server::Server()
@@ -82,9 +79,9 @@ namespace bugat
 
 	void Server::Accept(const NetworkContext& executor, AnyConnectionFactory factory, Configure config)
 	{
-		auto info = std::make_shared<AcceptInfo>(executor.GetExecutor(), config.port, factory);
+		auto info = TSharedPtr<AcceptInfo>(new AcceptInfo(executor.GetExecutor(), config.port, factory));
 		_acceptInfos.push_back(info);
 		for (auto i = 0; i < config.acceptTaskCount; i++)
-			CoSpawn(*this, Net::Accept(this, info));
+			Spawn_Accept(info);
 	}
 }

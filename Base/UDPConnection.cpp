@@ -43,22 +43,19 @@ namespace bugat
 		std::size_t _recv;
 	};
 
-	namespace Net
+	DEF_COROUTINE_FUNC(UDPConnection, RecvFrom, void, ())
 	{
-		AwaitTask<void> RecvFrom(TSharedPtr<UDPConnection> connection)
+		NetworkMessage<UDPRecvPacket> msg;
+		while (true)
 		{
-			NetworkMessage<UDPRecvPacket> msg;
-			while (true)
-			{
-				auto bufInfo = msg.GetBufInfo();
-				co_await AwaitRecvFrom(connection.Get(), bufInfo.buf, bufInfo.size);
-			}
+			auto bufInfo = msg.GetBufInfo();
+			co_await AwaitRecvFrom(this, bufInfo.buf, bufInfo.size);
 		}
 	}
 
 	void UDPConnection::Recv(Executor& executor, int recieverCount, unsigned short port)
 	{
 		_info = std::make_shared<UDPInfo>(executor, port);
-		CoSpawn(*this, Net::RecvFrom(this));
+		Spawn_RecvFrom();
 	}
 }

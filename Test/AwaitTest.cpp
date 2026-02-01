@@ -5,9 +5,9 @@ namespace bugat
 {
 	class AwaitTestObject : public SerializeObject
 	{
-        DECL_COROUTINE_FUNC(Add, void, (int num))
-        DECL_COROUTINE_FUNC(Complete, void, (std::function<void(int)> callback))
-        DECL_COROUTINE_FUNC(GetCount, int, ())
+        DECL_COROUTINE_FUNC(AwaitTestObject, Add, void, (int num))
+        DECL_COROUTINE_FUNC(AwaitTestObject, Complete, void, (std::function<void(int)> callback))
+        DECL_COROUTINE_FUNC(AwaitTestObject, GetCount, int, ())
 
     public:
         AwaitTestObject() : _count(0) {}
@@ -39,8 +39,8 @@ namespace bugat
     public:
         AwaitTestObjects() : _completeCount(0) {}
 
-        DECL_COROUTINE_FUNC(CheckComplete, void, (int targetCount))
-        DECL_COROUTINE_FUNC(Check, void, (bugat::TSharedPtr<AwaitTestObject> target, int targetCount))
+        DECL_COROUTINE_FUNC(AwaitTestObjects, CheckComplete, void, (int targetCount))
+        DECL_COROUTINE_FUNC(AwaitTestObjects, Check, void, (bugat::TSharedPtr<AwaitTestObject> target, int targetCount))
         
     public:
         void CreateObjects(int count)
@@ -94,7 +94,7 @@ namespace bugat
     DEF_COROUTINE_FUNC(AwaitTestObjects, Check, void, (bugat::TSharedPtr<AwaitTestObject> target, int targetCount))
     {
         //throw std::runtime_error("코루틴 내부에서 에러 발생!");
-        auto count = co_await target->Await_GetCount();
+        int count = co_await target->Await_GetCount();
         auto id = target->GetObjectId();
         if (targetCount == count)
         {
