@@ -1,11 +1,8 @@
 #pragma once
-#include <stack>
 #include <vector>
-#include <memory>
 #include <atomic>
 #include "Memory.h"
 #include "LockObject.h"
-#include "LockFreeQueue.h"
 
 namespace bugat
 {
@@ -18,10 +15,7 @@ namespace bugat
 			struct MemoryBlock : public RefCountable
 			{
 				MemoryBlock(TSharedPtr<Pool> pool, void* p) : _pool(pool), _ptr(p) {}
-				~MemoryBlock()
-				{
-					::operator delete(_ptr);
-				}
+				~MemoryBlock() {}
 
 				TSharedPtr<Pool>& GetPool()
 				{
@@ -72,22 +66,38 @@ namespace bugat
 						});
 				}
 
-				TSharedPtr<MemoryBlock> _block; //집나간동안 해제되면안됨..
+				Member* _next;
 				T* _ptr;
+				TSharedPtr<MemoryBlock> _block; //집나간동안 해제되면안됨..
+			};
+
+			struct Link
+			{
+				Link(Link* ptr) : _next(ptr) {}
+				Link* _next;
 			};
 
 		public:
-			Pool() 
+			Pool() : _end(new Link(nullptr))
 			{
+				_top.store(_end, std::memory_order_release);
 			}
 
 			~Pool()
 			{
-				_mems.ConsumeAll([](Member* mem) {
-					mem->~Member();
-					});
-				while(!_blocks.empty())
-					_blocks.pop();
+				auto curTop = _top.load(std::memory_order_acquire);
+				while (true)
+				{
+					if (curTop == _end)
+						break;
+
+					if (true == _top.compare_exchange_strong(curTop, curTop->_next, std::memory_order_acq_rel))
+						reinterpret_cast<Member*>(curTop)->~Member();
+				}
+
+				_blocks.clear();
+
+				delete _end;
 			}
 
 			void Init(int defaultPoolSize)
@@ -95,27 +105,50 @@ namespace bugat
 				Alloc(defaultPoolSize);
 			}
 
+			void Release()
+			{
+				for (auto& block : _blocks)
+					block->Release();
+			}
+
 			template<typename ...Args>
 			TSharedPtr<T> Get(Args&&... args)
 			{
-				Member* mem;
-				while (false == _mems.Pop(mem))
-				{
-					if (_mems.GetSize() > 0)
-						continue;
-					
-					if(auto lock = ScopedLock(_allocLock); lock)
-						Alloc(AllocSize);
-				}
+				auto mem = Pop();
 
 				auto sptr = mem->Get(std::forward<Args>(args)...);
 				return sptr;
 			}
 
 		private:
+			Member* Pop()
+			{
+				auto curTop = _top.load(std::memory_order_acquire);
+				while (true)
+				{
+					if (curTop == _end)
+					{
+						if (auto lock = ScopedLock(_allocLock); lock)
+							Alloc(AllocSize);
+
+						curTop = _top.load(std::memory_order_acquire);
+						continue;
+					}
+
+					if (true == _top.compare_exchange_strong(curTop, curTop->_next, std::memory_order_acq_rel))
+						break;
+				}
+
+				return reinterpret_cast<Member*>(curTop);
+			}
+
 			void Push(Member* member)
 			{
-				_mems.Push(member);
+				auto voidPtr = reinterpret_cast<void*>(member);
+				auto curTop = _top.load(std::memory_order_acquire);
+				new(voidPtr)Link(curTop);
+				while (false == _top.compare_exchange_strong(curTop, reinterpret_cast<Link*>(voidPtr), std::memory_order_acq_rel))
+					new(voidPtr)Link(curTop);
 			}
 
 			void Alloc(int size)
@@ -132,7 +165,7 @@ namespace bugat
 				auto startBlockPtr = static_cast<char*>(memoryBlock) + memoryBlockSize;
 				new(memoryBlock)MemoryBlock(TSharedPtr(this), startBlockPtr);
 				auto blockPtr = TSharedPtr<MemoryBlock>(static_cast<MemoryBlock*>(memoryBlock));
-				_blocks.push(blockPtr);
+				_blocks.push_back(blockPtr);
 
 				for (int i = 0; i < size; i++)
 				{
@@ -144,14 +177,22 @@ namespace bugat
 			}
 
 		private:
-			LockFreeQueue<Member*> _mems;
-			std::stack<TSharedPtr<MemoryBlock>> _blocks;
+			std::vector<TSharedPtr<MemoryBlock>> _blocks;
 			LockObject _allocLock;
+
+			std::atomic<Link*> _top;
+			Link* _end;
 		};
 
 	public:
 		ObjectPool() : _pool(new Pool())
 		{
+		}
+
+		~ObjectPool()
+		{
+			_pool->Release();
+			_pool.Reset();
 		}
 
 		void Init(int DefaultBlockSize = 0)
