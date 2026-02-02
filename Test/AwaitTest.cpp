@@ -5,8 +5,8 @@ namespace bugat
 {
 	class AwaitTestObject : public SerializeObject
 	{
-        DECL_COROUTINE_FUNC(AwaitTestObject, Add, void, (int num))
-        DECL_COROUTINE_FUNC(AwaitTestObject, Complete, void, (std::function<void(int)> callback))
+        DECL_COROUTINE_FUNC(AwaitTestObject, Add, void, (int, num))
+        DECL_COROUTINE_FUNC(AwaitTestObject, Complete, void, (std::function<void(int)>, callback))
         DECL_COROUTINE_FUNC(AwaitTestObject, GetCount, int, ())
 
     public:
@@ -16,7 +16,7 @@ namespace bugat
 		int _count;
 	};
 
-    DEF_COROUTINE_FUNC(AwaitTestObject, Add, void, (int num))
+    DEF_COROUTINE_FUNC(AwaitTestObject, Add, void, (int, num))
 	{
         _count += num;
 		co_return;
@@ -28,7 +28,7 @@ namespace bugat
         co_return _count;
     }
 
-    DEF_COROUTINE_FUNC(AwaitTestObject, Complete, void, (std::function<void(int)> callback))
+    DEF_COROUTINE_FUNC(AwaitTestObject, Complete, void, (std::function<void(int)>, callback))
     {
         callback(_count);
         co_return;
@@ -38,9 +38,6 @@ namespace bugat
     {
     public:
         AwaitTestObjects() : _completeCount(0) {}
-
-        DECL_COROUTINE_FUNC(AwaitTestObjects, CheckComplete, void, (int targetCount))
-        DECL_COROUTINE_FUNC(AwaitTestObjects, Check, void, (bugat::TSharedPtr<AwaitTestObject> target, int targetCount))
         
     public:
         void CreateObjects(int count)
@@ -60,48 +57,31 @@ namespace bugat
                     obj->Spawn_Add(1);
         }
 
-       /* void CheckComplete(int targetCount)
+       void CheckComplete(int targetCount)
         {
             for (auto& obj : _objects)
             {
-                obj->Async_Complete([this, targetCount](int count) {
+                obj->Spawn_Complete([this, targetCount](int count) {
                     if (targetCount == count)
                         _completeCount.fetch_add(1, std::memory_order_release);
                     });
             }
-        }*/
+        }
 
         void Complete() const
         {
-            while (_objects.size() != _completeCount.load(std::memory_order_acquire))
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            int complete = 0;
+            do 
+            {
+                complete = _completeCount.load(std::memory_order_acquire);
+                InfoLog("CompleteCount [{}]", complete);
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            } while (_objects.size() != complete);
         }
 
         std::vector<bugat::TSharedPtr<AwaitTestObject>> _objects;
         std::atomic<int> _completeCount;
     };
-
-    DEF_COROUTINE_FUNC(AwaitTestObjects, CheckComplete, void, (int targetCount))
-    {
-        for (auto& obj : _objects)
-        {
-            Spawn_Check(obj, targetCount);
-        }
-
-        co_return;
-    }
-
-    DEF_COROUTINE_FUNC(AwaitTestObjects, Check, void, (bugat::TSharedPtr<AwaitTestObject> target, int targetCount))
-    {
-        //throw std::runtime_error("코루틴 내부에서 에러 발생!");
-        int count = co_await target->Await_GetCount();
-        auto id = target->GetObjectId();
-        if (targetCount == count)
-        {
-            _completeCount.fetch_add(1, std::memory_order_release);
-            //InfoLog("{} Complete!", id.String());
-        }
-    }
 
 	void AwaitTest(Context& context)
 	{
@@ -125,7 +105,7 @@ namespace bugat
 			t.join();
 
 		//objects->CheckComplete(threadCount * runningCount);
-        objects->Spawn_CheckComplete(threadCount * runningCount);
+        objects->CheckComplete(threadCount * runningCount);
 		objects->Complete();
 		auto endMs = DateTime::NowMs();
         InfoLog("{} end [{}] {} diff {}", __FUNCTION__, std::this_thread::get_id(), endMs, endMs - startMs);

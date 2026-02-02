@@ -50,7 +50,7 @@ namespace bugat
 		Executor _executor;
 	};
 
-	DEF_COROUTINE_FUNC(Server, Accept, void, (TSharedPtr<AcceptInfo> info))
+	DEF_COROUTINE_FUNC(Server, Accept, void, (TSharedPtr<AcceptInfo>, info))
 	{
 		for (;;)
 		{

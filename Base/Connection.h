@@ -34,7 +34,7 @@ namespace bugat
 
 		DECL_COROUTINE_FUNC(Connection, Send, void, ());
 		DECL_COROUTINE_FUNC(Connection, Recv, void, ());
-		DECL_COROUTINE_FUNC(Connection, Connect, void, (Executor executor, std::string ip, short port));
+		DECL_COROUTINE_FUNC(Connection, Connect, void, (Executor, executor, std::string, ip, short, port));
 
 	public:
 		Event<> OnConnect;

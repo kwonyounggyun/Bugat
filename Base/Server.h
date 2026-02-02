@@ -17,7 +17,7 @@ namespace bugat
 		Server();
 		virtual ~Server();
 
-		DECL_COROUTINE_FUNC(Server, Accept, void, (TSharedPtr<AcceptInfo> info));
+		DECL_COROUTINE_FUNC(Server, Accept, void, (TSharedPtr<AcceptInfo>, info));
 
 	public:
 		void Accept(const NetworkContext& executor, AnyConnectionFactory factory, Configure config);

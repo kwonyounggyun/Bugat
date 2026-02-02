@@ -202,7 +202,7 @@ namespace bugat
 		co_return;
 	}
 
-	DEF_COROUTINE_FUNC(Connection, Connect, void, (const Executor executor, std::string ip, short port))
+	DEF_COROUTINE_FUNC(Connection, Connect, void, (Executor, executor, std::string, ip, short, port))
 	{
 		auto p = AwaitTask<void, Connection>::promise_type(*this, executor, ip, port);
 		_socket = std::make_unique<TCPSocket>(executor);

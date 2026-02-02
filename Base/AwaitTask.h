@@ -91,8 +91,8 @@ namespace bugat
 
 				if (_h.promise()._executor != nullptr)
 				{
-					_h.promise()._executor->Post([h = _h]() {
-						h.resume();
+					_h.promise()._executor->Post([copy = _h]() {
+						copy.resume();
 						});
 				}
 				else

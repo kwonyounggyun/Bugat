@@ -7,7 +7,7 @@ namespace bugat
     {
     public:
         DECL_ASYNC_FUNC(AddCount, void, ())
-        DECL_ASYNC_FUNC(Complete, void, (std::invocable<int> auto& comp))
+        DECL_ASYNC_FUNC(Complete, void, (std::invocable<int> auto, comp))
 
     private:
         int count = 0;
@@ -18,7 +18,7 @@ namespace bugat
         count++;
     }
 
-    DEF_ASYNC_FUNC(TestObject, Complete, void, (std::invocable<int> auto& comp))
+    DEF_ASYNC_FUNC(TestObject, Complete, void, (std::invocable<int> auto, comp))
     {
         comp(count);
     }
@@ -48,17 +48,25 @@ namespace bugat
         {
             for (auto& obj : _objects)
             {
-                obj->Async_Complete([this, targetCount](int count) {
-                    if(targetCount == count)
+                const int a = 0;
+                auto func = [this, targetCount, b = a](int count) mutable {
+                    if (targetCount == count)
                         _completeCount.fetch_add(1, std::memory_order_release);
-                    });
+                    b++;
+                    };
+                obj->Async_Complete(func);
             }
 		}
 
         void Complete() const
         {
-            while (_objects.size() != _completeCount.load(std::memory_order_acquire))
-				std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            int complete = 0;
+            do
+            {
+                complete = _completeCount.load(std::memory_order_acquire);
+                InfoLog("CompleteCount [{}]", complete);
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            } while (_objects.size() != complete);
         }
 
         std::vector<bugat::TSharedPtr<TestObject>> _objects;
