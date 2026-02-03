@@ -58,20 +58,22 @@ namespace bugat
             }
 		}
 
-        void Complete() const
+#pragma optimize("", off)
+        void Complete()
         {
             int complete = 0;
             do
             {
                 complete = _completeCount.load(std::memory_order_acquire);
-                InfoLog("CompleteCount [{}]", complete);
-                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                //InfoLog("CompleteCount [{}]", complete);
+                //std::this_thread::sleep_for(std::chrono::milliseconds(1));
             } while (_objects.size() != complete);
         }
 
         std::vector<bugat::TSharedPtr<TestObject>> _objects;
         std::atomic<int> _completeCount;
     };
+#pragma optimize("", on)
 
     void RunObjectTest(Context& context)
     {
