@@ -26,6 +26,12 @@ namespace bugat
             _tail = temp;
         }
 
+        ~LockFreeQueue()
+        {
+            ConsumeAll([](T& value) {
+                });
+        }
+
         int64_t Push(T& value)
         {
             auto node = std::make_shared<Node>(value);
@@ -40,21 +46,13 @@ namespace bugat
             return InternalPush(node);
         }
 
-        bool Pop(T& output)
-        {
-			int64_t outRemainCount;
-			return Pop(output, outRemainCount);
-        }
-
         /// <summary>
-        /// 데이터를 하나 꺼낸다. outRemainCount는 현재 큐 사이즈를 반환하는데 atomic연산 순서에 따라 -
+        /// 데이터를 하나 꺼낸다.
         /// </summary>
         /// <param name="output">꺼낸 요소</param>
-        /// <param name="outRemainCount">현재 큐 사이즈</param>
         /// <returns></returns>
-        bool Pop(T& output, int64_t& outRemainCount)
+        bool Pop(T& output)
         {
-            outRemainCount = 0;
             auto head = _head.load(std::memory_order_acquire);
             while (true)
             {
@@ -62,7 +60,9 @@ namespace bugat
                 auto popNode = head->_next.load(std::memory_order_acquire);
 
                 if (popNode == _dummy)
+                {
                     return false;
+                }
 
                 if (head == tail)
                 {
@@ -74,7 +74,7 @@ namespace bugat
                 if (false == _head.compare_exchange_strong(head, popNode, std::memory_order_acq_rel, std::memory_order_acquire))
                     continue;
 
-                outRemainCount = _size.fetch_sub(1, std::memory_order_relaxed) - 1;
+                _size.fetch_sub(1, std::memory_order_relaxed);
                 output = std::move(popNode->_value);
 
                 head->_next.store(nullptr, std::memory_order_release);
@@ -125,23 +125,22 @@ namespace bugat
         /// <param name="count">지정 카운트</param>
         /// <param name="func"></param>
         /// <returns>
-        /// 남은 작업 수.
+        /// 실제 실행한 작업 수
         /// </returns>
         template<typename Func>
         int64_t Consume(int64_t count, Func&& func)
         {
-            int64_t remainCount = 0;
+            int64_t executeCount = 0;
             while (count > 0)
             {
-                T value;
-                if (false == Pop(value, remainCount))
-                    return remainCount;
+                if (false == ConsumeOne(func))
+                    break;
 
-                func(value);
                 count--;
+                executeCount++;
             }
 
-            return remainCount;
+            return executeCount;
         }
 
         void Clear()

@@ -7,7 +7,6 @@
 namespace bugat
 {
 	template<typename T, int AllocSize = 10>
-	requires std::is_base_of_v<RefCountable, T>
 	class ObjectPool
 	{
 		class Pool : public RefCountable
@@ -51,11 +50,28 @@ namespace bugat
 				}
 
 				template<typename ...Args>
+				requires std::is_base_of_v<RefCountable, T>
 				TSharedPtr<T> Get(Args&&... args)
 				{
 					// ptr은 MemoryBlock이 관리하기 때문에 delete 하지 않음.
 					new(_ptr)T(std::forward<Args>(args)...);
 					return TSharedPtr<T>(_ptr, [memPtr = this](T* ptr) {
+						ptr->~T();
+						if (false == memPtr->Return())
+						{
+							// block이 실제 메모리라 member의 소멸자 호출 보다 먼저 해제되면 안되기때문에 임시 저장
+							auto block = std::move(memPtr->_block);
+							memPtr->~Member();
+						}
+						});
+				}
+
+				template<typename ...Args>
+				std::shared_ptr<T> GetSharedPtr(Args&&... args)
+				{
+					// ptr은 MemoryBlock이 관리하기 때문에 delete 하지 않음.
+					new(_ptr)T(std::forward<Args>(args)...);
+					return std::shared_ptr<T>(_ptr, [memPtr = this](T* ptr) {
 						ptr->~T();
 						if (false == memPtr->Return())
 						{
@@ -117,6 +133,15 @@ namespace bugat
 				auto mem = Pop();
 
 				auto sptr = mem->Get(std::forward<Args>(args)...);
+				return sptr;
+			}
+
+			template<typename ...Args>
+			std::shared_ptr<T> GetSharedPtr(Args&&... args)
+			{
+				auto mem = Pop();
+
+				auto sptr = mem->GetSharedPtr(std::forward<Args>(args)...);
 				return sptr;
 			}
 
@@ -204,6 +229,12 @@ namespace bugat
 		TSharedPtr<T> Get(Args&&... args)
 		{
 			return _pool->Get(std::forward<Args>(args)...);
+		}
+
+		template<typename ...Args>
+		std::shared_ptr<T> GetSharedPtr(Args&&... args)
+		{
+			return _pool->GetSharedPtr(std::forward<Args>(args)...);
 		}
 
 	private:

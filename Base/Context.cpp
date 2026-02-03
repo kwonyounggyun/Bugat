@@ -53,6 +53,16 @@ namespace bugat
 		_threadCounter.store(0);
 	}
 
+	Context::~Context()
+	{
+		for (auto& que : _globalQue)
+			delete que->load(std::memory_order_acquire);
+
+		_waitQue.ConsumeAll([](SerializerQueue* que) {
+			delete que;
+			});
+	}
+
 	void Context::Initialize()
 	{
 		for (uint32_t i = 0; i < _globalQueSize; i++)
@@ -97,9 +107,9 @@ namespace bugat
 #endif
 				}
 			}
-
-			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		}
+
+		delete _localQue;
 	}
 	void Context::Post(TSharedPtr<SerializeObject> serializeObject)
 	{

@@ -14,7 +14,7 @@ namespace bugat
 		friend class SerializerQueue;
 	public:
 		explicit Context(uint32_t queCount = 10);
-		virtual ~Context() = default;
+		virtual ~Context();
 
 		void Initialize();
 		void Run();

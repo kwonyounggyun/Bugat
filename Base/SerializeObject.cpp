@@ -24,7 +24,7 @@ namespace bugat
 	{
 		if (TASKSERIALIZER_ERROR == remainCount)
 		{
-			CriticalLog("SerializeObject was executed on two thread!! serializeobject should only be executed on one thread.");
+			CriticalLog("SerializeObject is behaving abnormally.");
 			return;
 		}
 

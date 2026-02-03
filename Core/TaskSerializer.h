@@ -6,10 +6,11 @@
 #include "Memory.h"
 #include "LockObject.h"
 
-#define TASKSERIALIZER_ERROR UINT64_MAX
-
 namespace bugat
 {
+	constexpr int64_t TASKSERIALIZER_ERROR = (1LL << 60);
+	constexpr int64_t MAX_TASK = (1LL << 32);
+
 	class TaskSerializer : public RefCountable
 	{
 	public:
@@ -23,7 +24,12 @@ namespace bugat
 		requires std::invocable<Func, ARGS&...>
 		void Post(Func&& func, ARGS&&... args)
 		{
-			OnPost(_que.Push(AnyTask(std::forward<Func>(func), std::forward<ARGS>(args)...)));
+			_que.Push(AnyTask(std::forward<Func>(func), std::forward<ARGS>(args)...));
+			auto taskCount = _taskCount.fetch_add(1) + 1;
+			if (taskCount < MAX_TASK)
+				OnPost(taskCount);
+			else
+				OnPost(TASKSERIALIZER_ERROR);
 		}
 
 		/*
@@ -38,5 +44,6 @@ namespace bugat
 	private:
 		LockFreeQueue<AnyTask> _que;
 		LockObject _runningGuard;
+		std::atomic<int64_t> _taskCount;
 	};
 }
