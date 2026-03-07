@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <atomic>
 
 #include "LockFreeQueue.h"
@@ -14,7 +14,7 @@ namespace bugat
 	class TaskSerializer : public RefCountable
 	{
 	public:
-		TaskSerializer() {}
+		TaskSerializer() : _taskCount(0) {}
 		virtual ~TaskSerializer()
 		{
 			_que.Clear();
@@ -33,7 +33,7 @@ namespace bugat
 		}
 
 		/*
-		* ¹İµå½Ã ÇÏ³ªÀÇ ½º·¹µå¿¡¼­¸¸ È£ÃâµÇ¾î¾ß ÇÑ´Ù.
+		* ë°˜ë“œì‹œ í•˜ë‚˜ì˜ ìŠ¤ë ˆë“œì—ì„œë§Œ í˜¸ì¶œë˜ì–´ì•¼ í•œë‹¤.
 		*/
 		int64_t Run();
 

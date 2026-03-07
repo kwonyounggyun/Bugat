@@ -60,6 +60,18 @@
     <ClInclude Include="Exception.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="free_list.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tagged_ptr.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tagged_ptr_compress.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tagged_ptr_dcas.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core.cpp">

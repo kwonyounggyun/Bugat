@@ -15,7 +15,7 @@ namespace bugat
 	class ThreadGroup
 	{
 	public:
-		ThreadGroup() {}
+		ThreadGroup() : _stop(false) {}
 		~ThreadGroup() {}
 
 		template<typename TaskFunc, typename ...ARGS>

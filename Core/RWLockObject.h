@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <atomic>
 #include <condition_variable>
 #include "NonCopyable.h"
@@ -77,7 +77,6 @@ namespace bugat
 		void UnLockWrite()
 		{
 			std::unique_lock lock(_mtx);
-			--_writerCount;
 			_writerActive = false;
 			if (--_writerCount > 0)
 				_writerCV.notify_one();
@@ -89,8 +88,8 @@ namespace bugat
 		std::condition_variable _readerCV;
 		std::condition_variable _writerCV;
 
-		int _readerCount = 0;     // ÇöÀç ÀĞ´Â ÁßÀÎ reader ¼ö
-		int _writerCount = 0;     // ´ë±â + ½ÇÇà ÁßÀÎ writer ¼ö
+		int _readerCount = 0;     // í˜„ì¬ ì½ëŠ” ì¤‘ì¸ reader ìˆ˜
+		int _writerCount = 0;     // ëŒ€ê¸° + ì‹¤í–‰ ì¤‘ì¸ writer ìˆ˜
 		bool _writerActive = false;
 
 		ObjectType _obj;

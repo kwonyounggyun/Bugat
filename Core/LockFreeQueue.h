@@ -1,97 +1,105 @@
 #pragma once
 #include <memory>
+#include <atomic>
+#include "free_list.hpp"
+#include "tagged_ptr.hpp"
+#include "Memory.h"
 
 namespace bugat
 {
     template<typename T>
     class LockFreeQueue
     {
-        struct Node
-        {
-            Node() : _next(nullptr) {}
-            Node(const T& val) : _value(val), _next(nullptr) {}
-            Node(T&& val) : _value(std::move(val)), _next(nullptr) {}
+        struct Node;
 
+        using node_ptr_t = lockfree::tagged_ptr<Node>;
+        inline static const node_ptr_t nullHandle = node_ptr_t(0, 0);
+
+        struct alignas(TAGGED_PTR_MAX_ALIGN) Node
+        {
+            Node() : _next(node_ptr_t(nullptr, 0)) {}
+            Node(T& val, node_ptr_t next) : _value(val), _next(node_ptr_t(next)) {}
+            Node(T&& val, node_ptr_t next) : _value(std::move(val)), _next(node_ptr_t(next)) {}
+            ~Node() = default;
+
+            std::atomic<node_ptr_t> _next;
             T _value;
-            std::atomic<std::shared_ptr<Node>> _next;
         };
+
+        using pool_t = lockfree::freelist_stack<Node, std::allocator<Node>>;
+
 
     public:
         LockFreeQueue() : _size(0)
         {
-            _dummy = std::make_shared<Node>();
-            auto temp = std::make_shared<Node>();
-			temp->_next.store(_dummy, std::memory_order_release);
-            _head = temp;
-            _tail = temp;
+            auto temp = _pool.construct();
+            node_ptr_t tempPtr(temp, 0);
+            tempPtr->_next.store(nullHandle, std::memory_order_release);
+            _head->store(tempPtr);
+            _tail->store(tempPtr);
         }
 
         ~LockFreeQueue()
         {
-            ConsumeAll([](T& value) {
-                });
+            Clear();
+        }
+
+        bool IsLockFree() const
+        {
+            return _head->is_lock_free() && _tail->is_lock_free() && _size->is_lock_free() && _pool.IsLockFree();
         }
 
         int64_t Push(T& value)
         {
-            auto node = std::make_shared<Node>(value);
-			node->_next.store(_dummy, std::memory_order_release);
+            auto node = _pool.construct(value, nullHandle);
             return InternalPush(node);
         }
 
         int64_t Push(T&& value)
         {
-            auto node = std::make_shared<Node>(std::move(value));
-            node->_next.store(_dummy, std::memory_order_release);
+            auto node = _pool.construct(std::move(value), nullHandle);
             return InternalPush(node);
         }
 
-        /// <summary>
-        /// 데이터를 하나 꺼낸다.
-        /// </summary>
-        /// <param name="output">꺼낸 요소</param>
-        /// <returns></returns>
         bool Pop(T& output)
         {
-            auto head = _head.load(std::memory_order_acquire);
             while (true)
             {
-                auto tail = _tail.load(std::memory_order_acquire);
+                auto tail = _tail->load(std::memory_order_acquire);
+                auto head = _head->load(std::memory_order_acquire);
                 auto popNode = head->_next.load(std::memory_order_acquire);
 
-                if (popNode == _dummy)
+                if (head == _head->load(std::memory_order_relaxed))
                 {
-                    return false;
+                    if (head.get_ptr() == tail.get_ptr())
+                    {
+                        if (popNode.get_ptr() == nullptr)
+                            return false;
+
+                        _tail->compare_exchange_weak(tail, node_ptr_t(popNode.get_ptr(), tail.get_next_tag()), std::memory_order_acq_rel, std::memory_order_acquire);
+                    }
+                    else
+                    {
+                        if (popNode.get_ptr() != nullptr)
+                        {
+                            T value = popNode->_value;
+
+                            auto newNode = node_ptr_t(popNode.get_ptr(), head.get_next_tag());
+
+                            if (_head->compare_exchange_weak(head, newNode, std::memory_order_acq_rel, std::memory_order_acquire))
+                            {
+                                auto size = _size->fetch_sub(1, std::memory_order_relaxed);
+                                output = std::move(value);
+
+                                _pool.destruct(head.get_ptr());
+                                return true;
+                            }
+                        }
+                    }
                 }
-
-                if (head == tail)
-                {
-                    _tail.compare_exchange_strong(tail, popNode, std::memory_order_acq_rel, std::memory_order_acquire);
-                    head = _head.load(std::memory_order_acquire);
-                    continue;
-                }
-
-                if (false == _head.compare_exchange_strong(head, popNode, std::memory_order_acq_rel, std::memory_order_acquire))
-                    continue;
-
-                _size.fetch_sub(1, std::memory_order_relaxed);
-                output = std::move(popNode->_value);
-
-                head->_next.store(nullptr, std::memory_order_release);
-                break;
             }
-
-            return true;
         }
 
-        /// <summary>
-        /// 작업하나를 소비한다.
-        /// </summary>
-        /// <typeparam name="Func"></typeparam>
-        /// <param name="func">value타입을 파라미터로 받는 함수객체</param>
-        /// <returns>
-        /// 성공 true, 실패 false
-        /// </returns>
         template<typename Func>
         bool ConsumeOne(Func&& func)
         {
@@ -103,12 +111,6 @@ namespace bugat
             return true;
         }
 
-        /// <summary>
-        /// 큐가 빌때까지 모든 작업을 소비한다.
-        /// </summary>
-        /// <typeparam name="Func"></typeparam>
-        /// <param name="func">value타입을 파라미터로 받는 함수객체</param>
-        /// <returns>진행한 작업 수</returns>
         template<typename Func>
         int64_t ConsumeAll(Func&& func)
         {
@@ -118,15 +120,6 @@ namespace bugat
             return count;
         }
 
-        /// <summary>
-        /// 지정한 수만 큼 소비하는데 큐가 비었으면 멈춘다.
-        /// </summary>
-        /// <typeparam name="Func"></typeparam>
-        /// <param name="count">지정 카운트</param>
-        /// <param name="func"></param>
-        /// <returns>
-        /// 실제 실행한 작업 수
-        /// </returns>
         template<typename Func>
         int64_t Consume(int64_t count, Func&& func)
         {
@@ -145,39 +138,48 @@ namespace bugat
 
         void Clear()
         {
-            T node;
-            while (GetSize() > 0)
-                Pop(node);
+            ConsumeAll([](T& value) {
+                });
         }
 
-        int64_t GetSize() { return _size.load(std::memory_order_acquire); }
+        int64_t GetSize() { return _size->load(std::memory_order_acquire); }
 
     private:
-        int64_t InternalPush(std::shared_ptr<Node>& node)
+        int64_t InternalPush(Node* node)
         {
             while (true)
             {
-                auto tail = _tail.load(std::memory_order_acquire);
-                auto next = _dummy;
+                auto tail = _tail->load(std::memory_order_acquire);
+                auto next = tail->_next.load(std::memory_order_acquire);
 
-                if (tail->_next.compare_exchange_strong(next, node, std::memory_order_acq_rel, std::memory_order_acquire))
+                if (tail == _tail->load(std::memory_order_relaxed))
                 {
-                    _tail.compare_exchange_strong(tail, node, std::memory_order_acq_rel, std::memory_order_acquire);
-                    break;
+                    if (next.get_ptr() == nullptr)
+                    {
+                        node_ptr_t newNode(node, next.get_next_tag());
+
+                        if (tail->_next.compare_exchange_weak(next, newNode, std::memory_order_acq_rel, std::memory_order_acquire))
+                        {
+                            _tail->compare_exchange_weak(tail, node_ptr_t(node, tail.get_next_tag()), std::memory_order_acq_rel, std::memory_order_acquire);
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        _tail->compare_exchange_weak(tail, node_ptr_t(next.get_ptr(), tail.get_next_tag()), std::memory_order_acq_rel, std::memory_order_acquire);
+                    }
                 }
-                else
-                    _tail.compare_exchange_strong(tail, next, std::memory_order_acq_rel, std::memory_order_acquire);
             }
 
-            auto size = _size.fetch_add(1, std::memory_order_relaxed);
+            auto size = _size->fetch_add(1, std::memory_order_relaxed);
             return size + 1;
         }
 
     private:
-        std::atomic<std::shared_ptr<Node>> _head;
-        std::atomic<std::shared_ptr<Node>> _tail;
-        std::atomic<int64_t> _size;
-        // 빈노드용 공유포인터
-        std::shared_ptr<Node> _dummy;
+        CacheLinePadding<std::atomic<node_ptr_t>> _head;
+        CacheLinePadding<std::atomic<node_ptr_t>> _tail;
+        CacheLinePadding<std::atomic<int64_t>> _size;
+
+        pool_t _pool;
     };
 }

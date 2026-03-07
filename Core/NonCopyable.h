@@ -6,8 +6,10 @@ namespace bugat
 	{
 	public:
 		NonCopyable() {}
-		virtual ~NonCopyable() = 0 {}
+		virtual ~NonCopyable() = 0;
 		NonCopyable(NonCopyable&) = delete;
 		NonCopyable& operator=(NonCopyable&) = delete;
 	};
+
+	inline NonCopyable::~NonCopyable() {}
 }

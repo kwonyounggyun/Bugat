@@ -8,14 +8,16 @@ namespace bugat
 	{
 	public:
 		TaskConcept() {}
-		virtual ~TaskConcept() = 0 {}
+		virtual ~TaskConcept() = 0;
 		virtual void Run() = 0;
 	};
+
+	inline TaskConcept::~TaskConcept() {}
 
 	template<typename Func, typename ...ARGS>
 	class TaskModel : public TaskConcept
 	{
-		using ReturnType = std::invoke_result_t<Func, ARGS...>;
+		using ReturnType = std::invoke_result_t<std::decay_t<Func>, ARGS...>;
 	public:
 		TaskModel(Func&& task, ARGS&&... args) : _task(std::bind(std::forward<Func>(task), std::forward<ARGS>(args)...)) {}
 		virtual ~TaskModel() {}
@@ -49,10 +51,15 @@ namespace bugat
 	{
 	public:
 		AnyTask() {};
+		AnyTask(const AnyTask&) = default;
+		AnyTask(AnyTask&&) = default;
+		AnyTask& operator=(const AnyTask&) = default;
+		AnyTask& operator=(AnyTask&&) = default;
 
 		template<typename Func, typename ...ARGS>
+		requires (!std::is_same_v<std::decay_t<Func>, AnyTask>)
 		AnyTask(Func&& func, ARGS&&... args)
-			: _task(std::make_unique<TaskModel<Func, ARGS...>>(std::forward<Func>(func), std::forward<ARGS>(args)...))
+			: _task(std::make_shared<TaskModel<Func, ARGS...>>(std::forward<Func>(func), std::forward<ARGS>(args)...))
 		{
 
 		}
@@ -63,6 +70,6 @@ namespace bugat
 		}
 
 	private:
-		std::unique_ptr<TaskConcept> _task;
+		std::shared_ptr<TaskConcept> _task;
 	};
 }
