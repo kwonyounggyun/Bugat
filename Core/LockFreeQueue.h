@@ -30,7 +30,7 @@ namespace bugat
 
 
     public:
-        LockFreeQueue()
+        LockFreeQueue() : _size(0)
         {
             auto temp = _pool.construct();
             node_ptr_t tempPtr(temp, 0);
@@ -46,16 +46,16 @@ namespace bugat
 
         bool IsLockFree() const
         {
-            return _head->is_lock_free() && _tail->is_lock_free() && _pool.IsLockFree();
+            return _head->is_lock_free() && _tail->is_lock_free() && _size->is_lock_free() && _pool.IsLockFree();
         }
 
-        bool Push(T& value)
+        int64_t Push(T& value)
         {
             auto node = _pool.construct(value, nullHandle);
             return InternalPush(node);
         }
 
-        bool Push(T&& value)
+        int64_t Push(T&& value)
         {
             auto node = _pool.construct(std::move(value), nullHandle);
             return InternalPush(node);
@@ -88,6 +88,7 @@ namespace bugat
 
                             if (_head->compare_exchange_weak(head, newNode, std::memory_order_acq_rel, std::memory_order_acquire))
                             {
+                                auto size = _size->fetch_sub(1, std::memory_order_relaxed);
                                 output = std::move(value);
 
                                 _pool.destruct(head.get_ptr());
@@ -119,14 +120,32 @@ namespace bugat
             return count;
         }
 
+        template<typename Func>
+        int64_t Consume(int64_t count, Func&& func)
+        {
+            int64_t executeCount = 0;
+            while (count > 0)
+            {
+                if (false == ConsumeOne(func))
+                    break;
+
+                count--;
+                executeCount++;
+            }
+
+            return executeCount;
+        }
+
         void Clear()
         {
             ConsumeAll([](T& value) {
                 });
         }
 
+        int64_t GetSize() { return _size->load(std::memory_order_acquire); }
+
     private:
-        bool InternalPush(Node* node)
+        int64_t InternalPush(Node* node)
         {
             while (true)
             {
@@ -152,12 +171,14 @@ namespace bugat
                 }
             }
 
-            return true;
+            auto size = _size->fetch_add(1, std::memory_order_relaxed);
+            return size + 1;
         }
 
     private:
         CacheLinePadding<std::atomic<node_ptr_t>> _head;
         CacheLinePadding<std::atomic<node_ptr_t>> _tail;
+        CacheLinePadding<std::atomic<int64_t>> _size;
 
         pool_t _pool;
     };
