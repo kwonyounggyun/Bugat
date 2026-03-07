@@ -36,7 +36,6 @@ namespace bugat::lockfree
 			{
 				auto next = top->_next;
 				T* ptr = reinterpret_cast<T*>(top.get_ptr());
-				ptr->~T();
 				Alloc::deallocate(ptr, 1);
 				top = next;
 			}
