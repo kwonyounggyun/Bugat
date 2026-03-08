@@ -107,6 +107,8 @@ namespace bugat
 #endif
 				}
 			}
+
+			std::this_thread::sleep_for(std::chrono::microseconds(1));
 		}
 
 		delete _localQue;

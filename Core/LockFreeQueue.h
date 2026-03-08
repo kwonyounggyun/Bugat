@@ -49,13 +49,13 @@ namespace bugat
             return _head->is_lock_free() && _tail->is_lock_free() && _size->is_lock_free() && _pool.IsLockFree();
         }
 
-        int64_t Push(T& value)
+        bool Push(T& value)
         {
             auto node = _pool.construct(value, nullHandle);
             return InternalPush(node);
         }
 
-        int64_t Push(T&& value)
+        bool Push(T&& value)
         {
             auto node = _pool.construct(std::move(value), nullHandle);
             return InternalPush(node);
@@ -73,19 +73,18 @@ namespace bugat
                 {
                     if (head.get_ptr() == tail.get_ptr())
                     {
-                        if (popNode.get_ptr() == nullptr)
+                        if (popNode == nullHandle)
                             return false;
 
                         _tail->compare_exchange_weak(tail, node_ptr_t(popNode.get_ptr(), tail.get_next_tag()), std::memory_order_acq_rel, std::memory_order_acquire);
                     }
                     else
                     {
-                        if (popNode.get_ptr() != nullptr)
+                        if (popNode != nullHandle)
                         {
                             T value = popNode->_value;
 
                             auto newNode = node_ptr_t(popNode.get_ptr(), head.get_next_tag());
-
                             if (_head->compare_exchange_weak(head, newNode, std::memory_order_acq_rel, std::memory_order_acquire))
                             {
                                 auto size = _size->fetch_sub(1, std::memory_order_relaxed);
@@ -120,22 +119,6 @@ namespace bugat
             return count;
         }
 
-        template<typename Func>
-        int64_t Consume(int64_t count, Func&& func)
-        {
-            int64_t executeCount = 0;
-            while (count > 0)
-            {
-                if (false == ConsumeOne(func))
-                    break;
-
-                count--;
-                executeCount++;
-            }
-
-            return executeCount;
-        }
-
         void Clear()
         {
             ConsumeAll([](T& value) {
@@ -145,7 +128,7 @@ namespace bugat
         int64_t GetSize() { return _size->load(std::memory_order_acquire); }
 
     private:
-        int64_t InternalPush(Node* node)
+        bool InternalPush(Node* node)
         {
             while (true)
             {
@@ -154,10 +137,9 @@ namespace bugat
 
                 if (tail == _tail->load(std::memory_order_relaxed))
                 {
-                    if (next.get_ptr() == nullptr)
+                    if (next == nullHandle)
                     {
-                        node_ptr_t newNode(node, next.get_next_tag());
-
+                        node_ptr_t newNode(node, tail.get_tag());
                         if (tail->_next.compare_exchange_weak(next, newNode, std::memory_order_acq_rel, std::memory_order_acquire))
                         {
                             _tail->compare_exchange_weak(tail, node_ptr_t(node, tail.get_next_tag()), std::memory_order_acq_rel, std::memory_order_acquire);
@@ -171,8 +153,8 @@ namespace bugat
                 }
             }
 
-            auto size = _size->fetch_add(1, std::memory_order_relaxed);
-            return size + 1;
+            _size->fetch_add(1, std::memory_order_relaxed);
+            return true;
         }
 
     private:

@@ -7,21 +7,22 @@ namespace bugat
 	{
 		int64_t size = 0;
 		int64_t executeCount = 0;
-		if (auto lock = ScopedLock(_runningGuard); lock)
+
+		size = _que.GetSize();
+		for (int i = 0; i < size; i++)
 		{
-			size = _que.GetSize();
-			executeCount = _que.Consume(size, [](AnyTask& task)
-				{
-					task.Run();
-				});
-		}
-		else
-		{
-			OnRun(TASKSERIALIZER_ERROR);
-			return 0;
+			AnyTask task;
+			if (_que.Pop(task))
+			{
+				task.Run();
+				executeCount++;
+			}
+			else
+				break;
 		}
 
-		OnRun(_taskCount.fetch_sub(executeCount) - executeCount);
+		auto taskCount = _taskCount.fetch_sub(executeCount, std::memory_order_acq_rel) - executeCount;
+		OnRun(taskCount);
 		return executeCount;
 	}
 }

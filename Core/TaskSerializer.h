@@ -9,7 +9,6 @@
 namespace bugat
 {
 	constexpr int64_t TASKSERIALIZER_ERROR = (1LL << 60);
-	constexpr int64_t MAX_TASK = (1LL << 32);
 
 	class TaskSerializer : public RefCountable
 	{
@@ -24,10 +23,11 @@ namespace bugat
 		requires std::invocable<Func, ARGS&...>
 		void Post(Func&& func, ARGS&&... args)
 		{
-			_que.Push(AnyTask(std::forward<Func>(func), std::forward<ARGS>(args)...));
-			auto taskCount = _taskCount.fetch_add(1) + 1;
-			if (taskCount < MAX_TASK)
+			if (true == _que.Push(AnyTask(std::forward<Func>(func), std::forward<ARGS>(args)...)))
+			{
+				auto taskCount = _taskCount.fetch_add(1, std::memory_order_acq_rel) + 1;
 				OnPost(taskCount);
+			}
 			else
 				OnPost(TASKSERIALIZER_ERROR);
 		}
@@ -43,7 +43,6 @@ namespace bugat
 
 	private:
 		LockFreeQueue<AnyTask> _que;
-		LockObject _runningGuard;
 		std::atomic<int64_t> _taskCount;
 	};
 }
