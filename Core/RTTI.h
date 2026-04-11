@@ -1,4 +1,6 @@
 #pragma once
+#include <memory>
+
 struct TypeInfo
 {
     TypeInfo(const TypeInfo* parents) : _id(GetUniqueID()), _parents(parents) {}
@@ -60,4 +62,12 @@ T* Cast(U* instance)
         return static_cast<T*>(instance);
 
     return nullptr;
+}
+
+template<typename T, typename U>
+std::shared_ptr<T> SharedCast(std::shared_ptr<U>& instance)
+{
+    if (IsA<T, U>(instance.get()))
+        return std::static_pointer_cast<T>(instance);
+	return nullptr;
 }

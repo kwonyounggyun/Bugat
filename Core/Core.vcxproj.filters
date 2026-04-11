@@ -72,6 +72,9 @@
     <ClInclude Include="tagged_ptr_dcas.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="RTTI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core.cpp">
