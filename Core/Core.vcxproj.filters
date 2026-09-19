@@ -24,12 +24,6 @@
     <ClInclude Include="NonCopyable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RWLockObject.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ObjectPool.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Math.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -49,9 +43,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Memory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LockObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Exception.h">
@@ -79,6 +70,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="memory\ObjectPool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="memory\CacheLine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="memory\TSharedPtr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="lock\LockObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="lock\RWLockObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
