@@ -1,15 +1,17 @@
 #pragma once
 #include <atomic>
-#include "NonCopyable.h"
 
-namespace bugat
+namespace bugat::lock
 {
     class SpinLock;
     class ScopedLock;
-    class LockObject : public NonCopyable
+    class LockObject
     {
         friend class SpinLock;
         friend class ScopedLock;
+
+        LockObject(LockObject&) = delete;
+        LockObject& operator=(LockObject&) = delete;
     private:
         bool TryLock()
         {

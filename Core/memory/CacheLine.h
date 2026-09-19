@@ -1,16 +1,19 @@
 #pragma once
 #include <type_traits>
 
-template<typename T>
-class alignas(std::hardware_destructive_interference_size) CacheLinePadding
+namespace bugat::memory
 {
-public:
-    template<typename... Args>
-    explicit CacheLinePadding(Args&&... args) : _value(std::forward<Args>(args)...) {}
+    template<typename T>
+    class alignas(std::hardware_destructive_interference_size) CacheLinePadding
+    {
+    public:
+        template<typename... Args>
+        explicit CacheLinePadding(Args&&... args) : _value(std::forward<Args>(args)...) {}
 
-    T* operator->() { return &_value; }
-    const T* operator->() const { return &_value; }
+        T* operator->() { return &_value; }
+        const T* operator->() const { return &_value; }
 
-private:
-    T _value;
-};
+    private:
+        T _value;
+    };
+}

@@ -3,9 +3,8 @@
 #include <atomic>
 #include "free_list.hpp"
 #include "tagged_ptr.hpp"
-#include "Memory.h"
 
-namespace bugat
+namespace bugat::lockfree
 {
     template<typename T>
     class LockFreeQueue

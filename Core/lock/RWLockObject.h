@@ -1,19 +1,20 @@
 ﻿#pragma once
 #include <atomic>
 #include <condition_variable>
-#include "NonCopyable.h"
 
-namespace bugat
+namespace bugat::lock
 {
 	template<class ObjectType>
 	class RWLockObject
 	{
 	public:
-		class ReadObject : NonCopyable
+		class ReadObject
 		{
+			ReadObject(ReadObject&) = delete;
+			ReadObject& operator=(ReadObject&) = delete;
 		public:
 			explicit ReadObject(RWLockObject& object) : _rwObject(object) {}
-			virtual ~ReadObject() 
+			virtual ~ReadObject()
 			{
 				_rwObject.UnLockRead();
 			}
@@ -27,8 +28,11 @@ namespace bugat
 			RWLockObject& _rwObject;
 		};
 
-		class WriteObject : NonCopyable
+		class WriteObject
 		{
+			WriteObject(WriteObject&) = delete;
+			WriteObject& operator=(WriteObject&) = delete;
+
 		public:
 			explicit WriteObject(RWLockObject& object) : _rwObject(object) {}
 			virtual ~WriteObject()

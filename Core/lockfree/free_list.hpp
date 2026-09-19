@@ -1,12 +1,10 @@
+#ifndef BUGAT_LOCKFREE_FREE_LIST_INCLUDED
+#define BUGAT_LOCKFREE_FREE_LIST_INCLUDED
+
 #include "tagged_ptr.hpp"
 #include <memory>
 #include <cstring>
 
-#ifndef BUGAT_LOCKFREE_FREE_LIST_INCLUDED
-#define BUGAT_LOCKFREE_FREE_LIST_INCLUDED
-/// <summary>
-/// �޸� ���������ʰ� �����ϴ� ����Ʈ
-/// </summary>
 namespace bugat::lockfree
 {
 	template<typename T, typename Alloc = std::allocator<T>>

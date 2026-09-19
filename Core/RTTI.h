@@ -1,18 +1,20 @@
 #pragma once
 #include <memory>
 
-struct TypeInfo
+namespace bugat
 {
-    TypeInfo(const TypeInfo* parents) : _id(GetUniqueID()), _parents(parents) {}
-    int _id;
-    const TypeInfo* _parents = nullptr;
-
-    static int GetUniqueID()
+    struct TypeInfo
     {
-        static int id = 0;
-        return id++;
-    }
-};
+        TypeInfo(const TypeInfo* parents) : _id(GetUniqueID()), _parents(parents) {}
+        int _id;
+        const TypeInfo* _parents = nullptr;
+
+        static int GetUniqueID()
+        {
+            static int id = 0;
+            return id++;
+        }
+    };
 
 #define DECLARE_RTTI(Base) \
 public: \
@@ -35,39 +37,40 @@ private:  \
         return &_staticInfo; \
     }
 
-template<typename T, typename U>
-static bool IsA(U* instance)
-{
-    auto info = instance->GetInstanceTypeInfo();
-    if (info->_id == T::GetStaticTypeInfo()->_id)
-        return true;
-    else
+    template<typename T, typename U>
+    static bool IsA(U* instance)
     {
-        auto parents = info->_parents;
-        while (parents != nullptr)
+        auto info = instance->GetInstanceTypeInfo();
+        if (info->_id == T::GetStaticTypeInfo()->_id)
+            return true;
+        else
         {
-            if (parents->_id == T::GetStaticTypeInfo()->_id)
-                return true;
-            parents = parents->_parents;
+            auto parents = info->_parents;
+            while (parents != nullptr)
+            {
+                if (parents->_id == T::GetStaticTypeInfo()->_id)
+                    return true;
+                parents = parents->_parents;
+            }
         }
+
+        return false;
     }
 
-    return false;
-}
+    template<typename T, typename U>
+    T* Cast(U* instance)
+    {
+        if (IsA<T, U>(instance))
+            return static_cast<T*>(instance);
 
-template<typename T, typename U>
-T* Cast(U* instance)
-{
-    if (IsA<T, U>(instance))
-        return static_cast<T*>(instance);
+        return nullptr;
+    }
 
-    return nullptr;
-}
-
-template<typename T, typename U>
-std::shared_ptr<T> SharedCast(std::shared_ptr<U>& instance)
-{
-    if (IsA<T, U>(instance.get()))
-        return std::static_pointer_cast<T>(instance);
-	return nullptr;
+    template<typename T, typename U>
+    std::shared_ptr<T> SharedCast(std::shared_ptr<U>& instance)
+    {
+        if (IsA<T, U>(instance.get()))
+            return std::static_pointer_cast<T>(instance);
+        return nullptr;
+    }
 }

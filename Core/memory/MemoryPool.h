@@ -9,155 +9,159 @@
 #include <bit>
 #include <algorithm>
 
-constexpr int PTR_SIZE = sizeof(uintptr_t*);
-
-class MemoryPoolBase
+namespace bugat::memory
 {
-public:
-	MemoryPoolBase() {}
-	virtual ~MemoryPoolBase() {}
-	virtual void* Get() = 0;
-	virtual void Release(void* ptr) = 0;
-};
 
-template<int SIZE, int COUNT>
-class MemoryPool : public MemoryPoolBase
-{
-private:
-	class Chunk
+	constexpr int PTR_SIZE = sizeof(uintptr_t*);
+
+	class MemoryPoolBase
 	{
 	public:
-		Chunk(void* ptr, Chunk* next) : _ptr(ptr), _next(next) {}
-
-		Chunk* _next;
-		void* _ptr;
+		MemoryPoolBase() {}
+		virtual ~MemoryPoolBase() {}
+		virtual void* Get() = 0;
+		virtual void Release(void* ptr) = 0;
 	};
 
-public:
-	MemoryPool() : _chunk_list(nullptr), _head(nullptr)
+	template<int SIZE, int COUNT>
+	class MemoryPool : public MemoryPoolBase
 	{
-
-	}
-
-	~MemoryPool()
-	{
-	}
-
-	virtual void* Get() override
-	{
-		if (_head == nullptr)
+	private:
+		class Chunk
 		{
-			Alloc();
-		}
-		auto ret = _head;
-		_head = reinterpret_cast<uintptr_t*>(*_head);
-#ifdef MEMORYPOOL_H_DEBUG
-		DebugLog("get - head : {}, out {}", (void*)_head, (void*)ret);
-#endif
-		return ret;
-	}
+		public:
+			Chunk(void* ptr, Chunk* next) : _ptr(ptr), _next(next) {}
 
-	virtual void Release(void* ptr) override
-	{
-		*reinterpret_cast<uintptr_t*>(ptr) = reinterpret_cast<uintptr_t>(_head);
-		_head = reinterpret_cast<uintptr_t*>(ptr);
-#ifdef MEMORYPOOL_H_DEBUG
-		DebugLog("release - head : {}, next {}", (void*)_head, (void*)*_head);
-#endif
-	}
+			Chunk* _next;
+			void* _ptr;
+		};
 
-private:
-	// when this function is called, _head is nullptr, so we need to allocate a new chunk and set _head to the first block of the new chunk.
-	void Alloc()
-	{
-		Chunk* new_chunk = AllocChunk();
-		if (_chunk_list == nullptr)
+	public:
+		MemoryPool() : _chunk_list(nullptr), _head(nullptr)
 		{
-			_chunk_list = new_chunk;
-		}
-		else
-		{
-			Chunk* cur = _chunk_list;
-			while (cur->_next != nullptr) cur = cur->_next;
-			cur->_next = new_chunk;
+
 		}
 
-		_head = reinterpret_cast<uintptr_t*>(new_chunk->_ptr);
-		auto pre_head = _head;
-
-#ifdef MEMORYPOOL_H_DEBUG
-		DebugLog("alloc - head : {}, next : {}", (void*)_head, (void*)*_head);
-#endif
-
-		int count = 1;
-		while (count < COUNT)
+		~MemoryPool()
 		{
-			_head = reinterpret_cast<uintptr_t*>(reinterpret_cast<char*>(_head) + SIZE);
-			*_head = reinterpret_cast<uintptr_t>(pre_head);
-			pre_head = _head;
+		}
+
+		virtual void* Get() override
+		{
+			if (_head == nullptr)
+			{
+				Alloc();
+			}
+			auto ret = _head;
+			_head = reinterpret_cast<uintptr_t*>(*_head);
+#ifdef MEMORYPOOL_H_DEBUG
+			DebugLog("get - head : {}, out {}", (void*)_head, (void*)ret);
+#endif
+			return ret;
+		}
+
+		virtual void Release(void* ptr) override
+		{
+			*reinterpret_cast<uintptr_t*>(ptr) = reinterpret_cast<uintptr_t>(_head);
+			_head = reinterpret_cast<uintptr_t*>(ptr);
+#ifdef MEMORYPOOL_H_DEBUG
+			DebugLog("release - head : {}, next {}", (void*)_head, (void*)*_head);
+#endif
+		}
+
+	private:
+		// when this function is called, _head is nullptr, so we need to allocate a new chunk and set _head to the first block of the new chunk.
+		void Alloc()
+		{
+			Chunk* new_chunk = AllocChunk();
+			if (_chunk_list == nullptr)
+			{
+				_chunk_list = new_chunk;
+			}
+			else
+			{
+				Chunk* cur = _chunk_list;
+				while (cur->_next != nullptr) cur = cur->_next;
+				cur->_next = new_chunk;
+			}
+
+			_head = reinterpret_cast<uintptr_t*>(new_chunk->_ptr);
+			auto pre_head = _head;
+
 #ifdef MEMORYPOOL_H_DEBUG
 			DebugLog("alloc - head : {}, next : {}", (void*)_head, (void*)*_head);
 #endif
-			count++;
-		}
-	}
 
-	Chunk* AllocChunk()
-	{
-
-		auto c = reinterpret_cast<Chunk*>(::malloc(SIZE * COUNT + sizeof(Chunk)));
-
-		::memset(c, 0x00, SIZE * COUNT + sizeof(Chunk));
-		c->_next = nullptr;
-		c->_ptr = reinterpret_cast<void*>(reinterpret_cast<char*>(c) + sizeof(Chunk));
+			int count = 1;
+			while (count < COUNT)
+			{
+				_head = reinterpret_cast<uintptr_t*>(reinterpret_cast<char*>(_head) + SIZE);
+				*_head = reinterpret_cast<uintptr_t>(pre_head);
+				pre_head = _head;
 #ifdef MEMORYPOOL_H_DEBUG
-		DebugLog("alloc totoal byte: {}", SIZE * COUNT + sizeof(Chunk));
-		DebugLog("chunk ptr: {}, mem start ptr {}, end ptr : {}", (void*)c, (void*)c->_ptr, (void*)(reinterpret_cast<char*>(c) + SIZE * COUNT + sizeof(Chunk)));
+				DebugLog("alloc - head : {}, next : {}", (void*)_head, (void*)*_head);
+#endif
+				count++;
+			}
+		}
+
+		Chunk* AllocChunk()
+		{
+
+			auto c = reinterpret_cast<Chunk*>(::malloc(SIZE * COUNT + sizeof(Chunk)));
+
+			::memset(c, 0x00, SIZE * COUNT + sizeof(Chunk));
+			c->_next = nullptr;
+			c->_ptr = reinterpret_cast<void*>(reinterpret_cast<char*>(c) + sizeof(Chunk));
+#ifdef MEMORYPOOL_H_DEBUG
+			DebugLog("alloc totoal byte: {}", SIZE * COUNT + sizeof(Chunk));
+			DebugLog("chunk ptr: {}, mem start ptr {}, end ptr : {}", (void*)c, (void*)c->_ptr, (void*)(reinterpret_cast<char*>(c) + SIZE * COUNT + sizeof(Chunk)));
 #endif
 
-		return c;
-	}
-
-	Chunk* _chunk_list;
-	uintptr_t* _head;
-};
-
-thread_local std::unordered_map<int, MemoryPoolBase*> tls_memorypool_map;
-
-constexpr int GetSizeIndexBitwise(size_t size) {
-	// size가 0~8일 때를 방지하기 위해 최소값을 8로 보정
-	size_t clamped_size = std::max<size_t>(size, 8);
-
-	// std::bit_width(N)은 N을 표현하는 데 필요한 비트 수를 반환
-	// 예: 크기가 16이면 bit_width(15) -> 4 반환
-	return std::bit_width(clamped_size - 1) - 2;
-}
-
-template <typename T>
-constexpr size_t BucketSize_v = std::bit_ceil(std::max<size_t>(sizeof(T), 8));
-
-/*
-* TLSMemoryPool must define __TLS_MEMORYPOOL_ALLOC_COUNT when use before
-*/
-template<typename T>
-class TLSMemoryPool
-{
-	const int IDX = GetSizeIndexBitwise(BucketSize_v<T>);
-
-public:
-	void* Get()
-	{
-		auto iter = tls_memorypool_map.find(IDX);
-		if (iter == tls_memorypool_map.end())
-		{
-			auto pool = new MemoryPool<BucketSize_v<T>, __TLS_MEMORYPOOL_ALLOC_COUNT>();
-			tls_memorypool_map.emplace(IDX, static_cast<MemoryPoolBase*>(pool)).first;
+			return c;
 		}
-		return tls_memorypool_map[IDX]->Get();
+
+		Chunk* _chunk_list;
+		uintptr_t* _head;
+	};
+
+	thread_local std::unordered_map<int, MemoryPoolBase*> tls_memorypool_map;
+
+	constexpr int GetSizeIndexBitwise(size_t size) {
+		// size가 0~8일 때를 방지하기 위해 최소값을 8로 보정
+		size_t clamped_size = std::max<size_t>(size, 8);
+
+		// std::bit_width(N)은 N을 표현하는 데 필요한 비트 수를 반환
+		// 예: 크기가 16이면 bit_width(15) -> 4 반환
+		return std::bit_width(clamped_size - 1) - 2;
 	}
 
-	void Release(void* ptr)
+	template <typename T>
+	constexpr size_t BucketSize_v = std::bit_ceil(std::max<size_t>(sizeof(T), 8));
+
+	/*
+	* TLSMemoryPool must define __TLS_MEMORYPOOL_ALLOC_COUNT when use before
+	*/
+	template<typename T>
+	class TLSMemoryPool
 	{
-		tls_memorypool_map[IDX]->Release(ptr);
-	}
-};
+		const int IDX = GetSizeIndexBitwise(BucketSize_v<T>);
+
+	public:
+		void* Get()
+		{
+			auto iter = tls_memorypool_map.find(IDX);
+			if (iter == tls_memorypool_map.end())
+			{
+				auto pool = new MemoryPool<BucketSize_v<T>, __TLS_MEMORYPOOL_ALLOC_COUNT>();
+				tls_memorypool_map.emplace(IDX, static_cast<MemoryPoolBase*>(pool)).first;
+			}
+			return tls_memorypool_map[IDX]->Get();
+		}
+
+		void Release(void* ptr)
+		{
+			tls_memorypool_map[IDX]->Release(ptr);
+		}
+	};
+}

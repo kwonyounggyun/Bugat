@@ -3,7 +3,7 @@
 
 #include "pch.h"
 #include "framework.h"
-#include "RWLockObject.h"
+#include "lock/RWLockObject.h"
 #include <map>
 #include "memory/ObjectPool.h"
 #include "memory/MemoryPool.h"

@@ -3,49 +3,52 @@
 #include <vector>
 #include <utility>
 
-template<typename... Args>
-class Event
+namespace bugat
 {
-public:
-    using Handler = std::function<void(Args...)>;
-    int Subscribe(Handler h)
+    template<typename... Args>
+    class Event
     {
-        const int id = ++_nextId;
-        _handlers.emplace_back(id, std::move(h));
-        return id;
-    }
-
-    void Unsubscribe(int id)
-    {
-        for (auto it = _handlers.begin(); it != _handlers.end(); ++it)
+    public:
+        using Handler = std::function<void(Args...)>;
+        int Subscribe(Handler h)
         {
-            if (it->first == id)
+            const int id = ++_nextId;
+            _handlers.emplace_back(id, std::move(h));
+            return id;
+        }
+
+        void Unsubscribe(int id)
+        {
+            for (auto it = _handlers.begin(); it != _handlers.end(); ++it)
             {
-                _handlers.erase(it);
-                return;
+                if (it->first == id)
+                {
+                    _handlers.erase(it);
+                    return;
+                }
             }
         }
-    }
 
-    void Invoke(Args... args)
-    {
-        for (auto& [id, handler] : _handlers)
+        void Invoke(Args... args)
         {
-            handler(args...);
+            for (auto& [id, handler] : _handlers)
+            {
+                handler(args...);
+            }
         }
-    }
 
-    void operator+=(Handler handle)
-    {
-        Subscribe(handle);
-    }
+        void operator+=(Handler handle)
+        {
+            Subscribe(handle);
+        }
 
-    void operator=(Handler handle) = delete;
+        void operator=(Handler handle) = delete;
 
-    // C#처럼 operator()로도 부를 수 있게
-    void operator()(Args... args) { Invoke(std::forward<Args>(args)...); }
+        // C#처럼 operator()로도 부를 수 있게
+        void operator()(Args... args) { Invoke(std::forward<Args>(args)...); }
 
-private:
-    int _nextId = 0;
-    std::vector<std::pair<int, Handler>> _handlers;
-};
+    private:
+        int _nextId = 0;
+        std::vector<std::pair<int, Handler>> _handlers;
+    };
+}
