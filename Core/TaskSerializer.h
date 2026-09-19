@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include <atomic>
 
-#include "LockFreeQueue.h"
+#include "lockfree/LockFreeQueue.h"
 #include "Task.h"
 #include "Memory.h"
 #include "LockObject.h"

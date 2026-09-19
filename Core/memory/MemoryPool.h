@@ -1,11 +1,13 @@
 #pragma once
-#ifdef MEMORYPOOL_HPP_DEBUG
+#ifdef MEMORYPOOL_H_DEBUG
 	#include "Log.h"
 #endif
-#include <ctype.h>
 
-#ifndef MEMORYPOOL_HPP
-#define MEMORYPOOL_HPP
+#include <ctype.h>
+#include <unordered_map>
+
+#include <bit>
+#include <algorithm>
 
 constexpr int PTR_SIZE = sizeof(uintptr_t*);
 
@@ -49,7 +51,7 @@ public:
 		}
 		auto ret = _head;
 		_head = reinterpret_cast<uintptr_t*>(*_head);
-#ifdef MEMORYPOOL_HPP_DEBUG
+#ifdef MEMORYPOOL_H_DEBUG
 		DebugLog("get - head : {}, out {}", (void*)_head, (void*)ret);
 #endif
 		return ret;
@@ -59,7 +61,7 @@ public:
 	{
 		*reinterpret_cast<uintptr_t*>(ptr) = reinterpret_cast<uintptr_t>(_head);
 		_head = reinterpret_cast<uintptr_t*>(ptr);
-#ifdef MEMORYPOOL_HPP_DEBUG
+#ifdef MEMORYPOOL_H_DEBUG
 		DebugLog("release - head : {}, next {}", (void*)_head, (void*)*_head);
 #endif
 	}
@@ -83,7 +85,7 @@ private:
 		_head = reinterpret_cast<uintptr_t*>(new_chunk->_ptr);
 		auto pre_head = _head;
 
-#ifdef MEMORYPOOL_HPP_DEBUG
+#ifdef MEMORYPOOL_H_DEBUG
 		DebugLog("alloc - head : {}, next : {}", (void*)_head, (void*)*_head);
 #endif
 
@@ -93,7 +95,7 @@ private:
 			_head = reinterpret_cast<uintptr_t*>(reinterpret_cast<char*>(_head) + SIZE);
 			*_head = reinterpret_cast<uintptr_t>(pre_head);
 			pre_head = _head;
-#ifdef MEMORYPOOL_HPP_DEBUG
+#ifdef MEMORYPOOL_H_DEBUG
 			DebugLog("alloc - head : {}, next : {}", (void*)_head, (void*)*_head);
 #endif
 			count++;
@@ -108,7 +110,7 @@ private:
 		::memset(c, 0x00, SIZE * COUNT + sizeof(Chunk));
 		c->_next = nullptr;
 		c->_ptr = reinterpret_cast<void*>(reinterpret_cast<char*>(c) + sizeof(Chunk));
-#ifdef MEMORYPOOL_HPP_DEBUG
+#ifdef MEMORYPOOL_H_DEBUG
 		DebugLog("alloc totoal byte: {}", SIZE * COUNT + sizeof(Chunk));
 		DebugLog("chunk ptr: {}, mem start ptr {}, end ptr : {}", (void*)c, (void*)c->_ptr, (void*)(reinterpret_cast<char*>(c) + SIZE * COUNT + sizeof(Chunk)));
 #endif
@@ -119,4 +121,43 @@ private:
 	Chunk* _chunk_list;
 	uintptr_t* _head;
 };
-#endif
+
+thread_local std::unordered_map<int, MemoryPoolBase*> tls_memorypool_map;
+
+constexpr int GetSizeIndexBitwise(size_t size) {
+	// size가 0~8일 때를 방지하기 위해 최소값을 8로 보정
+	size_t clamped_size = std::max<size_t>(size, 8);
+
+	// std::bit_width(N)은 N을 표현하는 데 필요한 비트 수를 반환
+	// 예: 크기가 16이면 bit_width(15) -> 4 반환
+	return std::bit_width(clamped_size - 1) - 2;
+}
+
+template <typename T>
+constexpr size_t BucketSize_v = std::bit_ceil(std::max<size_t>(sizeof(T), 8));
+
+/*
+* TLSMemoryPool must define __TLS_MEMORYPOOL_ALLOC_COUNT when use before
+*/
+template<typename T>
+class TLSMemoryPool
+{
+	const int IDX = GetSizeIndexBitwise(BucketSize_v<T>);
+
+public:
+	void* Get()
+	{
+		auto iter = tls_memorypool_map.find(IDX);
+		if (iter == tls_memorypool_map.end())
+		{
+			auto pool = new MemoryPool<BucketSize_v<T>, __TLS_MEMORYPOOL_ALLOC_COUNT>();
+			tls_memorypool_map.emplace(IDX, static_cast<MemoryPoolBase*>(pool)).first;
+		}
+		return tls_memorypool_map[IDX]->Get();
+	}
+
+	void Release(void* ptr)
+	{
+		tls_memorypool_map[IDX]->Release(ptr);
+	}
+};

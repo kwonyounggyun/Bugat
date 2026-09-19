@@ -14,4 +14,6 @@
 // add headers that you want to pre-compile here
 #include "framework.h"
 
+#define __TLS_MEMORYPOOL_ALLOC_COUNT 100
+
 #endif //PCH_H

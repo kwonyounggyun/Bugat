@@ -3,11 +3,20 @@
 #include "DateTime.h"
 #define MAX_LOG_LENGTH 1024
 
+#ifdef __LOG_WITH_FUNCTION_NAME
+#include <cstring>
+#define CriticalLog(data, ...) CLog::WriteLog(LogType::Critical, data, __FUNCTION__, __VA_ARGS__)
+#define ErrorLog(data, ...) CLog::WriteLog(LogType::Error, data, __FUNCTION__, __VA_ARGS__)
+#define WarningLog(data, ...) CLog::WriteLog(LogType::Warning, data, __FUNCTION__, __VA_ARGS__)
+#define InfoLog(data, ...) CLog::WriteLog(LogType::Info, data, __FUNCTION__, __VA_ARGS__)
+#define DebugLog(data, ...) CLog::WriteLog(LogType::Debug, data, __FUNCTION__, __VA_ARGS__)
+#else
 #define CriticalLog(data, ...) CLog::WriteLog(LogType::Critical, data, __VA_ARGS__)
 #define ErrorLog(data, ...) CLog::WriteLog(LogType::Error, data, __VA_ARGS__)
 #define WarningLog(data, ...) CLog::WriteLog(LogType::Warning, data, __VA_ARGS__)
 #define InfoLog(data, ...) CLog::WriteLog(LogType::Info, data, __VA_ARGS__)
 #define DebugLog(data, ...) CLog::WriteLog(LogType::Debug, data, __VA_ARGS__)
+#endif
 
 class LogType
 {
@@ -43,12 +52,22 @@ public:
 class CLog
 {
 public:
+#ifdef __LOG_WITH_FUNCTION_NAME
+	template<typename... Args>
+	static void WriteLog(LogType::en type, std::format_string<Args...> fmt, std::string functionName, Args&&... args)
+	{
+		std::string s = std::format(fmt, std::forward<Args>(args)...);
+		std::string funcNameStr = std::format("[{}] {}", functionName, s);
+		Write(type, funcNameStr);
+	}
+#else
 	template<typename... Args>
 	static void WriteLog(LogType::en type, std::format_string<Args...> fmt, Args&&... args)
 	{
 		std::string s = std::format(fmt, std::forward<Args>(args)...);
 		Write(type, s);
 	}
+#endif
 
 private:
 	static bool Write(LogType::en type, std::string& log)

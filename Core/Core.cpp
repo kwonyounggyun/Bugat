@@ -5,7 +5,8 @@
 #include "framework.h"
 #include "RWLockObject.h"
 #include <map>
-#include "ObjectPool.h"
+#include "memory/ObjectPool.h"
+#include "memory/MemoryPool.h"
 #include "TaskSerializer.h"
 #include "ThreadGroup.h"
 
@@ -26,7 +27,7 @@ void fnCore()
 	bugat::RWLockObject<std::map<int, int>> obj;
 	auto lock = obj.LockRead();
 
-	bugat::ObjectPool<TestSerializer, 10> k2;
+	ObjectPool<TestSerializer, TLSMemoryPool<TestSerializer>> k2;
 	{
 		auto testObj1 = k2.Get();
 		auto testObj2 = k2.Get();

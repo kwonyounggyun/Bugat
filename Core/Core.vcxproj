@@ -164,10 +164,15 @@
     <ClInclude Include="Event.h" />
     <ClInclude Include="Exception.h" />
     <ClInclude Include="framework.h" />
-    <ClInclude Include="free_list.hpp" />
-    <ClInclude Include="LockFreeQueue.h" />
+    <ClInclude Include="lockfree\free_list.hpp" />
+    <ClInclude Include="lockfree\LockFreeQueue.h" />
+    <ClInclude Include="lockfree\tagged_ptr.hpp" />
+    <ClInclude Include="lockfree\tagged_ptr_compress.hpp" />
+    <ClInclude Include="lockfree\tagged_ptr_dcas.hpp" />
     <ClInclude Include="LockObject.h" />
     <ClInclude Include="Math.h" />
+    <ClInclude Include="memory\MemoryPool.h" />
+    <ClInclude Include="memory\ObjectPool.h" />
     <ClInclude Include="NonCopyable.h" />
     <ClInclude Include="ObjectPool.h" />
     <ClInclude Include="pch.h" />
@@ -175,9 +180,6 @@
     <ClInclude Include="RTTI.h" />
     <ClInclude Include="RWLockObject.h" />
     <ClInclude Include="Singleton.h" />
-    <ClInclude Include="tagged_ptr.hpp" />
-    <ClInclude Include="tagged_ptr_compress.hpp" />
-    <ClInclude Include="tagged_ptr_dcas.hpp" />
     <ClInclude Include="Task.h" />
     <ClInclude Include="TaskSerializer.h" />
     <ClInclude Include="ThreadGroup.h" />
