@@ -1,4 +1,7 @@
 #pragma once
+#ifdef TASK_H_DEBUG
+	#include "Log.h"
+#endif
 #include <functional>
 #include <type_traits>
 
@@ -30,46 +33,63 @@ namespace bugat
 		std::function<ReturnType()> _task;
 	};
 
-	/*template<typename Func>
-	class TaskModel<Func, void> : public TaskConcept
-	{
-		using ReturnType = std::invoke_result_t<Func>;
-	public:
-		TaskModel(Func&& task) : _task(std::forward<Func>(task)) {}
-		virtual ~TaskModel() {}
-		virtual void Run() override
-		{
-			_task();
-		}
-
-	private:
-		std::function<ReturnType()> _task;
-	};*/
-
 
 	class AnyTask
 	{
 	public:
 		AnyTask() {};
-		AnyTask(const AnyTask&) = default;
-		AnyTask(AnyTask&&) = default;
-		AnyTask& operator=(const AnyTask&) = default;
-		AnyTask& operator=(AnyTask&&) = default;
+		AnyTask(AnyTask& other) noexcept
+		{
+			_task = other._task;
+			other._task = nullptr;
+		}
+		AnyTask(AnyTask&& other) noexcept
+		{
+			_task = other._task;
+			other._task = nullptr;
+		}
+		AnyTask& operator=(AnyTask& other) noexcept
+		{
+			_task = other._task;
+			other._task = nullptr;
+			return *this;
+		}
+		AnyTask& operator=(AnyTask&& other) noexcept
+		{
+			_task = other._task;
+			other._task = nullptr;
+			return *this;
+		}
 
 		template<typename Func, typename ...ARGS>
 		requires (!std::is_same_v<std::decay_t<Func>, AnyTask>)
 		AnyTask(Func&& func, ARGS&&... args)
-			: _task(std::make_shared<TaskModel<Func, ARGS...>>(std::forward<Func>(func), std::forward<ARGS>(args)...))
+			: _task(new TaskModel<Func, ARGS...>(std::forward<Func>(func), std::forward<ARGS>(args)...))
 		{
 
+		}
+
+		~AnyTask() 
+		{
+			if(_task != nullptr)
+				delete _task;
+#ifdef TASK_H_DEBUG
+			else
+				DebugLog("Not del...");
+#endif
 		}
 
 		void Run()
 		{
-			_task->Run();
+			if (_task != nullptr)
+				_task->Run();
+#ifdef TASK_H_DEBUG
+			else
+				DebugLog("Must not do...");
+#endif
 		}
 
 	private:
-		std::shared_ptr<TaskConcept> _task;
+		TaskConcept* _task;
 	};
 }

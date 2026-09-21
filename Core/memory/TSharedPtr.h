@@ -1,9 +1,8 @@
 #pragma once
 #include <atomic>
-#include <new>
 #include <functional>
 
-namespace bugat::memory
+namespace bugat
 {
     class __deleter;
     struct __add_ref_count;

@@ -1,7 +1,8 @@
 #pragma once
 
-#include "../Core/LockFreeQueue.h"
-#include "../Core/Event.h"
+#include "Core/lockfree/LockFreeQueue.h"
+#include "Core/Event.h"
+#include "Core/Memory.h"
 
 #include "ObjectId.h"
 #include "SerializeObject.h"
@@ -39,7 +40,7 @@ namespace bugat
 	public:
 		Event<> OnConnect;
 		Event<> OnClose;
-		Event<const TSharedPtr<TCPRecvPacket>&> OnRead;
+		Event<const memory::TSharedPtr<TCPRecvPacket>&> OnRead;
 
 
 		Connection();

@@ -24,10 +24,10 @@ class TestSerializer : public bugat::TaskSerializer
 void fnCore()
 {
 
-	bugat::RWLockObject<std::map<int, int>> obj;
+	bugat::lock::RWLockObject<std::map<int, int>> obj;
 	auto lock = obj.LockRead();
 
-	ObjectPool<TestSerializer, TLSMemoryPool<TestSerializer>> k2;
+	bugat::memory::ObjectPool<TestSerializer, bugat::memory::TLSMemoryPool<TestSerializer>> k2;
 	{
 		auto testObj1 = k2.Get();
 		auto testObj2 = k2.Get();

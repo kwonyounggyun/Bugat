@@ -128,11 +128,8 @@ namespace bugat::memory
 	thread_local std::unordered_map<int, MemoryPoolBase*> tls_memorypool_map;
 
 	constexpr int GetSizeIndexBitwise(size_t size) {
-		// size가 0~8일 때를 방지하기 위해 최소값을 8로 보정
 		size_t clamped_size = std::max<size_t>(size, 8);
 
-		// std::bit_width(N)은 N을 표현하는 데 필요한 비트 수를 반환
-		// 예: 크기가 16이면 bit_width(15) -> 4 반환
 		return std::bit_width(clamped_size - 1) - 2;
 	}
 

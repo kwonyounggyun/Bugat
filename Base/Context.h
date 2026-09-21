@@ -1,8 +1,8 @@
 #pragma once
 #include <atomic>
 #include <vector>
-#include "../Core/LockFreeQueue.h"
-#include "../Core/Memory.h"
+#include "Core/lockfree/LockFreeQueue.h"
+#include "Core/Memory.h"
 
 namespace bugat
 {

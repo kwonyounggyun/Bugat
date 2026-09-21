@@ -2,7 +2,6 @@
 #include <thread>
 #include <vector>
 #include <atomic>
-#include <type_traits>
 
 namespace bugat
 {

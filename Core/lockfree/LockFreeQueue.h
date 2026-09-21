@@ -34,8 +34,8 @@ namespace bugat::lockfree
             auto temp = _pool.construct();
             node_ptr_t tempPtr(temp, 0);
             tempPtr->_next.store(nullHandle, std::memory_order_release);
-            _head->store(tempPtr);
-            _tail->store(tempPtr);
+            _head.store(tempPtr);
+            _tail.store(tempPtr);
         }
 
         ~LockFreeQueue()
@@ -45,7 +45,7 @@ namespace bugat::lockfree
 
         bool IsLockFree() const
         {
-            return _head->is_lock_free() && _tail->is_lock_free() && _size->is_lock_free() && _pool.IsLockFree();
+            return _head.is_lock_free() && _tail.is_lock_free() && _size.is_lock_free() && _pool.IsLockFree();
         }
 
         bool Push(T& value)
@@ -64,18 +64,18 @@ namespace bugat::lockfree
         {
             while (true)
             {
-                auto tail = _tail->load(std::memory_order_acquire);
-                auto head = _head->load(std::memory_order_acquire);
+                auto tail = _tail.load(std::memory_order_acquire);
+                auto head = _head.load(std::memory_order_acquire);
                 auto popNode = head->_next.load(std::memory_order_acquire);
 
-                if (head == _head->load(std::memory_order_relaxed))
+                if (head == _head.load(std::memory_order_relaxed))
                 {
                     if (head.get_ptr() == tail.get_ptr())
                     {
                         if (popNode == nullHandle)
                             return false;
 
-                        _tail->compare_exchange_weak(tail, node_ptr_t(popNode.get_ptr(), tail.get_next_tag()), std::memory_order_acq_rel, std::memory_order_acquire);
+                        _tail.compare_exchange_weak(tail, node_ptr_t(popNode.get_ptr(), tail.get_next_tag()), std::memory_order_acq_rel, std::memory_order_acquire);
                     }
                     else
                     {
@@ -84,9 +84,9 @@ namespace bugat::lockfree
                             T value = popNode->_value;
 
                             auto newNode = node_ptr_t(popNode.get_ptr(), head.get_next_tag());
-                            if (_head->compare_exchange_weak(head, newNode, std::memory_order_acq_rel, std::memory_order_acquire))
+                            if (_head.compare_exchange_weak(head, newNode, std::memory_order_acq_rel, std::memory_order_acquire))
                             {
-                                auto size = _size->fetch_sub(1, std::memory_order_relaxed);
+                                auto size = _size.fetch_sub(1, std::memory_order_relaxed);
                                 output = std::move(value);
 
                                 _pool.destruct(head.get_ptr());
@@ -124,42 +124,42 @@ namespace bugat::lockfree
                 });
         }
 
-        int64_t GetSize() { return _size->load(std::memory_order_acquire); }
+        int64_t GetSize() { return _size.load(std::memory_order_acquire); }
 
     private:
         bool InternalPush(Node* node)
         {
             while (true)
             {
-                auto tail = _tail->load(std::memory_order_acquire);
+                auto tail = _tail.load(std::memory_order_acquire);
                 auto next = tail->_next.load(std::memory_order_acquire);
 
-                if (tail == _tail->load(std::memory_order_relaxed))
+                if (tail == _tail.load(std::memory_order_relaxed))
                 {
                     if (next == nullHandle)
                     {
                         node_ptr_t newNode(node, tail.get_tag());
                         if (tail->_next.compare_exchange_weak(next, newNode, std::memory_order_acq_rel, std::memory_order_acquire))
                         {
-                            _tail->compare_exchange_weak(tail, node_ptr_t(node, tail.get_next_tag()), std::memory_order_acq_rel, std::memory_order_acquire);
+                            _tail.compare_exchange_weak(tail, node_ptr_t(node, tail.get_next_tag()), std::memory_order_acq_rel, std::memory_order_acquire);
                             break;
                         }
                     }
                     else
                     {
-                        _tail->compare_exchange_weak(tail, node_ptr_t(next.get_ptr(), tail.get_next_tag()), std::memory_order_acq_rel, std::memory_order_acquire);
+                        _tail.compare_exchange_weak(tail, node_ptr_t(next.get_ptr(), tail.get_next_tag()), std::memory_order_acq_rel, std::memory_order_acquire);
                     }
                 }
             }
 
-            _size->fetch_add(1, std::memory_order_relaxed);
+            _size.fetch_add(1, std::memory_order_relaxed);
             return true;
         }
 
     private:
-        CacheLinePadding<std::atomic<node_ptr_t>> _head;
-        CacheLinePadding<std::atomic<node_ptr_t>> _tail;
-        CacheLinePadding<std::atomic<int64_t>> _size;
+        std::atomic<node_ptr_t> _head;
+        std::atomic<node_ptr_t> _tail;
+        std::atomic<int64_t> _size;
 
         pool_t _pool;
     };
